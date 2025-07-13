@@ -3,8 +3,8 @@ package globals
 import (
 	"math/rand/v2"
 
-	"github.com/fzeitner/beecs_ecotox/comp"
-	"github.com/fzeitner/beecs_ecotox/enum/activity"
+	"github.com/fzeitner/beecs_masterthesis/comp"
+	"github.com/fzeitner/beecs_masterthesis/enum/activity"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )

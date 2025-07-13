@@ -1,2 +1,2 @@
-// Package enum provides enumerations for beecs_ecotox.
+// Package enum provides enumerations for beecs_masterthesis.
 package enum

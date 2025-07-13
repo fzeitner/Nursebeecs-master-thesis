@@ -1,7 +1,7 @@
 package comp
 
 import (
-	"github.com/fzeitner/beecs_ecotox/enum/activity"
+	"github.com/fzeitner/beecs_masterthesis/enum/activity"
 	"github.com/mlange-42/ark/ecs"
 )
 

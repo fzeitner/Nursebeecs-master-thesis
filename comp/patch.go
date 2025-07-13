@@ -1,6 +1,6 @@
 package comp
 
-import "github.com/fzeitner/beecs_ecotox/enum/interp"
+import "github.com/fzeitner/beecs_masterthesis/enum/interp"
 
 // PatchConfig for initialization of flower patches.
 // Not used as a component directly!

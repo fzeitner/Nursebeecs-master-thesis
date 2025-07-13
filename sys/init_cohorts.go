@@ -1,8 +1,8 @@
 package sys
 
 import (
-	"github.com/fzeitner/beecs_ecotox/globals"
-	"github.com/fzeitner/beecs_ecotox/params"
+	"github.com/fzeitner/beecs_masterthesis/globals"
+	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/mlange-42/ark/ecs"
 )
 

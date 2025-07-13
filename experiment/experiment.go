@@ -3,7 +3,7 @@ package experiment
 import (
 	"math/rand/v2"
 
-	"github.com/fzeitner/beecs_ecotox/model"
+	"github.com/fzeitner/beecs_masterthesis/model"
 	"github.com/mlange-42/ark/ecs"
 )
 

@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/fzeitner/beecs_ecotox/data"
-	"github.com/fzeitner/beecs_ecotox/globals"
-	"github.com/fzeitner/beecs_ecotox/params"
-	"github.com/fzeitner/beecs_ecotox/util"
+	"github.com/fzeitner/beecs_masterthesis/data"
+	"github.com/fzeitner/beecs_masterthesis/globals"
+	"github.com/fzeitner/beecs_masterthesis/params"
+	"github.com/fzeitner/beecs_masterthesis/util"
 	"github.com/mlange-42/ark/ecs"
 )
 

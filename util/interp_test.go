@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"github.com/fzeitner/beecs_ecotox/util"
+	"github.com/fzeitner/beecs_masterthesis/util"
 	"github.com/stretchr/testify/assert"
 )
 

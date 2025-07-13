@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fzeitner/beecs_ecotox/comp"
+	"github.com/fzeitner/beecs_masterthesis/comp"
 )
 
 // PatchesFromFile reads patch configurations from a JSON file.

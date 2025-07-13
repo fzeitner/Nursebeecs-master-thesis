@@ -3,7 +3,7 @@ package sys
 import (
 	"testing"
 
-	"github.com/fzeitner/beecs_ecotox/params"
+	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/mlange-42/ark/ecs"
 	"github.com/stretchr/testify/assert"
 )

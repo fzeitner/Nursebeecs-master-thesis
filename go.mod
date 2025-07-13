@@ -1,4 +1,4 @@
-module github.com/fzeitner/beecs_ecotox
+module github.com/fzeitner/beecs_masterthesis
 
 go 1.24.0
 

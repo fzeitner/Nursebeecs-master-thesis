@@ -3,9 +3,9 @@ package sys_test
 import (
 	"testing"
 
-	"github.com/fzeitner/beecs_ecotox/globals"
-	"github.com/fzeitner/beecs_ecotox/params"
-	"github.com/fzeitner/beecs_ecotox/sys"
+	"github.com/fzeitner/beecs_masterthesis/globals"
+	"github.com/fzeitner/beecs_masterthesis/params"
+	"github.com/fzeitner/beecs_masterthesis/sys"
 	"github.com/mlange-42/ark/ecs"
 	"github.com/stretchr/testify/assert"
 )

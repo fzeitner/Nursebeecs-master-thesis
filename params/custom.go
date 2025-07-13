@@ -7,8 +7,8 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/fzeitner/beecs_ecotox/registry"
-	"github.com/fzeitner/beecs_ecotox/util"
+	"github.com/fzeitner/beecs_masterthesis/registry"
+	"github.com/fzeitner/beecs_masterthesis/util"
 	"github.com/mlange-42/ark/ecs"
 )
 
