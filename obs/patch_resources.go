@@ -4,15 +4,17 @@ import (
 	"fmt"
 
 	"github.com/fzeitner/beecs_masterthesis/comp"
+	"github.com/fzeitner/beecs_masterthesis/comp_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
 // PatchNectar is a row observer for the nectar availability of all patches in L (liters).
 type PatchNectar struct {
 	patchMapper *ecs.Map1[comp.Resource]
-	data        []float64
-	patches     []ecs.Entity
-	header      []string
+
+	data    []float64
+	patches []ecs.Entity
+	header  []string
 }
 
 func (o *PatchNectar) Initialize(w *ecs.World) {
@@ -45,14 +47,17 @@ func (o *PatchNectar) Values(w *ecs.World) []float64 {
 
 // PatchPPPNectar is a row observer for the PPPNectar availability of all patches in .
 type PatchPPPNectar struct {
-	patchMapper *ecs.Map1[comp.Resource]
-	data        []float64
-	patches     []ecs.Entity
-	header      []string
+	patchMapper      *ecs.Map1[comp.Resource]
+	patchMapper_etox *ecs.Map1[comp_etox.Resource_etox]
+
+	data    []float64
+	patches []ecs.Entity
+	header  []string
 }
 
 func (o *PatchPPPNectar) Initialize(w *ecs.World) {
 	o.patchMapper = o.patchMapper.New(w)
+	o.patchMapper_etox = o.patchMapper_etox.New(w)
 
 	patchFilter := *ecs.NewFilter1[comp.Resource](w)
 	query := patchFilter.Query()
@@ -73,7 +78,7 @@ func (o *PatchPPPNectar) Header() []string {
 }
 func (o *PatchPPPNectar) Values(w *ecs.World) []float64 {
 	for i, e := range o.patches {
-		res := o.patchMapper.Get(e)
+		res := o.patchMapper_etox.Get(e)
 		o.data[i] = res.PPPconcentrationNectar
 	}
 	return o.data
@@ -81,14 +86,17 @@ func (o *PatchPPPNectar) Values(w *ecs.World) []float64 {
 
 // PatchPPPPollen is a row observer for the PPPPollen availability of all patches in .
 type PatchPPPPollen struct {
-	patchMapper *ecs.Map1[comp.Resource]
-	data        []float64
-	patches     []ecs.Entity
-	header      []string
+	patchMapper      *ecs.Map1[comp.Resource]
+	patchMapper_etox *ecs.Map1[comp_etox.Resource_etox]
+
+	data    []float64
+	patches []ecs.Entity
+	header  []string
 }
 
 func (o *PatchPPPPollen) Initialize(w *ecs.World) {
 	o.patchMapper = o.patchMapper.New(w)
+	o.patchMapper_etox = o.patchMapper_etox.New(w)
 
 	patchFilter := *ecs.NewFilter1[comp.Resource](w)
 	query := patchFilter.Query()
@@ -109,7 +117,7 @@ func (o *PatchPPPPollen) Header() []string {
 }
 func (o *PatchPPPPollen) Values(w *ecs.World) []float64 {
 	for i, e := range o.patches {
-		res := o.patchMapper.Get(e)
+		res := o.patchMapper_etox.Get(e)
 		o.data[i] = res.PPPconcentrationPollen
 	}
 	return o.data
@@ -117,14 +125,17 @@ func (o *PatchPPPPollen) Values(w *ecs.World) []float64 {
 
 // PatchPPPContact is a row observer for the contact dose in all patches in .
 type PatchPPPcontact struct {
-	patchMapper *ecs.Map1[comp.Resource]
-	data        []float64
-	patches     []ecs.Entity
-	header      []string
+	patchMapper      *ecs.Map1[comp.Resource]
+	patchMapper_etox *ecs.Map1[comp_etox.Resource_etox]
+
+	data    []float64
+	patches []ecs.Entity
+	header  []string
 }
 
 func (o *PatchPPPcontact) Initialize(w *ecs.World) {
 	o.patchMapper = o.patchMapper.New(w)
+	o.patchMapper_etox = o.patchMapper_etox.New(w)
 
 	patchFilter := *ecs.NewFilter1[comp.Resource](w)
 	query := patchFilter.Query()
@@ -145,7 +156,7 @@ func (o *PatchPPPcontact) Header() []string {
 }
 func (o *PatchPPPcontact) Values(w *ecs.World) []float64 {
 	for i, e := range o.patches {
-		res := o.patchMapper.Get(e)
+		res := o.patchMapper_etox.Get(e)
 		o.data[i] = res.PPPcontactDose
 	}
 	return o.data

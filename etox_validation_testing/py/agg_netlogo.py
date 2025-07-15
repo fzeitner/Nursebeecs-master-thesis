@@ -10,7 +10,7 @@ def agg_netlogo(file, out_file):
     ticks = pd.unique(data.ticks)
     ticks.sort()
 
-    columns = list(data.columns)[-19:]
+    columns = list(data.columns)[-8:]
 
     out = pd.DataFrame(data={"ticks": ticks}, index=ticks)
 
@@ -35,4 +35,4 @@ def agg_netlogo(file, out_file):
 
 
 if __name__ == "__main__":
-    agg_netlogo("etox_validation_testing/default_with_dimethoate/out/netlogo_etox_oldthermo.csv", "etox_validation_testing/default_with_dimethoate/netlogo_etox_oldthermo.csv")
+    agg_netlogo("etox_validation_testing/tunnel_beecs/out/netlogo.csv", "etox_validation_testing/tunnel_beecs/netlogo.csv")

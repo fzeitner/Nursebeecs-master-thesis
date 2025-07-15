@@ -45,11 +45,6 @@ type ScriptedPatch struct {
 	NectarConcentration  [][2]float64 // Sucrose concentration in the nectar [mol/L].
 	DetectionProbability [][2]float64 // Detection probability, e.g. from BeeScout.
 	Interpolation        interp.Interpolation
-
-	//PPPconcentrationNectar [][2]float64 // PPP concentration in nectar [mug/kg]     + need to unterstand why [][2]
-	//PPPconcentrationPollen [][2]float64 // PPP concentration in nectar [mug/kg]
-	//PPPcontactExposure     [][2]float64 // PPP concentration for contact exposure on patch [kg/ha] ??
-
 }
 
 // PatchProperties component for flower patches.
@@ -58,10 +53,6 @@ type PatchProperties struct {
 	NectarConcentration  float64 // Sucrose concentration in the nectar [mol/L].
 	MaxPollen            float64 // Maximum of available pollen [kg].
 	DetectionProbability float64 // Detection probability, e.g. from BeeScout.
-
-	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kJ]
-	PPPconcentrationPollen float64 // PPP concentration in pollen [mug/g]
-	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug] ??
 }
 
 // PatchDistance component for flower patches.
@@ -78,10 +69,6 @@ type Resource struct {
 	Pollen           float64 // Currently available pollen [g].
 	MaxPollen        float64 // Maximum currently available pollen (before any collecting) [g].
 	EnergyEfficiency float64 // Energy efficiency of nectar foraging.
-
-	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kJ]
-	PPPconcentrationPollen float64 // PPP concentration in pollen [mug/g]
-	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug] ??
 }
 
 // HandlingTime component for flower patches.
@@ -91,7 +78,7 @@ type HandlingTime struct {
 	Nectar float64 // Nectar handling time [s].
 	Pollen float64 // Pollen handling time [s].
 
-	Water float64 // Water handling time [s].
+	//Water float64 // Water handling time [s].
 }
 
 // Trip component for flower patches.
@@ -103,8 +90,8 @@ type Trip struct {
 	CostNectar     float64 // Current trip energy cost for nectar [kJ].
 	CostPollen     float64 // Current trip energy cost for pollen [kJ].
 
-	DurationWater float64 // Current trip duration for water [s].
-	CostWater     float64 // Current trip energy cost for water [kJ].
+	//DurationWater float64 // Current trip duration for water [s].
+	//CostWater     float64 // Current trip energy cost for water [kJ].
 }
 
 // Mortality component for flower patches.
@@ -114,7 +101,7 @@ type Mortality struct {
 	Nectar float64 // Current mortality for nectar foragers.
 	Pollen float64 // Current mortality for pollen foragers.
 
-	Water float64 // Current mortality for water foragers.
+	//Water float64 // Current mortality for water foragers.
 }
 
 // Dance component for flower patches.
@@ -135,5 +122,5 @@ type Visits struct {
 	Nectar int // Nectar visits today.
 	Pollen int // Pollen visits today.
 
-	Water int // Water visits today.
+	//Water int // Water visits today.
 }

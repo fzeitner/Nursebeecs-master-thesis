@@ -18,7 +18,8 @@ import (
 // Foraging performs the complete foraging process of each day.
 // It potentially performs multiple foraging rounds per day.
 type Foraging struct {
-	rng *rand.Rand
+	rng  *rand.Rand
+	time *resource.Tick
 
 	foragerParams      *params.Foragers
 	forageParams       *params.Foraging
@@ -26,16 +27,11 @@ type Foraging struct {
 	danceParams        *params.Dance
 	energyParams       *params.EnergyContent
 	storeParams        *params.Stores
-	storesParams       *params.Stores
-
-	waterParams *params.WaterParams
-	etox        *params.ETOXparams
 
 	foragePeriod  *globals.ForagingPeriod
 	stores        *globals.Stores
 	popStats      *globals.PopulationStats
 	foragingStats *globals.ForagingStats
-	waterneeds    *globals.WaterNeeds
 
 	patches  []patchCandidate
 	toRemove []ecs.Entity
@@ -50,16 +46,15 @@ type Foraging struct {
 	patchConfigMapper    *ecs.Map2[comp.PatchProperties, comp.Trip]
 	foragerMapper        *ecs.Map2[comp.Activity, comp.KnownPatch]
 
-	activityFilter       *ecs.Filter1[comp.Activity]
-	loadFilter           *ecs.Filter2[comp.Activity, comp.NectarLoad]
-	foragerFilter        *ecs.Filter3[comp.Activity, comp.KnownPatch, comp.Milage]
-	foragerFilterLoadPPP *ecs.Filter5[comp.Activity, comp.KnownPatch, comp.Milage, comp.NectarLoad, comp.PPPExpo]
-	foragerFilterSimple  *ecs.Filter2[comp.Activity, comp.KnownPatch]
-	patchFilter          *ecs.Filter2[comp.Resource, comp.PatchProperties]
-	patchUpdateFilter    *ecs.Filter7[comp.PatchProperties, comp.PatchDistance, comp.Resource, comp.HandlingTime, comp.Trip, comp.Mortality, comp.Dance]
+	activityFilter      *ecs.Filter1[comp.Activity]
+	loadFilter          *ecs.Filter2[comp.Activity, comp.NectarLoad]
+	foragerFilter       *ecs.Filter3[comp.Activity, comp.KnownPatch, comp.Milage]
+	foragerFilterLoad   *ecs.Filter4[comp.Activity, comp.KnownPatch, comp.Milage, comp.NectarLoad]
+	foragerFilterSimple *ecs.Filter2[comp.Activity, comp.KnownPatch]
+	patchFilter         *ecs.Filter2[comp.Resource, comp.PatchProperties]
+	patchUpdateFilter   *ecs.Filter7[comp.PatchProperties, comp.PatchDistance, comp.Resource, comp.HandlingTime, comp.Trip, comp.Mortality, comp.Dance]
 
 	maxHoneyStore float64
-	time          *resource.Tick
 }
 
 func (s *Foraging) Initialize(w *ecs.World) {
@@ -69,21 +64,16 @@ func (s *Foraging) Initialize(w *ecs.World) {
 	s.danceParams = ecs.GetResource[params.Dance](w)
 	s.energyParams = ecs.GetResource[params.EnergyContent](w)
 	s.storeParams = ecs.GetResource[params.Stores](w)
-	s.storesParams = ecs.GetResource[params.Stores](w)
-
-	s.waterParams = ecs.GetResource[params.WaterParams](w)
-	s.etox = ecs.GetResource[params.ETOXparams](w)
 
 	s.popStats = ecs.GetResource[globals.PopulationStats](w)
 	s.foragingStats = ecs.GetResource[globals.ForagingStats](w)
 	s.foragePeriod = ecs.GetResource[globals.ForagingPeriod](w)
 	s.stores = ecs.GetResource[globals.Stores](w)
-	s.waterneeds = ecs.GetResource[globals.WaterNeeds](w)
 
 	s.activityFilter = s.activityFilter.New(w)
 	s.loadFilter = s.loadFilter.New(w)
 	s.foragerFilter = s.foragerFilter.New(w)
-	s.foragerFilterLoadPPP = s.foragerFilterLoadPPP.New(w)
+	s.foragerFilterLoad = s.foragerFilterLoad.New(w)
 	s.foragerFilterSimple = s.foragerFilterSimple.New(w)
 	s.patchFilter = s.patchFilter.New(w)
 	s.patchUpdateFilter = s.patchUpdateFilter.New(w)
@@ -101,9 +91,7 @@ func (s *Foraging) Initialize(w *ecs.World) {
 
 	s.maxHoneyStore = storeParams.MaxHoneyStoreKg * 1000.0 * energyParams.Honey
 	s.rng = rand.New(ecs.GetResource[resource.Rand](w))
-
 	s.time = ecs.GetResource[resource.Tick](w)
-
 }
 
 func (s *Foraging) Update(w *ecs.World) {
@@ -116,9 +104,8 @@ func (s *Foraging) Update(w *ecs.World) {
 
 	query := s.foragerFilter.Query()
 	for query.Next() {
-		_, patch, milage := query.Get()
+		_, _, milage := query.Get()
 		milage.Today = 0
-		patch.VisitedthisDay = false
 	}
 
 	if s.time.Tick > 0 {
@@ -145,12 +132,12 @@ func (s *Foraging) Update(w *ecs.World) {
 
 			round++
 		}
+	}
 
-		query = s.foragerFilter.Query()
-		for query.Next() {
-			act, _, _ := query.Get()
-			act.Current = activity.Resting
-		}
+	query = s.foragerFilter.Query()
+	for query.Next() {
+		act, _, _ := query.Get()
+		act.Current = activity.Resting
 	}
 }
 
@@ -197,11 +184,9 @@ func (s *Foraging) updatePatches(w *ecs.World) {
 		if s.handlingTimeParams.ConstantHandlingTime {
 			ht.Pollen = s.handlingTimeParams.PollenGathering
 			ht.Nectar = s.handlingTimeParams.NectarGathering
-			ht.Water = s.handlingTimeParams.ETOX_handlingTimeWater
 		} else {
 			ht.Pollen = s.handlingTimeParams.PollenGathering * r.MaxPollen / r.Pollen
 			ht.Nectar = s.handlingTimeParams.NectarGathering * r.MaxNectar / r.Nectar
-			ht.Water = s.handlingTimeParams.ETOX_handlingTimeWater
 		}
 
 		trip.CostNectar = (2 * dist.DistToColony * s.foragerParams.FlightCostPerM) +
@@ -212,17 +197,13 @@ func (s *Foraging) updatePatches(w *ecs.World) {
 			(s.foragerParams.FlightCostPerM * ht.Pollen *
 				s.foragerParams.FlightVelocity * s.forageParams.EnergyOnFlower) // [kJ] = [m*kJ/m + kJ/m * s * m/s]
 
-		trip.CostWater = (2 * dist.DistToColony * s.foragerParams.FlightCostPerM) // for some reason does not have the same addition as the ones above
-
 		r.EnergyEfficiency = (conf.NectarConcentration*s.foragerParams.NectarLoad*s.energyParams.Sucrose - trip.CostNectar) / trip.CostNectar
 
 		trip.DurationNectar = 2*dist.DistToColony/s.foragerParams.FlightVelocity + ht.Nectar
 		trip.DurationPollen = 2*dist.DistToColony/s.foragerParams.FlightVelocity + ht.Pollen
-		trip.DurationWater = 2*dist.DistToColony/s.foragerParams.FlightVelocity + ht.Water
 
 		mort.Nectar = 1.0 - (math.Pow(1.0-s.forageParams.MortalityPerSec, trip.DurationNectar))
 		mort.Pollen = 1.0 - (math.Pow(1.0-s.forageParams.MortalityPerSec, trip.DurationPollen))
-		mort.Water = 1.0 - (math.Pow(1.0-s.forageParams.MortalityPerSec, trip.DurationWater))
 
 		circ := r.EnergyEfficiency*s.danceParams.Slope + s.danceParams.Intercept
 		dance.Circuits = util.Clamp(circ, 0, float64(s.danceParams.MaxCircuits))
@@ -230,37 +211,9 @@ func (s *Foraging) updatePatches(w *ecs.World) {
 }
 
 func (s *Foraging) decisions(w *ecs.World, probForage, probCollectPollen float64) {
-	ETOX_foragersneeded := 0.
-	if s.stores.ETOX_Waterneedfordilution > 0 {
-		ETOX_foragersneeded = s.stores.ETOX_Waterneedfordilution / (s.waterParams.ETOX_cropvolume_water * s.waterParams.ETOX_Watertripsperh * float64(s.foragePeriod.SecondsToday) / 3600)
-	}
-	if s.waterneeds.ETOX_Waterneedforcooling > 0 {
-		ETOX_foragersneeded += s.waterneeds.ETOX_Waterneedforcooling / (s.waterParams.ETOX_cropvolume_water * s.waterParams.ETOX_Watertripsperh * float64(s.foragePeriod.SecondsToday) / 3600)
-	}
-	sumofwaterforagers := 0. // unsure if the original model made a mistake here and actually intended to use the global "ETOX_NumberofWaterforagers" instead, need to check up on this at some point
-	ETOX_ProbWatercollection := 0.
-
 	query := s.foragerFilter.Query()
 	for query.Next() {
 		act, patch, milage := query.Get()
-
-		if s.waterParams.WaterForaging { // doesn´t get accessed atm, because WaterForaging should not be turned on, seems rather irrelevant to the original model as well
-			if act.Current != activity.WaterForaging {
-				if sumofwaterforagers > ETOX_foragersneeded {
-					act.Current = activity.Resting
-				}
-			}
-			if sumofwaterforagers < ETOX_foragersneeded { // This code is super weird; sumofwaterforagers never gets reassigned any value other than 0, checked the original BEEHAVE multiple times, unsure if I need to fix smth here atm
-				ETOX_foragersneeded -= sumofwaterforagers
-				ETOX_ProbWatercollection = ETOX_foragersneeded / (float64(s.popStats.WorkersForagers)) // BEEHAVE uses SQUADRON_SIZE * count foragerSquadrons, should equate to s.popStats.WorkersForagers
-
-				if s.rng.Float64() < ETOX_ProbWatercollection {
-					act.Current = activity.WaterForaging
-					act.WaterForager = true
-					act.PollenForager = false
-				}
-			}
-		}
 
 		if act.Current != activity.Recruited {
 			act.PollenForager = s.rng.Float64() < probCollectPollen
@@ -323,8 +276,6 @@ func (s *Foraging) decisions(w *ecs.World, probForage, probCollectPollen float64
 func (s *Foraging) searching(w *ecs.World) {
 	cumProb := 0.0
 	nonDetectionProb := 1.0
-
-	// TODO: water foraging search here, postponed because module seems to be rather irrelevant
 
 	sz := float64(s.foragerParams.SquadronSize)
 	patchQuery := s.patchFilter.Query()
@@ -433,12 +384,9 @@ func (s *Foraging) searching(w *ecs.World) {
 
 func (s *Foraging) collecting(w *ecs.World) {
 	sz := float64(s.foragerParams.SquadronSize)
-	foragerQuery := s.foragerFilterLoadPPP.Query()
-
-	// TODO: water collecting here, postponed because water foraging basically irrelevant overall
-
+	foragerQuery := s.foragerFilterLoad.Query()
 	for foragerQuery.Next() {
-		act, patch, milage, load, PPPexpo := foragerQuery.Get()
+		act, patch, milage, load := foragerQuery.Get()
 
 		if act.Current == activity.Experienced {
 			if act.PollenForager {
@@ -474,58 +422,14 @@ func (s *Foraging) collecting(w *ecs.World) {
 
 		if act.Current == activity.BringNectar {
 			conf, trip := s.patchConfigMapper.Get(patch.Nectar)
-			load.Energy = conf.NectarConcentration * s.foragerParams.NectarLoad * s.energyParams.Sucrose // --> kJ
-
-			// exposition from nectar foraging
-			load.PPPLoad = load.Energy * conf.PPPconcentrationNectar
-			PPPexpo.OralDose += load.PPPLoad * s.etox.HSuptake
-			load.PPPLoad -= load.PPPLoad * s.etox.HSuptake
-
-			if patch.VisitedthisDay {
-				s.foragingStats.ContactExp_repeat++
-			} else {
-				s.foragingStats.ContactExp_once++
-				patch.VisitedthisDay = true
-			}
-
-			if PPPexpo.ContactDose > 0 {
-				if s.etox.ContactSum {
-					PPPexpo.ContactDose += conf.PPPcontactDose
-				} else {
-					PPPexpo.ContactDose = (PPPexpo.ContactDose + conf.PPPcontactDose) / 2
-				}
-			} else {
-				PPPexpo.ContactDose += conf.PPPcontactDose
-			}
-
+			load.Energy = conf.NectarConcentration * s.foragerParams.NectarLoad * s.energyParams.Sucrose
 			dist := trip.CostNectar / (s.foragerParams.FlightCostPerM * 1000)
 			milage.Today += float32(dist)
 			milage.Total += float32(dist)
 		}
 
 		if act.Current == activity.BringPollen {
-			conf, trip := s.patchConfigMapper.Get(patch.Pollen)
-
-			// exposition from pollen foraging
-			load.PPPLoad = s.foragerParams.PollenLoad * conf.PPPconcentrationPollen
-
-			if patch.VisitedthisDay {
-				s.foragingStats.ContactExp_repeat++
-			} else {
-				s.foragingStats.ContactExp_once++
-				patch.VisitedthisDay = true
-			}
-
-			if PPPexpo.ContactDose > 0 {
-				if s.etox.ContactSum {
-					PPPexpo.ContactDose += conf.PPPcontactDose
-				} else {
-					PPPexpo.ContactDose = (PPPexpo.ContactDose + conf.PPPcontactDose) / 2
-				}
-			} else {
-				PPPexpo.ContactDose += conf.PPPcontactDose
-			}
-
+			trip := s.patchTripMapper.Get(patch.Pollen)
 			dist := trip.CostPollen / (s.foragerParams.FlightCostPerM * 1000)
 			milage.Today += float32(dist)
 			milage.Total += float32(dist)
@@ -537,11 +441,9 @@ func (s *Foraging) flightCost(w *ecs.World) (duration float64, foragers int) {
 	duration = 0.0
 	foragers = 0
 
-	// TODO: flightCost for water foraging here, postponed ...
-
-	query := s.foragerFilterLoadPPP.Query()
+	query := s.foragerFilter.Query()
 	for query.Next() {
-		act, patch, milage, _, ppp := query.Get()
+		act, patch, milage := query.Get()
 
 		if act.Current == activity.Searching {
 			dist := s.forageParams.SearchLength / 1000.0
@@ -550,8 +452,6 @@ func (s *Foraging) flightCost(w *ecs.World) (duration float64, foragers int) {
 
 			en := s.forageParams.SearchLength * s.foragerParams.FlightCostPerM
 			s.stores.Honey -= en * float64(s.foragerParams.SquadronSize)
-
-			ppp.OralDose += s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
 
 			duration += s.forageParams.SearchLength / s.foragerParams.FlightVelocity
 			foragers++
@@ -567,66 +467,35 @@ func (s *Foraging) flightCost(w *ecs.World) (duration float64, foragers int) {
 				en = trip.CostNectar
 			}
 			s.stores.Honey -= en * float64(s.foragerParams.SquadronSize)
-
-			ppp.OralDose += s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
-
-			foragers++
-		} else if s.waterParams.WaterForaging && (act.Current == activity.BringWater || act.Current == activity.UnsuccessfulWater) {
-			en := 0.0
-			trip := s.patchTripMapper.Get(patch.Water)
-			duration += trip.DurationWater + s.handlingTimeParams.NectarUnloading // WRONG; ADJUSTMENT NEEDED original model assumes Nectar unloading time for water as well (or forgot to change)
-			en = trip.CostWater
-
-			//if act.Current == activity.UnsuccessfulWater {
-			//	patch.Water =                       // have to mark knownWaterPatch here if waterforaging will ever be relevant enough to implement
-			//}
-			act.Current = activity.WaterForaging
-			s.stores.Honey -= en * float64(s.foragerParams.SquadronSize)
-
-			ppp.OralDose += s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
-
 			foragers++
 		}
 	}
+
 	return
 }
 
 func (s *Foraging) mortality(w *ecs.World) {
 	searchDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
 
-	// TODO: mortality for water foragers, postponed ..
-
-	foragerQuery := s.foragerFilterLoadPPP.Query()
+	foragerQuery := s.foragerFilterSimple.Query()
 	for foragerQuery.Next() {
-		act, patch, _, _, PPPexpo := foragerQuery.Get()
-
-		// Acute toxicity during flight
-		lethaldose := false
-		if s.etox.ForagerImmediateMortality {
-			if PPPexpo.RdmSurvivalOral < 1-(1/(1+math.Pow(PPPexpo.OralDose/s.etox.ForagerOralLD50, s.etox.ForagerOralSlope))) {
-				lethaldose = true
-			}
-			if PPPexpo.RdmSurvivalContact < 1-(1/(1+math.Pow(PPPexpo.ContactDose/s.etox.ForagerContactLD50, s.etox.ForagerContactSlope))) {
-				lethaldose = true
-			}
-		}
+		act, patch := foragerQuery.Get()
 
 		if act.Current == activity.Searching {
-			if s.rng.Float64() < 1-math.Pow(1-s.forageParams.MortalityPerSec, searchDuration) || lethaldose {
+			if s.rng.Float64() < 1-math.Pow(1-s.forageParams.MortalityPerSec, searchDuration) {
 				s.toRemove = append(s.toRemove, foragerQuery.Entity())
 			}
 		} else if act.Current == activity.BringNectar {
 			m := s.patchMortalityMapper.Get(patch.Nectar)
-			if s.rng.Float64() < m.Nectar || lethaldose {
+			if s.rng.Float64() < m.Nectar {
 				s.toRemove = append(s.toRemove, foragerQuery.Entity())
 			}
 		} else if act.Current == activity.BringPollen {
 			m := s.patchMortalityMapper.Get(patch.Pollen)
-			if s.rng.Float64() < m.Pollen || lethaldose {
+			if s.rng.Float64() < m.Pollen {
 				s.toRemove = append(s.toRemove, foragerQuery.Entity())
 			}
-		} //else if act.Current == activity.BringWater {}   // postponed because irrelevant
-
+		}
 	}
 
 	for _, e := range s.toRemove {
@@ -736,36 +605,19 @@ func (s *Foraging) dancing(w *ecs.World) {
 }
 
 func (s *Foraging) unloading(w *ecs.World) {
-
-	// TODO: water unloading, postponed ...
-
 	query := s.loadFilter.Query()
 	for query.Next() {
 		act, load := query.Get()
 		if act.Current == activity.BringNectar {
-
-			s.stores.Honey += load.Energy * float64(s.foragerParams.SquadronSize)
-
-			s.stores.ETOX_HES_C_D0 = ((s.stores.ETOX_HES_C_D0 * s.stores.ETOX_HES_E_D0) + (load.PPPLoad * (1 - s.etox.HSuptake) * float64(s.foragerParams.SquadronSize))) / (s.stores.ETOX_HES_E_D0 + (load.Energy * float64(s.foragerParams.SquadronSize))) // may need to readjust
-			s.stores.ETOX_HES_E_D0 += load.Energy * float64(s.foragerParams.SquadronSize)
-
-			// if s.etox.WaterForaging {} // continue here when Water foraging
-
-			if s.stores.Honey > s.maxHoneyStore ||
-				s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D0+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D4 > s.maxHoneyStore {
-				s.stores.Honey = s.maxHoneyStore
-				s.stores.ETOX_HES_E_D0 = s.maxHoneyStore - (s.stores.ETOX_HES_E_Capped + s.stores.ETOX_HES_E_D1 + s.stores.ETOX_HES_E_D2 + s.stores.ETOX_HES_E_D3 + s.stores.ETOX_HES_E_D4)
-			}
-
-			load.Energy = 0.
-			load.PPPLoad = 0.
+			s.stores.Honey = math.Min(
+				s.stores.Honey+load.Energy*float64(s.foragerParams.SquadronSize),
+				s.maxHoneyStore,
+			)
+			load.Energy = 0
 			act.Current = activity.Experienced
 		} else if act.Current == activity.BringPollen {
-			s.stores.PPPInHivePollenConc = ((s.stores.PPPInHivePollenConc * s.stores.Pollen) + (load.PPPLoad * float64(s.foragerParams.SquadronSize))) / (s.stores.Pollen + s.foragerParams.PollenLoad*float64(s.foragerParams.SquadronSize)) // may need to readjust
-
 			s.stores.Pollen += s.foragerParams.PollenLoad * float64(s.foragerParams.SquadronSize)
 			act.Current = activity.Experienced
-			load.PPPLoad = 0.
 		}
 	}
 }
@@ -787,15 +639,9 @@ func (s *Foraging) countForagers(w *ecs.World) {
 			round.Searching += sz
 		case activity.Recruited:
 			round.Recruited += sz
-		case activity.WaterForaging:
-			round.Water += sz
-		case activity.UnsuccessfulWater:
-			round.Water += sz
 		case activity.Experienced:
 			if act.PollenForager {
 				round.Pollen += sz
-			} else if act.WaterForager {
-				round.Water += sz
 			} else {
 				round.Nectar += sz
 			}
@@ -812,71 +658,4 @@ type patchCandidate struct {
 	Probability float64
 	HasNectar   bool
 	HasPollen   bool
-
-	HasWater bool
-}
-
-// copy from etox_storages_consumption, because I had no simple way or headspace to deal with cyclic import issues atm
-func (s *Foraging) FeedOnHoneyStores(w *ecs.World, cons float64, number float64, honeydilution bool) (OralDose float64) {
-	OralDose = 0.
-	if cons < s.stores.ETOX_HES_E_D0 {
-		OralDose += cons * s.stores.ETOX_HES_C_D0 / number
-		s.stores.ETOX_HES_E_D0 -= cons
-	} else {
-		OralDose += s.stores.ETOX_HES_E_D0 * s.stores.ETOX_HES_C_D0 / number
-		cons -= s.stores.ETOX_HES_E_D0
-		s.stores.ETOX_HES_E_D0 = 0
-
-		if cons < s.stores.ETOX_HES_E_D1 {
-			OralDose += cons * s.stores.ETOX_HES_C_D1 / number
-			s.stores.ETOX_HES_E_D1 -= cons
-		} else {
-			OralDose += s.stores.ETOX_HES_E_D1 * s.stores.ETOX_HES_C_D1 / number
-			cons -= s.stores.ETOX_HES_E_D1
-			s.stores.ETOX_HES_E_D1 = 0
-
-			if cons < s.stores.ETOX_HES_E_D2 {
-				OralDose += cons * s.stores.ETOX_HES_C_D2 / number
-				s.stores.ETOX_HES_E_D2 -= cons
-			} else {
-				OralDose += s.stores.ETOX_HES_E_D1 * s.stores.ETOX_HES_C_D2 / number
-				cons -= s.stores.ETOX_HES_E_D2
-				s.stores.ETOX_HES_E_D2 = 0
-
-				if cons < s.stores.ETOX_HES_E_D3 {
-					OralDose += cons * s.stores.ETOX_HES_C_D3 / number
-					s.stores.ETOX_HES_E_D3 -= cons
-				} else {
-					OralDose += s.stores.ETOX_HES_E_D3 * s.stores.ETOX_HES_C_D3 / number
-					cons -= s.stores.ETOX_HES_E_D3
-					s.stores.ETOX_HES_E_D3 = 0
-
-					if cons < s.stores.ETOX_HES_E_D4 {
-						OralDose += cons * s.stores.ETOX_HES_C_D4 / number
-						s.stores.ETOX_HES_E_D4 -= cons
-					} else {
-						OralDose += s.stores.ETOX_HES_E_D4 * s.stores.ETOX_HES_C_D4 / number
-						cons -= s.stores.ETOX_HES_E_D4
-						s.stores.ETOX_HES_E_D4 = 0
-
-						if cons < s.stores.ETOX_HES_E_Capped {
-							OralDose += cons * s.stores.ETOX_HES_C_Capped / number
-							s.stores.ETOX_HES_E_Capped -= cons
-							if honeydilution {
-								s.stores.ETOX_Waterneedfordilution += cons / s.energyParams.Honey / s.storesParams.ETOXDensityOfHoney * 0.6
-							}
-						} else {
-							OralDose += s.stores.ETOX_HES_E_Capped * s.stores.ETOX_HES_C_Capped / number
-							cons -= s.stores.ETOX_HES_E_Capped
-							if honeydilution {
-								s.stores.ETOX_Waterneedfordilution += s.stores.ETOX_HES_E_Capped / s.energyParams.Honey / s.storesParams.ETOXDensityOfHoney * 0.6
-							}
-							s.stores.ETOX_HES_E_Capped = 0
-						}
-					}
-				}
-			}
-		}
-	}
-	return
 }

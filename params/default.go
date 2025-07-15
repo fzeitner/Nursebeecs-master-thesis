@@ -46,10 +46,6 @@ type DefaultParams struct {
 	EnergyContent     EnergyContent
 	InitialStores     InitialStores
 	RandomSeed        RandomSeed
-
-	ETOXparams          ETOXparams
-	WaterParams         WaterParams
-	WaterForagingPeriod WaterForagingPeriod
 }
 
 // Default returns the complete default parameter set of BEEHAVE.
@@ -121,11 +117,6 @@ func Default() DefaultParams {
 			Builtin:     true,
 			RandomYears: false,
 		},
-		WaterForagingPeriod: WaterForagingPeriod{
-			Files:       []string{"ETOX_waterforcooling_daily/waterlistExample.txt"},
-			Builtin:     true,
-			RandomYears: false,
-		},
 		HandlingTime: HandlingTime{
 			NectarGathering:      1200,
 			PollenGathering:      600,
@@ -133,7 +124,7 @@ func Default() DefaultParams {
 			PollenUnloading:      210,
 			ConstantHandlingTime: false,
 
-			ETOX_handlingTimeWater: 64,
+			//ETOX_handlingTimeWater: 64,
 		},
 		Dance: Dance{
 			Slope:                       1.16,
@@ -153,7 +144,8 @@ func Default() DefaultParams {
 			MaxHoneyStoreKg:      50.0, // [kg]
 			DecentHoneyPerWorker: 1.5,  // [g]
 			ProteinStoreNurse:    7,    // [d]
-			ETOXDensityOfHoney:   1.4,  // [kg/l]
+
+			//ETOXDensityOfHoney:   1.4,  // [kg/l]
 		},
 		HoneyNeeds: HoneyNeeds{
 			WorkerResting:    11.0,  // [mg/d]
@@ -211,46 +203,6 @@ func Default() DefaultParams {
 				},
 			},
 		},
-		ETOXparams: ETOXparams{
-			Application: false,
-			PPPname:     "No applications", // Identifier for the PPP used.
-			//ApplicationRate:        0.,                // Application rate of PPP [kg/ha].                  // probably take this out, not used atm and probably wont be
-			PPPconcentrationNectar: 990,
-			PPPconcentrationPollen: 26631,
-			PPPcontactExposure:     0.3,   // actually dont have a value for this
-			DT50:                   1000., // Whole plant DT50 from residue studies [d].
-			AppDay:                 189,   // Day of the year in which application starts [d].
-			ExposurePeriod:         8,     // Duration of exposure happening (irrespective of DT50) [d].
-			SpinupPhase:            0,     // Number of years before exposure starts (to stabilize colony; 0 = first year) [y].
-			ExposurePhase:          3,     // Number of years in which exposure takes place [y].
-
-			ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
-			DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
-			ContactSum:                false, // Determines whether contact exposure should be summed up per visit to a patch (true) or if the mean should be calculated whenever a new patch is visited (false)
-			ContactExposureOneDay:     false, // Determines whether contact exposure should only be possible on the day of application
-
-			ForagerOralLD50:  1000., // Lethal oral dose for 50% mortality of foragers [µg/bee].
-			ForagerOralSlope: 100.,  // Slope of the dose-response relationship (forager, oral) [ ].
-			HSuptake:         0.1,   // Uptake of a given percentage of ai in the honey stomach by the forager bees
-
-			ForagerContactLD50:  0.6,  // Lethal dose for 50% of foragers via contact exposure [µg/bee]
-			ForagerContactSlope: 1.08, // Slope of the dose-response relationship (forager, contact) [ ]
-
-			LarvaeOralLD50:  0.0014, // Lethal oral dose for 50% mortality of larvae [µg/larvae]
-			LarvaeOralSlope: 1.6,    // Slope of the dose-response relationship (larvae, oral) [ ]; A log-normal dose-response curve is implemented
-
-			NursebeesNectar: 0.25, // Factor describing the filter effect of nurse bees for nectar [ ]
-			NursebeesPollen: 1.,   // Factor describing the filter effect of nurse bees for pollen [ ]
-			DT50honey:       60.,  // Honey DT50 [d]
-			RUD:             21.,  // Residue per Unit Dose  [(ha*mg)/(kg*kg)]
-		},
-		WaterParams: WaterParams{
-			WaterForaging:             false,       // Determines whether water foraging takes place or not.
-			ETOX_cropvolume_water:     44. / 1000., // [g]: 44 mg water per forager Visscher et al. 1996
-			ETOX_Watertripsperh:       7.,          // Number of trips per h for water foragers
-			ETOX_Durationofwatertrips: 1.,          // How long do the bees go out in the morning exclusively searching for water 1 h according to Lindauer 1954
-
-		},
 	}
 }
 
@@ -302,7 +254,6 @@ func (p *DefaultParams) Apply(world *ecs.World) {
 	ecs.AddResource(world, &pCopy.Foragers)
 	ecs.AddResource(world, &pCopy.Foraging)
 	ecs.AddResource(world, &pCopy.ForagingPeriod)
-	ecs.AddResource(world, &pCopy.WaterForagingPeriod)
 	ecs.AddResource(world, &pCopy.HandlingTime)
 	ecs.AddResource(world, &pCopy.Dance)
 	ecs.AddResource(world, &pCopy.EnergyContent)
@@ -313,6 +264,4 @@ func (p *DefaultParams) Apply(world *ecs.World) {
 	ecs.AddResource(world, &pCopy.InitialPopulation)
 	ecs.AddResource(world, &pCopy.InitialStores)
 	ecs.AddResource(world, &pCopy.InitialPatches)
-	ecs.AddResource(world, &pCopy.ETOXparams)
-	ecs.AddResource(world, &pCopy.WaterParams)
 }

@@ -30,22 +30,21 @@ func Default(p params.Params, app *app.App) *app.App {
 
 	app.AddSystem(&sys.CalcAff{})
 	app.AddSystem(&sys.CalcForagingPeriod{})
-	app.AddSystem(&sys.ReplenishPatches{}) // introduced PPP exposure at patches
+	app.AddSystem(&sys.ReplenishPatches{})
 
-	app.AddSystem(&sys.MortalityCohorts{}) // introduced ETOXMortality as an additional process for all cohorts
+	app.AddSystem(&sys.BroodCare{}) // Moved before any other population changes for now, to avoid counting more than once.
 	app.AddSystem(&sys.AgeCohorts{})
-	app.AddSystem(&sys.EggLaying{})       // no counting before this one because this happens before counting in the timestep in orig. model and has to happen after ageing in beecs
-	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
-	app.AddSystem(&sys.BroodCare{})       // Moved after the first countingproc to resemble the original model further, as counting twice is inevitable because of ETOXmortality processes.
-
 	app.AddSystem(&sys.TransitionForagers{})
-	app.AddSystem(&sys.Foraging{})          // introduced the uptake of PPP into foragers and the hive through contaminated honey/pollen
-	app.AddSystem(&sys.MortalityForagers{}) // introduced ETOXMortality as an additional process for foragers and put after Foraging, because same in BEEHAVE
+	app.AddSystem(&sys.EggLaying{})
 
-	app.AddSystem(&sys.CountPopulation{}) // necessary here because of food comsumption in the next steps
-	app.AddSystem(&sys.PollenConsumption{})
+	app.AddSystem(&sys.MortalityCohorts{})
+	app.AddSystem(&sys.MortalityForagers{})
+
+	app.AddSystem(&sys.Foraging{})
 	app.AddSystem(&sys.HoneyConsumption{})
-	app.AddSystem(&sys.EtoxStorages{}) // regulates in-hive exposition and fate of PPP and the newly introduced honey compartiments
+	app.AddSystem(&sys.PollenConsumption{})
+
+	app.AddSystem(&sys.CountPopulation{})
 
 	app.AddSystem(&sys.FixedTermination{})
 

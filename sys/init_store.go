@@ -17,23 +17,9 @@ func (s *InitStore) Initialize(w *ecs.World) {
 		Honey:               init.Honey * 1000.0 * energyParams.Honey,
 		Pollen:              init.Pollen,
 		ProteinFactorNurses: 1.0,
-
-		ETOX_HES_E_Capped: init.Honey * 1000.0 * energyParams.Honey,
-		ETOX_HES_C_Capped: 0,
-		ETOX_HES_E_D0:     0,
-		ETOX_HES_C_D0:     0,
-		ETOX_HES_E_D1:     0,
-		ETOX_HES_C_D1:     0,
-		ETOX_HES_E_D2:     0,
-		ETOX_HES_C_D2:     0,
-		ETOX_HES_E_D3:     0,
-		ETOX_HES_C_D3:     0,
-		ETOX_HES_E_D4:     0,
-		ETOX_HES_C_D4:     0,
 	}
 
 	ecs.AddResource(w, &stores)
-
 }
 
 func (s *InitStore) Update(w *ecs.World) {}

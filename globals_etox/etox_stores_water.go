@@ -1,0 +1,40 @@
+package globals_etox
+
+// globals necessary for the _ecotox additions of water foraging, ecotoxicological variables and honey storage compartimentation
+// none of this is used with the default ecotox settings and should not, because of a lack of testing atm
+
+type WaterNeeds struct {
+	ETOX_Waterneedforcooling float64 // The amount of water needed for cooling today
+}
+
+// WaterForagingPeriodData contains data on daily foraging hours.
+type WaterForagingPeriodData struct {
+	// Foraging period per day [h].
+	// First index: year, second index: day of year.
+	Years [][]float64
+	// The currently selected year.
+	CurrentYear int
+}
+
+type Storages_etox struct {
+	PPPInHivePollenConc float64 // Concentration of PPP currently in stored pollen [mug/g].
+	ETOX_EnergyThermo   float64 // Energy needed for Thermoregulation of hive/brood made global for Etox_consumption purposes.
+
+	ETOX_HES_E_Capped float64 // Energy in the capped honey cells                                                 [kJ]
+	ETOX_HES_C_Capped float64 // Average concentration of pesticide in the capped honey cells                     [µg/kJ]
+	ETOX_HES_E_D0     float64 // Energy in the uncapped honey cells of today                                      [kJ]
+	ETOX_HES_C_D0     float64 // Average concentration of pesticide in the uncapped honey cells of today          [µg/kJ]
+	ETOX_HES_E_D1     float64 // Energy in the uncapped honey cells of yesterday                                  [kJ]
+	ETOX_HES_C_D1     float64 // Average concentration of pesticide in the uncapped honey cells of yesterday      [µg/kJ]
+	ETOX_HES_E_D2     float64 // Energy in the uncapped honey cells of two days ago                               [kJ]
+	ETOX_HES_C_D2     float64 // Average concentration of pesticide in the uncapped honey cells of two days ago   [µg/kJ]
+	ETOX_HES_E_D3     float64 // Energy in the uncapped honey cells of three days ago                             [kJ]
+	ETOX_HES_C_D3     float64 // Average concentration of pesticide in the uncapped honey cells of three days ago [µg/kJ]
+	ETOX_HES_E_D4     float64 // Energy in the uncapped honey cells of four days ago                              [kJ]
+	ETOX_HES_C_D4     float64 // Average concentration of pesticide in the uncapped honey cells of four days ago  [µg/kJ]
+
+	ETOX_Waterneedfordilution float64 // The amount of water needed for diluation of honey yesterday
+
+	Pollenconcbeforeeating float64 // added for bugfixing
+	Nectarconcbeforeeating float64 // added for bugfixing
+}

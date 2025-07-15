@@ -30,7 +30,7 @@ func (s *EggLaying) Initialize(w *ecs.World) {
 
 func (s *EggLaying) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
-		elr := float64(s.nurseParams.MaxEggsPerDay) * util.Season(s.time.Tick)
+		elr := float64(s.nurseParams.MaxEggsPerDay) * util.Season(s.time.Tick-1) // -1 because model is now forced to start on tick 1 instead of tick 0 before
 
 		if s.nurseParams.EggNursingLimit {
 			emergingAge := float64(s.workerDev.EggTime + s.workerDev.LarvaeTime + s.workerDev.PupaeTime)
@@ -50,7 +50,7 @@ func (s *EggLaying) Update(w *ecs.World) {
 		}
 
 		droneEggs := 0
-		dayOfYear := int(s.time.Tick % 365)
+		dayOfYear := int((s.time.Tick - 1) % 365)
 		if dayOfYear >= s.nurseParams.DroneEggLayingSeasonStart && dayOfYear <= s.nurseParams.DroneEggLayingSeasonEnd {
 			droneEggs = int(math.Max(s.nurseParams.DroneEggsProportion*float64(eggs), 0))
 		}

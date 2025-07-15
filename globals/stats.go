@@ -19,22 +19,6 @@ type PopulationStats struct {
 	TotalBrood      int
 	TotalAdults     int
 	TotalPopulation int
-
-	NumberIHbeeCohorts int // only for debugging, will probably remove this later
-
-	MeanDoseIHBees      float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
-	MeanDoseLarvae      float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
-	MeanDoseDrones      float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
-	MeanDoseDroneLarvae float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
-	MeanDoseForager     float64 // doesn´t do anything, just there for debugging
-
-	CumDoseIHBees      float64 // cumulative dose before calculating a mean, used for debugging
-	CumDoseLarvae      float64 // cumulative dose before calculating a mean, used for debugging
-	CumDoseForagers    float64 // cumulative dose before calculating a mean, used for debugging
-	CumDoseDrones      float64 // cumulative dose before calculating a mean, used for debugging
-	CumDoseDroneLarvae float64 // cumulative dose before calculating a mean, used for debugging
-
-	PPPNursebees float64 // variable for debugging and finding out how much PPP is "lost" to nursebees, who are not explicitely modeled
 }
 
 // Reset all stats to zero.
@@ -53,11 +37,6 @@ func (s *PopulationStats) Reset() {
 	s.TotalBrood = 0
 	s.TotalAdults = 0
 	s.TotalPopulation = 0
-
-	s.MeanDoseIHBees = 0      // original model actually only calculates the exposure per cohort and divides by number of individualy per cohort for mean doses
-	s.MeanDoseLarvae = 0      // original model actually only calculates the exposure per cohort and divides by number of individualy per cohort for mean doses
-	s.MeanDoseDrones = 0      // original model actually only calculates the exposure per cohort and divides by number of individualy per cohort for mean doses
-	s.MeanDoseDroneLarvae = 0 // original model actually only calculates the exposure per cohort and divides by number of individualy per cohort for mean doses
 }
 
 // ConsumptionStats contains statistics on daily consumption.
@@ -73,17 +52,11 @@ func (s *ConsumptionStats) Reset() {
 // ForagingStats contains statistics on foraging per foraging round.
 type ForagingStats struct {
 	Rounds []ForagingRound
-
-	ContactExp_once   int // for debugging how often foragers get contact exp per foraging day
-	ContactExp_repeat int // for debugging how often foragers get contact exp per foraging day
 }
 
 // Reset all stats.
 func (s *ForagingStats) Reset() {
 	s.Rounds = s.Rounds[:0]
-
-	s.ContactExp_once = 0
-	s.ContactExp_repeat = 0
 }
 
 // ForagingRound contains statistics for a single foraging round.
@@ -95,6 +68,4 @@ type ForagingRound struct {
 	Recruited int
 	Nectar    int
 	Pollen    int
-
-	Water int
 }

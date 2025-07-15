@@ -32,7 +32,6 @@ func (s *PollenConsumption) Initialize(w *ecs.World) {
 	s.stores = ecs.GetResource[globals.Stores](w)
 	s.pop = ecs.GetResource[globals.PopulationStats](w)
 	s.time = ecs.GetResource[resource.Tick](w)
-
 }
 
 func (s *PollenConsumption) Update(w *ecs.World) {

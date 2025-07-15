@@ -30,9 +30,6 @@ func (s *InitCohorts) Initialize(w *ecs.World) {
 	s.larvae = globals.Larvae{
 		Workers: make([]int, workerDev.LarvaeTime),
 		Drones:  make([]int, droneDev.LarvaeTime),
-
-		WorkerCohortDose: make([]float64, workerDev.LarvaeTime),
-		DroneCohortDose:  make([]float64, droneDev.LarvaeTime),
 	}
 	ecs.AddResource(w, &s.larvae)
 
@@ -45,9 +42,6 @@ func (s *InitCohorts) Initialize(w *ecs.World) {
 	s.inHive = globals.InHive{
 		Workers: make([]int, aff.Max+1),
 		Drones:  make([]int, droneDev.MaxLifespan),
-
-		WorkerCohortDose: make([]float64, aff.Max+1),
-		DroneCohortDose:  make([]float64, droneDev.MaxLifespan),
 	}
 	ecs.AddResource(w, &s.inHive)
 }

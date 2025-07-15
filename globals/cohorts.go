@@ -10,9 +10,6 @@ type Eggs struct {
 type Larvae struct {
 	Workers []int // Worker larvae per day since hatching.
 	Drones  []int // Drone larvae per day since hatching.
-
-	WorkerCohortDose []float64 // Mean PPP oral dose per cohort.
-	DroneCohortDose  []float64 // Mean PPP oral dose per cohort.
 }
 
 // Pupae contains worker and drone pupae age cohorts.
@@ -25,7 +22,4 @@ type Pupae struct {
 type InHive struct {
 	Workers []int // In-hive workers per day of age since emergence.
 	Drones  []int // Drones per day of age since emergence.
-
-	WorkerCohortDose []float64 // Mean PPP oral dose per cohort.
-	DroneCohortDose  []float64 // Mean PPP oral dose per cohort.
 }

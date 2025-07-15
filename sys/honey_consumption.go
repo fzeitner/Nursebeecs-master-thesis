@@ -51,16 +51,6 @@ func (s *HoneyConsumption) Update(w *ecs.World) {
 		consumptionEnergy := 0.001 * consumption * s.energyParams.Honey
 
 		s.stores.Honey -= consumptionEnergy
-		if s.stores.Honey <= 0 || s.stores.ETOX_HES_E_Capped < 0 {
-			s.stores.Honey = 0
-			s.stores.ETOX_HES_E_Capped = 0
-			s.stores.ETOX_HES_E_D0 = 0
-			s.stores.ETOX_HES_E_D1 = 0
-			s.stores.ETOX_HES_E_D2 = 0
-			s.stores.ETOX_HES_E_D3 = 0
-			s.stores.ETOX_HES_E_D4 = 0
-		}
-
 		s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey
 		s.cons.HoneyDaily = consumption
 	}

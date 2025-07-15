@@ -146,27 +146,27 @@ def plot_column(data_beehave, data_beecs, column, quantiles, image_file, appday)
 if __name__ == "__main__":
     ### change test folder and day of application manually here, applicationday is only relevant for 
     ### adding a visual indicator in plots, does not change anything regarding the results
-    appdays = {"default_copy" : 0,                     # appday = 0 for no application
-              "default_with_dimethoate": 188, 
-              "default_with_dimethoate_3days_later": 191, 
-              "etox_validation_tunnel_control": 0,
-              "etox_validation_tunnel_dimethoate": 216, 
+    appdays = {"default_etox" : 0,                     # appday = 0 for no application
+              "default_dimethoate": 188, 
+              "etox_tunnel_control": 0,
+              "etox_tunnel_dimethoate": 216, 
               "Rothamsted2009_fenoxycarb": 188, 
-              "Rothamsted2009_fenoxycarb_3days_later": 191, 
               "Rothamsted2009_noPPP": 0,
     }
-    testfolders = ["default_copy", "default_with_dimethoate", "etox_validation_tunnel_control",
-                   "etox_validation_tunnel_dimethoate", "Rothamsted2009_fenoxycarb", "Rothamsted2009_noPPP",]
+    testfolders = ["default_etox", "default_dimethoate", "etox_tunnel_control",
+                   "etox_tunnel_dimethoate", "Rothamsted2009_fenoxycarb", "Rothamsted2009_noPPP", ]
     folder = testfolders[5]
 
 
 
-    run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
+    run_all = True                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
+    agg_all = True
 
     if run_all:
         for folder in testfolders:
-            agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
-            agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+            if agg_all:
+                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
+                agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
             plot_quantiles(
                 "etox_validation_testing/" + folder + "/netlogo.csv",
                 "etox_validation_testing/" + folder + "/beecs.csv",

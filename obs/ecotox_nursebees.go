@@ -2,6 +2,7 @@ package obs
 
 import (
 	"github.com/fzeitner/beecs_masterthesis/globals"
+	"github.com/fzeitner/beecs_masterthesis/globals_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -10,11 +11,13 @@ import (
 //
 // Primarily meant for validation of beecs_masterthesis against BEEHAVE_ecotox.
 type DebugNursebees struct {
-	pop      *globals.PopulationStats
-	stores   *globals.Stores
-	foraging *globals.ForagingPeriod
-	data     []float64
-	forstats *globals.ForagingStats
+	pop         *globals.PopulationStats
+	stores      *globals.Stores
+	foraging    *globals.ForagingPeriod
+	data        []float64
+	forstats    *globals.ForagingStats
+	popetox     *globals_etox.PopulationStats_etox
+	stores_etox *globals_etox.Storages_etox
 }
 
 func (o *DebugNursebees) Initialize(w *ecs.World) {
@@ -23,6 +26,9 @@ func (o *DebugNursebees) Initialize(w *ecs.World) {
 	o.foraging = ecs.GetResource[globals.ForagingPeriod](w)
 	o.data = make([]float64, len(o.Header()))
 	o.forstats = ecs.GetResource[globals.ForagingStats](w)
+	o.popetox = ecs.GetResource[globals_etox.PopulationStats_etox](w)
+	o.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
+
 }
 func (o *DebugNursebees) Update(w *ecs.World) {}
 func (o *DebugNursebees) Header() []string {
@@ -38,14 +44,14 @@ func (o *DebugNursebees) Values(w *ecs.World) []float64 {
 	o.data[5] = float64(o.pop.WorkersInHive)
 	o.data[6] = float64(o.pop.WorkersForagers)
 
-	o.data[7] = float64(o.pop.CumDoseLarvae)
-	o.data[8] = float64(o.pop.CumDoseIHBees)
-	o.data[9] = float64(o.pop.CumDoseForagers)
+	o.data[7] = float64(o.popetox.CumDoseLarvae)
+	o.data[8] = float64(o.popetox.CumDoseIHBees)
+	o.data[9] = float64(o.popetox.CumDoseForagers)
 
-	o.data[10] = float64(o.pop.NumberIHbeeCohorts)
-	o.data[11] = float64(o.stores.Pollenconcbeforeeating)
-	o.data[12] = float64(o.stores.Nectarconcbeforeeating)
-	o.data[13] = float64(o.pop.PPPNursebees)
+	o.data[10] = float64(o.popetox.NumberIHbeeCohorts)
+	o.data[11] = float64(o.stores_etox.Pollenconcbeforeeating)
+	o.data[12] = float64(o.stores_etox.Nectarconcbeforeeating)
+	o.data[13] = float64(o.popetox.PPPNursebees)
 
 	return o.data
 }
