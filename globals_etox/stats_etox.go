@@ -20,7 +20,6 @@ type PopulationStats_etox struct {
 	CumDoseDroneLarvae float64 // cumulative dose before calculating a mean, used for debugging
 
 	PPPNursebees float64 // variable for debugging and finding out how much PPP is "lost" to nursebees, who are not explicitely modeled
-
 }
 
 // Reset all stats to zero.
@@ -54,8 +53,10 @@ type ForagingRound_etox struct {
 type ForagingStats_etox struct {
 	Rounds []ForagingRound_etox
 
-	ContactExp_once   int // for debugging how often foragers get contact exp per foraging day
-	ContactExp_repeat int // for debugging how often foragers get contact exp per foraging day
+	ContactExp_once   int     // for debugging how often foragers get contact exp per foraging day
+	ContactExp_repeat int     // for debugging how often foragers get contact exp per foraging day
+	Prob              float64 // debugging global
+	SumDur            float64 // debugging global
 }
 
 // Reset all stats.
@@ -64,4 +65,6 @@ func (s *ForagingStats_etox) Reset() {
 
 	s.ContactExp_once = 0
 	s.ContactExp_repeat = 0
+	s.Prob = 0.
+	s.SumDur = 0.
 }

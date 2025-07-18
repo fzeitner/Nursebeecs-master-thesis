@@ -10,10 +10,11 @@ import (
 // It also handles transition from eggs to larvae, larvae to pupae and pupae to in-hive bees.
 // It does not handle transition from in-hive bees to foragers.
 type AgeCohorts struct {
-	eggs   *globals.Eggs
-	larvae *globals.Larvae
-	pupae  *globals.Pupae
-	inHive *globals.InHive
+	eggs       *globals.Eggs
+	larvae     *globals.Larvae
+	pupae      *globals.Pupae
+	inHive     *globals.InHive
+	newCohorts *globals.NewCohorts
 
 	time *resource.Tick
 }
@@ -23,14 +24,17 @@ func (s *AgeCohorts) Initialize(w *ecs.World) {
 	s.larvae = ecs.GetResource[globals.Larvae](w)
 	s.pupae = ecs.GetResource[globals.Pupae](w)
 	s.inHive = ecs.GetResource[globals.InHive](w)
+	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
 	s.time = ecs.GetResource[resource.Tick](w)
-
 }
 
 func (s *AgeCohorts) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
-		shiftCohorts(s.inHive.Workers, s.pupae.Workers[len(s.pupae.Workers)-1])
-		shiftCohorts(s.inHive.Drones, s.pupae.Drones[len(s.pupae.Drones)-1])
+		s.newCohorts.IHbees = s.pupae.Workers[len(s.pupae.Workers)-1]
+		s.newCohorts.Drones = s.pupae.Drones[len(s.pupae.Drones)-1]
+
+		shiftCohorts(s.inHive.Workers, 0)
+		shiftCohorts(s.inHive.Drones, 0)
 
 		shiftCohorts(s.pupae.Workers, s.larvae.Workers[len(s.larvae.Workers)-1])
 		shiftCohorts(s.pupae.Drones, s.larvae.Drones[len(s.larvae.Drones)-1])

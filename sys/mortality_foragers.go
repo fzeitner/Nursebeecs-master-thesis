@@ -36,6 +36,9 @@ func (s *MortalityForagers) Update(w *ecs.World) {
 		query := s.foragerFilter.Query()
 		for query.Next() {
 			a, m := query.Get()
+			if int(s.time.Tick-1)-a.DayOfBirth < 0 {
+				panic("Fatal error in age calculation, there are foragers with negative age!")
+			}
 			if int(s.time.Tick-1)-a.DayOfBirth >= s.workerDev.MaxLifespan ||
 				m.Total >= s.workerMort.MaxMilage ||
 				r.Float64() < s.workerMort.InHive {

@@ -160,6 +160,7 @@ func (s *Foraging) calcForagingProb() float64 {
 func (s *Foraging) foragingRound(w *ecs.World, forageProb float64) (duration float64, foragers int) {
 	probCollectPollen := (1.0 - s.stores.Pollen/s.stores.IdealPollen) * s.danceParams.MaxProportionPollenForagers
 
+	s.stores.DecentHoney = math.Max(float64(s.popStats.WorkersInHive+s.popStats.WorkersForagers), 1) * s.storeParams.DecentHoneyPerWorker * s.energyParams.Honey // added this because counting proc happens in between last decent honey calc and now --> recalc necessary
 	if s.stores.Honey/s.stores.DecentHoney < 0.5 {
 		probCollectPollen *= s.stores.Honey / s.stores.DecentHoney
 	}

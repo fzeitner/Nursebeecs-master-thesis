@@ -155,35 +155,47 @@ if __name__ == "__main__":
     }
     testfolders = ["default_etox", "default_dimethoate", "etox_tunnel_control",
                    "etox_tunnel_dimethoate", "Rothamsted2009_fenoxycarb", "Rothamsted2009_noPPP", ]
-    folder = testfolders[5]
+    folder = testfolders[2]
 
 
 
-    run_all = True                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
+    run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
     agg_all = True
+    agg_net = False
+    agg_bee = False
 
     if run_all:
         for folder in testfolders:
             if agg_all:
                 agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
                 agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+            elif agg_net:
+                agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+            elif agg_bee:
+                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
+
+
             plot_quantiles(
                 "etox_validation_testing/" + folder + "/netlogo.csv",
                 "etox_validation_testing/" + folder + "/beecs.csv",
                 "etox_validation_testing/" + folder ,
-                #"png",
-                "svg",
+                "png",
+                #"svg",
                 appdays[folder],
             )
     else:
-
-        agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
-        agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+        if agg_all:
+                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
+                agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+        elif agg_net:
+            agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+        elif agg_bee:
+                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
         plot_quantiles(
             "etox_validation_testing/" + folder + "/netlogo.csv",
             "etox_validation_testing/" + folder + "/beecs.csv",
             "etox_validation_testing/" + folder ,
-            #"png",
-            "svg",
+            "png",
+            #"svg",
             appdays[folder],
         )

@@ -2,7 +2,6 @@ package sys_etox
 
 import (
 	"math"
-	"math/rand/v2"
 
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/globals_etox"
@@ -49,11 +48,11 @@ func (s *MortalityCohorts_etox) Initialize(w *ecs.World) {
 func (s *MortalityCohorts_etox) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 
-		applyMortalityEtox(s.larvae.Workers, s.workerMort.Larvae, s.rng, s.larvae_etox.WorkerCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
-		applyMortalityEtox(s.larvae.Drones, s.droneMort.Larvae, s.rng, s.larvae_etox.DroneCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
+		applyMortalityEtox(s.larvae.Workers, s.larvae_etox.WorkerCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
+		applyMortalityEtox(s.larvae.Drones, s.larvae_etox.DroneCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
 
-		applyMortalityEtox(s.inHive.Workers, s.workerMort.InHive, s.rng, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
-		applyMortalityEtox(s.inHive.Drones, s.droneMort.InHive, s.rng, s.inHive_etox.DroneCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
+		applyMortalityEtox(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
+		applyMortalityEtox(s.inHive.Drones, s.inHive_etox.DroneCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
 	}
 
 }
@@ -62,7 +61,7 @@ func (s *MortalityCohorts_etox) Finalize(w *ecs.World) {}
 
 // adapted the mortaliy function for cohorts that can be exposed to PPP, after the normal background mortality there is now
 // etox-based mortality depending on the dose of the cohort and a simple dose-response relationship; dose reset every tick
-func applyMortalityEtox(coh []int, m float64, rng rand.Source, dose []float64, slope float64, LD50 float64) {
+func applyMortalityEtox(coh []int, dose []float64, slope float64, LD50 float64) {
 	for i := range coh {
 		num := coh[i]
 		toDie := 0

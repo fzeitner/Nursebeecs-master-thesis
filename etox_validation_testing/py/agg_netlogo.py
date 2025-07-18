@@ -35,4 +35,4 @@ def agg_netlogo(file, out_file):
 
 
 if __name__ == "__main__":
-    agg_netlogo("etox_validation_testing/tunnel_beecs/out/netlogo.csv", "etox_validation_testing/tunnel_beecs/netlogo.csv")
+    agg_netlogo("etox_validation_testing/default_etox/out/netlogo_groeneveld_rndseeds.csv", "etox_validation_testing/default_etox/netlogo_groeneveld_rndseeds.csv")

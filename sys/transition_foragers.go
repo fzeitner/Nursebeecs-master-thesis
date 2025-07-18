@@ -11,11 +11,12 @@ import (
 // TransitionForagers transitions all in-hive bees of age equal or above [globals.AgeFirstForaging.Aff]
 // to forager squadrons.
 type TransitionForagers struct {
-	time    *resource.Tick
-	params  *params.Foragers
-	factory *globals.ForagerFactory
-	inHive  *globals.InHive
-	aff     *globals.AgeFirstForaging
+	time       *resource.Tick
+	params     *params.Foragers
+	factory    *globals.ForagerFactory
+	inHive     *globals.InHive
+	aff        *globals.AgeFirstForaging
+	newCohorts *globals.NewCohorts
 }
 
 func (s *TransitionForagers) Initialize(w *ecs.World) {
@@ -24,6 +25,7 @@ func (s *TransitionForagers) Initialize(w *ecs.World) {
 	s.factory = ecs.GetResource[globals.ForagerFactory](w)
 	s.inHive = ecs.GetResource[globals.InHive](w)
 	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
+	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
 }
 
 func (s *TransitionForagers) Update(w *ecs.World) {
@@ -40,9 +42,11 @@ func (s *TransitionForagers) Update(w *ecs.World) {
 
 		s.inHive.Workers[aff-1] += remainder
 
-		if squadrons > 0 {
-			s.factory.CreateSquadrons(squadrons, int(s.time.Tick-1)-aff)
-		}
+		s.newCohorts.Foragers = squadrons
+
+		//if squadrons > 0 {
+		//s.factory.CreateSquadrons(squadrons, int(s.time.Tick-1)-aff)
+		//}
 	}
 }
 

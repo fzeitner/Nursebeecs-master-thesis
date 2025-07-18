@@ -80,6 +80,8 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc
 		s.stores.Nectarconcbeforeeating = s.stores.ETOX_HES_C_D0
 
+		s.etoxStats.PPPNursebees = 0 // reset the additional nurse bee exposition every timestep
+
 		consumed_honey := 0. // tracker for total amount of honey consumed in this subsystem
 
 		// foragers, pretty straigt forward
@@ -174,11 +176,13 @@ func (s *EtoxStorages) CalcDosePerCohort(w *ecs.World, coh []int, dose []float64
 
 			ETOX_Consumed_Honey += honey_need * 0.001 * s.energyParams.Honey * float64(coh[i])
 			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[i]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
+			s.etoxStats.PPPNursebees += ETOX_PPPOralDose * (1 - nursebeefactorHoney)
 			ETOX_PPPOralDose = ETOX_PPPOralDose * nursebeefactorHoney
 
 			consumed += ETOX_Consumed_Honey
 
 			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollen_need * 0.001 * nursebeefactorPollen // intake from pollen
+			s.etoxStats.PPPNursebees += s.stores.PPPInHivePollenConc * pollen_need * 0.001 * (1 - nursebeefactorPollen)
 
 			dose[i] = ETOX_PPPOralDose
 			CumDose += ETOX_PPPOralDose

@@ -39,10 +39,9 @@ type Foraging_etox struct {
 	foragePeriod  *globals.ForagingPeriod
 	stores        *globals.Stores
 	stores_etox   *globals_etox.Storages_etox
-	popStats      *globals.PopulationStats
-	popStats_etox *globals_etox.PopulationStats_etox
 	foragingStats *globals_etox.ForagingStats_etox
 	waterneeds    *globals_etox.WaterNeeds
+	pop           *globals.PopulationStats
 
 	patches  []patchCandidate_etox
 	toRemove []ecs.Entity
@@ -86,13 +85,12 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
 
-	s.popStats = ecs.GetResource[globals.PopulationStats](w)
-	s.popStats_etox = ecs.GetResource[globals_etox.PopulationStats_etox](w)
 	s.foragingStats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
 	s.foragePeriod = ecs.GetResource[globals.ForagingPeriod](w)
 	s.stores = ecs.GetResource[globals.Stores](w)
 	s.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
 	s.waterneeds = ecs.GetResource[globals_etox.WaterNeeds](w)
+	s.pop = ecs.GetResource[globals.PopulationStats](w)
 
 	s.activityFilter = s.activityFilter.New(w)
 	s.ageFilter = s.ageFilter.New(w)
@@ -127,14 +125,15 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 func (s *Foraging_etox) Update(w *ecs.World) {
 	s.foragingStats.Reset()
 
+	// adding etox components to the newly initialized forager entities from the base model
 	agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
 	for agequery.Next() {
 		s.toAdd = append(s.toAdd, agequery.Entity())
 	}
-	//exchanger := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())
+	//exchanger := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())      // maybe later check this why exchanger results in bugs, works the way it is right now though
 	for _, entity := range s.toAdd {
 		s.PPPexpoMapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.PPPLoad{})
-		s.etoxExchanger.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting}) // have to bugfix later why exchanger isnt working
+		s.etoxExchanger.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
 	}
 	s.toAdd = s.toAdd[:0]
 
@@ -154,6 +153,7 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 
 		hangAroundDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
 		forageProb := s.calcForagingProb()
+		s.foragingStats.Prob = forageProb // added these for debugging
 
 		// TODO: Lazy winter bees.
 
@@ -169,7 +169,9 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 			}
 			totalDuration += meanDuration
 
-			if totalDuration > float64(s.foragePeriod.SecondsToday) {
+			s.foragingStats.SumDur = totalDuration // added these for debugging
+
+			if totalDuration >= float64(s.foragePeriod.SecondsToday) {
 				break
 			}
 
@@ -203,6 +205,7 @@ func (s *Foraging_etox) calcForagingProb() float64 {
 func (s *Foraging_etox) foragingRound(w *ecs.World, forageProb float64) (duration float64, foragers int) {
 	probCollectPollen := (1.0 - s.stores.Pollen/s.stores.IdealPollen) * s.danceParams.MaxProportionPollenForagers
 
+	s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey // added this because counting proc happens in between last decent honey calc and now --> recalc necessary
 	if s.stores.Honey/s.stores.DecentHoney < 0.5 {
 		probCollectPollen *= s.stores.Honey / s.stores.DecentHoney
 	}
@@ -590,8 +593,10 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 			}
 		}
 
-		if act.Current == activity.Searching {
-			if s.rng.Float64() < 1-math.Pow(1-s.forageParams.MortalityPerSec, searchDuration) || lethaldose {
+		if lethaldose {
+			s.toRemove = append(s.toRemove, foragerQuery.Entity())
+		} else if act.Current == activity.Searching {
+			if s.rng.Float64() < 1-math.Pow(1-s.forageParams.MortalityPerSec, searchDuration) {
 				s.toRemove = append(s.toRemove, foragerQuery.Entity())
 			}
 		} else if act.Current == activity.BringNectar {
