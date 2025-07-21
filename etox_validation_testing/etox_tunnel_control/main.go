@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fzeitner/beecs_masterthesis/comp"
 	"github.com/fzeitner/beecs_masterthesis/model_etox"
 	"github.com/fzeitner/beecs_masterthesis/obs"
 	"github.com/fzeitner/beecs_masterthesis/params"
@@ -60,6 +61,28 @@ func main() {
 		Files:       []string{"foraging-period/tunnel.txt"},
 		Builtin:     true,
 		RandomYears: false,
+	}
+	p.InitialPatches = params.InitialPatches{
+		Patches: []comp.PatchConfig{
+			{
+				DistToColony: 1500,
+				ConstantPatch: &comp.ConstantPatch{
+					Nectar:               20,
+					NectarConcentration:  1.5,
+					Pollen:               1,
+					DetectionProbability: 0.2,
+				},
+			},
+			{
+				DistToColony: 500,
+				ConstantPatch: &comp.ConstantPatch{
+					Nectar:               20,
+					NectarConcentration:  1.5,
+					Pollen:               1,
+					DetectionProbability: 0.2,
+				},
+			},
+		},
 	}
 
 	start := time.Now()
