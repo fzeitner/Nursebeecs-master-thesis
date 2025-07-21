@@ -43,11 +43,12 @@ type Foraging_etox struct {
 	waterneeds    *globals_etox.WaterNeeds
 	pop           *globals.PopulationStats
 
-	patches  []patchCandidate_etox
-	toRemove []ecs.Entity
-	resting  []ecs.Entity
-	dances   []ecs.Entity
-	toAdd    []ecs.Entity
+	patches        []patchCandidate_etox
+	toRemove       []ecs.Entity
+	resting        []ecs.Entity
+	foragershuffle []ecs.Entity
+	dances         []ecs.Entity
+	toAdd          []ecs.Entity
 
 	patchResourceMapper   *ecs.Map1[comp.Resource]
 	patchVisitsMapper     *ecs.Map2[comp.Resource, comp.Visits]
@@ -57,6 +58,7 @@ type Foraging_etox struct {
 	patchConfigMapper     *ecs.Map2[comp.PatchProperties, comp.Trip]
 	patchConfigMapperEtox *ecs.Map3[comp.PatchProperties, comp_etox.PatchProperties_etox, comp.Trip]
 	foragerMapper         *ecs.Map2[comp_etox.Activity_etox, comp_etox.KnownPatch_etox]
+	foragerLoadPPPMapper  *ecs.Map6[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage, comp.NectarLoad, comp_etox.PPPLoad, comp_etox.PPPExpo]
 
 	activityFilter       *ecs.Filter1[comp_etox.Activity_etox]
 	ageFilter            *ecs.Filter1[comp.Age]
@@ -110,6 +112,7 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.patchConfigMapperEtox = s.patchConfigMapperEtox.New(w)
 	s.foragerMapper = s.foragerMapper.New(w)
 	s.PPPexpoMapper = s.PPPexpoMapper.New(w)
+	s.foragerLoadPPPMapper = s.foragerLoadPPPMapper.New(w)
 
 	s.etoxExchanger = s.etoxExchanger.New(w)
 
@@ -346,10 +349,20 @@ func (s *Foraging_etox) searching(w *ecs.World) {
 	}
 	detectionProb := 1.0 - nonDetectionProb
 
-	// TODO: shuffle foragers
-	foragerQuery := s.foragerFilterSimple.Query()
-	for foragerQuery.Next() {
-		act, patch := foragerQuery.Get()
+	// TODO: test this foragershuffle
+	activityQuery := s.activityFilter.Query()
+	for activityQuery.Next() {
+		act := activityQuery.Get()
+		if act.Current == activity.Searching || act.Current == activity.Recruited {
+			s.foragershuffle = append(s.foragershuffle, activityQuery.Entity())
+		}
+	}
+	s.rng.Shuffle(len(s.foragershuffle), func(i, j int) { s.foragershuffle[i], s.foragershuffle[j] = s.foragershuffle[j], s.foragershuffle[i] })
+
+	for _, e := range s.foragershuffle {
+		act, patch := s.foragerMapper.Get(e)
+
+		s.foragingStats.TotalSearches += 1
 
 		if act.Current == activity.Searching {
 			if s.rng.Float64() >= detectionProb {
@@ -426,18 +439,27 @@ func (s *Foraging_etox) searching(w *ecs.World) {
 			}
 		}
 	}
-
+	//s.foragingStats.TotalSearches = len(s.foragershuffle)
 	s.patches = s.patches[:0]
+	s.foragershuffle = s.foragershuffle[:0]
 }
 
 func (s *Foraging_etox) collecting(w *ecs.World) {
 	sz := float64(s.foragerParams.SquadronSize)
-	foragerQuery := s.foragerFilterLoadPPP.Query()
 
 	// TODO: water collecting here, postponed because water foraging seems basically irrelevant overall
+	// TODO: test this foragershuffle
+	activityQuery := s.activityFilter.Query()
+	for activityQuery.Next() {
+		act := activityQuery.Get()
+		if act.Current == activity.Experienced || act.Current == activity.BringPollen || act.Current == activity.BringNectar {
+			s.foragershuffle = append(s.foragershuffle, activityQuery.Entity())
+		}
+	}
+	s.rng.Shuffle(len(s.foragershuffle), func(i, j int) { s.foragershuffle[i], s.foragershuffle[j] = s.foragershuffle[j], s.foragershuffle[i] })
 
-	for foragerQuery.Next() {
-		act, patch, milage, load, PPPload, PPPexpo := foragerQuery.Get()
+	for _, e := range s.foragershuffle {
+		act, patch, milage, load, PPPload, PPPexpo := s.foragerLoadPPPMapper.Get(e)
 
 		if act.Current == activity.Experienced {
 			if act.PollenForager {
@@ -472,6 +494,9 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 		}
 
 		if act.Current == activity.BringNectar {
+
+			s.foragingStats.Collectionflightstotal += 1
+
 			conf, etoxprops, trip := s.patchConfigMapperEtox.Get(patch.Nectar)
 			load.Energy = conf.NectarConcentration * s.foragerParams.NectarLoad * s.energyParams.Sucrose // --> kJ
 			dist := trip.CostNectar / (s.foragerParams.FlightCostPerM * 1000)
@@ -502,6 +527,9 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 		}
 
 		if act.Current == activity.BringPollen {
+
+			s.foragingStats.Collectionflightstotal += 1
+
 			_, etoxprops, trip := s.patchConfigMapperEtox.Get(patch.Pollen)
 			dist := trip.CostPollen / (s.foragerParams.FlightCostPerM * 1000)
 			milage.Today += float32(dist)
@@ -528,6 +556,8 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 			}
 		}
 	}
+	//s.foragingStats.Collectionflightstotal += len(s.foragershuffle)
+	s.foragershuffle = s.foragershuffle[:0]
 }
 
 func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int) {
@@ -536,9 +566,17 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 
 	// TODO: flightCost for water foraging here, postponed ...
 
-	query := s.foragerFilterLoadPPP.Query()
-	for query.Next() {
-		act, patch, milage, _, _, ppp := query.Get()
+	activityQuery := s.activityFilter.Query()
+	for activityQuery.Next() {
+		act := activityQuery.Get()
+		if act.Current == activity.Searching || act.Current == activity.BringPollen || act.Current == activity.BringNectar {
+			s.foragershuffle = append(s.foragershuffle, activityQuery.Entity())
+		}
+	}
+	s.rng.Shuffle(len(s.foragershuffle), func(i, j int) { s.foragershuffle[i], s.foragershuffle[j] = s.foragershuffle[j], s.foragershuffle[i] })
+
+	for _, e := range s.foragershuffle {
+		act, patch, milage, _, _, ppp := s.foragerLoadPPPMapper.Get(e)
 
 		if act.Current == activity.Searching {
 			dist := s.forageParams.SearchLength / 1000.0
@@ -570,6 +608,8 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 			foragers++
 		}
 	}
+	s.foragershuffle = s.foragershuffle[:0]
+
 	return
 }
 
@@ -615,6 +655,7 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 	for _, e := range s.toRemove {
 		w.RemoveEntity(e)
 	}
+	s.foragingStats.Foragerdied += len(s.toRemove)
 	s.toRemove = s.toRemove[:0]
 }
 
@@ -731,9 +772,6 @@ func (s *Foraging_etox) unloading(w *ecs.World) {
 
 			s.stores_etox.ETOX_HES_C_D0 = ((s.stores_etox.ETOX_HES_C_D0 * s.stores_etox.ETOX_HES_E_D0) + (PPPload.PPPLoad * (1 - s.toxic.HSuptake) * float64(s.foragerParams.SquadronSize))) / (s.stores_etox.ETOX_HES_E_D0 + (load.Energy * float64(s.foragerParams.SquadronSize))) // may need to readjust
 			s.stores_etox.ETOX_HES_E_D0 += load.Energy * float64(s.foragerParams.SquadronSize)
-
-			// if s.etox.WaterForaging {} // continue here when Water foraging
-
 			if s.stores.Honey > s.maxHoneyStore ||
 				s.stores_etox.ETOX_HES_E_Capped+s.stores_etox.ETOX_HES_E_D0+s.stores_etox.ETOX_HES_E_D1+s.stores_etox.ETOX_HES_E_D2+s.stores_etox.ETOX_HES_E_D3+s.stores_etox.ETOX_HES_E_D4 > s.maxHoneyStore {
 				s.stores.Honey = s.maxHoneyStore
@@ -749,6 +787,8 @@ func (s *Foraging_etox) unloading(w *ecs.World) {
 			s.stores.Pollen += s.foragerParams.PollenLoad * float64(s.foragerParams.SquadronSize)
 			PPPload.PPPLoad = 0.
 			act.Current = activity.Experienced
+
+			s.foragingStats.Pollensuccess += 1
 		}
 	}
 }

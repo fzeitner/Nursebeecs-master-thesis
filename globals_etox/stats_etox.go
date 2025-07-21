@@ -53,10 +53,15 @@ type ForagingRound_etox struct {
 type ForagingStats_etox struct {
 	Rounds []ForagingRound_etox
 
-	ContactExp_once   int     // for debugging how often foragers get contact exp per foraging day
-	ContactExp_repeat int     // for debugging how often foragers get contact exp per foraging day
-	Prob              float64 // debugging global
-	SumDur            float64 // debugging global
+	ContactExp_once        int     // for debugging how often foragers get contact exp per foraging day
+	ContactExp_repeat      int     // for debugging how often foragers get contact exp per foraging day
+	Prob                   float64 // debugging global
+	SumDur                 float64 // debugging global
+	Pollensuccess          float64 // debugging global
+	Collectionflightstotal int     // debugging global
+	Foragerdied            int     // debugging global
+	TotalSearches          int     //debugging global
+	ForagerDiedLifespan    int     //debugging global
 }
 
 // Reset all stats.
@@ -67,4 +72,9 @@ func (s *ForagingStats_etox) Reset() {
 	s.ContactExp_repeat = 0
 	s.Prob = 0.
 	s.SumDur = 0.
+	s.Pollensuccess = 0.
+	s.Collectionflightstotal = 0
+	s.Foragerdied = 0
+	s.TotalSearches = 0
+	s.ForagerDiedLifespan = 0
 }

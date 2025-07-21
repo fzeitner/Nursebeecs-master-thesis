@@ -185,15 +185,15 @@ if __name__ == "__main__":
             )
     else:
         if agg_all:
-                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
-                agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs_foraging.csv")
+                agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo_foraging.csv", "etox_validation_testing/" + folder + "/netlogo_foraging.csv")
         elif agg_net:
             agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
         elif agg_bee:
-                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
+                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs_foraging.csv")
         plot_quantiles(
-            "etox_validation_testing/" + folder + "/netlogo.csv",
-            "etox_validation_testing/" + folder + "/beecs.csv",
+            "etox_validation_testing/" + folder + "/netlogo_foraging.csv",
+            "etox_validation_testing/" + folder + "/beecs_foraging.csv",
             "etox_validation_testing/" + folder ,
             "png",
             #"svg",

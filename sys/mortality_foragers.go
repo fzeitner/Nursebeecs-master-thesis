@@ -4,6 +4,7 @@ import (
 	"math/rand/v2"
 
 	"github.com/fzeitner/beecs_masterthesis/comp"
+	"github.com/fzeitner/beecs_masterthesis/globals_etox"
 	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
@@ -20,6 +21,7 @@ type MortalityForagers struct {
 	workerDev     *params.WorkerDevelopment
 	toRemove      []ecs.Entity
 	foragerFilter *ecs.Filter2[comp.Age, comp.Milage]
+	forstats      *globals_etox.ForagingStats_etox
 }
 
 func (s *MortalityForagers) Initialize(w *ecs.World) {
@@ -28,6 +30,7 @@ func (s *MortalityForagers) Initialize(w *ecs.World) {
 	s.workerMort = ecs.GetResource[params.WorkerMortality](w)
 	s.workerDev = ecs.GetResource[params.WorkerDevelopment](w)
 	s.foragerFilter = s.foragerFilter.New(w)
+	s.forstats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
 }
 
 func (s *MortalityForagers) Update(w *ecs.World) {
@@ -45,6 +48,7 @@ func (s *MortalityForagers) Update(w *ecs.World) {
 				s.toRemove = append(s.toRemove, query.Entity())
 			}
 		}
+		s.forstats.ForagerDiedLifespan += len(s.toRemove)
 		for _, e := range s.toRemove {
 			w.RemoveEntity(e)
 		}
