@@ -99,7 +99,7 @@ func run(app *app.App, idx int, params params.Params, params_etox params_etox.Pa
 	app = model_etox.Default(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
-		Observer: &obs.DebugForaging{},
+		Observer: &obs.DebugEcotox{},
 		File:     fmt.Sprintf("out/beecs-%04d.csv", idx),
 		Sep:      ";",
 	})

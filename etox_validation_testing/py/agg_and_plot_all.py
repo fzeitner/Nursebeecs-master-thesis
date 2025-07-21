@@ -159,10 +159,10 @@ if __name__ == "__main__":
 
 
 
-    run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
-    agg_all = True
+    run_all = True                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
+    agg_all = False
     agg_net = False
-    agg_bee = False
+    agg_bee = True
 
     if run_all:
         for folder in testfolders:
@@ -179,8 +179,8 @@ if __name__ == "__main__":
                 "etox_validation_testing/" + folder + "/netlogo.csv",
                 "etox_validation_testing/" + folder + "/beecs.csv",
                 "etox_validation_testing/" + folder ,
-                "png",
-                #"svg",
+                #"png",
+                "svg",
                 appdays[folder],
             )
     else:
