@@ -31,9 +31,10 @@ func (s *PopulationStats_etox) Reset() {
 
 	s.CumDoseIHBees = 0      // cumulative dose before calculating a mean, used for debugging
 	s.CumDoseLarvae = 0      // cumulative dose before calculating a mean, used for debugging
-	s.CumDoseForagers = 0    // cumulative dose before calculating a mean, used for debugging
 	s.CumDoseDrones = 0      // cumulative dose before calculating a mean, used for debugging
 	s.CumDoseDroneLarvae = 0 // cumulative dose before calculating a mean, used for debugging
+
+	s.PPPNursebees = 0
 }
 
 // ForagingRound contains statistics for a single foraging round.

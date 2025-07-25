@@ -83,10 +83,8 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		thermoRegBrood := (s.needs.WorkerNurse - s.needs.WorkerResting) / s.nurseParams.MaxBroodNurseRatio
 		s.stores.ETOX_EnergyThermo = float64(s.pop.TotalBrood) * thermoRegBrood * 0.001 * s.energyParams.Honey
 
-		s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc
-		s.stores.Nectarconcbeforeeating = s.stores.ETOX_HES_C_D0
-
-		s.etoxStats.PPPNursebees = 0 // reset the additional nurse bee exposition every timestep
+		s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc // used in debugging and as a helpful metric
+		s.stores.Nectarconcbeforeeating = s.stores.ETOX_HES_C_D0       // used in debugging and as a helpful metric
 
 		consumed_honey := 0. // tracker for total amount of honey consumed in this subsystem
 

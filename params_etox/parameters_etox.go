@@ -3,6 +3,7 @@ package params_etox
 // ETOX parameters regarding application of the pesticide.
 type ETOXparams struct {
 	Application               bool // Determines if there is an application at all at any point in the model and if the _ecotox-module should be turned on for all purposes
+	GUTS                      bool // Determines whether BeeGUTS shall be used (true) or the old dose-response relationship
 	ForagerImmediateMortality bool // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 	DegradationHoney          bool // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 	ContactSum                bool // Determines whether contact exposures of different flower visits shall be summed up.
@@ -58,4 +59,22 @@ type WaterForagingPeriod struct {
 	Files       []string    // Files with daily foraging period data to use.
 	Builtin     bool        // Whether the used files are built-in. Use local files otherwise.
 	RandomYears bool        // Whether to randomize years.
+}
+
+// GUTS-RED parameters to implement BeeGUTS SD and IT into the mortality functions
+type GUTSParams struct {
+	Type string  // activate SD/IT here
+	K_SR float64 // honey stomach release rate [d**-1]
+	K_CA float64 // contact availability rate [d**-1]
+	T    int     // amount of timesteps per day for numeric GUTS approximation
+
+	// IT params
+	MW_IT float64 // Median of the distribution of thresholds for calculating IT threshold distribution
+	F_S   float64 // Fraction spread in distribution of thresholds; used to calculate beta for the threshold distribution calc
+	Kd_IT float64 //
+
+	// SD params
+	Kd_SD float64 //
+	MW_SD float64 //
+	BW_SD float64 //
 }

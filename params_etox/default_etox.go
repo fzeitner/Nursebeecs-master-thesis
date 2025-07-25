@@ -26,13 +26,15 @@ type DefaultParams_etox struct {
 	WaterParams         WaterParams
 	WaterForagingPeriod WaterForagingPeriod
 	Toxicityparams      Toxicityparams
+	GUTSParams          GUTSParams
 }
 
 // Default returns the complete default parameter set of BEEHAVE.
 func Default_etox() DefaultParams_etox {
 	return DefaultParams_etox{
 		ETOXparams: ETOXparams{
-			Application:               false,
+			Application:               false, // Determines if there is an application at all (and turns on/off the necessary code)
+			GUTS:                      false, // Determines whether BeeGUTS or dose-response shall be used for effect calculation
 			ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 			DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 			ContactSum:                false, // Determines whether contact exposure should be summed up per visit to a patch (true) or if the mean should be calculated whenever a new patch is visited (false)
@@ -78,6 +80,12 @@ func Default_etox() DefaultParams_etox {
 			Builtin:     true,
 			RandomYears: false,
 		},
+		GUTSParams: GUTSParams{
+			Type: "IT",  // GUTS mode
+			K_SR: 0.625, //default values taken from Baas et al. 2022
+			K_CA: 0.4,   //default values taken from Baas et al. 2022
+
+		},
 	}
 }
 
@@ -114,4 +122,5 @@ func (p *DefaultParams_etox) Apply(world *ecs.World) {
 	ecs.AddResource(world, &pCopy.ETOXparams)
 	ecs.AddResource(world, &pCopy.Toxicityparams)
 	ecs.AddResource(world, &pCopy.WaterParams)
+	ecs.AddResource(world, &pCopy.GUTSParams)
 }

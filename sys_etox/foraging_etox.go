@@ -48,7 +48,6 @@ type Foraging_etox struct {
 	resting        []ecs.Entity
 	foragershuffle []ecs.Entity
 	dances         []ecs.Entity
-	toAdd          []ecs.Entity
 
 	patchResourceMapper   *ecs.Map1[comp.Resource]
 	patchVisitsMapper     *ecs.Map2[comp.Resource, comp.Visits]
@@ -70,8 +69,6 @@ type Foraging_etox struct {
 	patchUpdateFilter    *ecs.Filter7[comp.PatchProperties, comp.PatchDistance, comp.Resource, comp.HandlingTime, comp.Trip, comp.Mortality, comp.Dance]
 
 	maxHoneyStore float64
-	PPPexpoMapper *ecs.Map2[comp_etox.PPPExpo, comp_etox.PPPLoad]
-	etoxExchanger *ecs.Map2[comp_etox.KnownPatch_etox, comp_etox.Activity_etox]
 }
 
 func (s *Foraging_etox) Initialize(w *ecs.World) {
@@ -111,10 +108,7 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.patchConfigMapper = s.patchConfigMapper.New(w)
 	s.patchConfigMapperEtox = s.patchConfigMapperEtox.New(w)
 	s.foragerMapper = s.foragerMapper.New(w)
-	s.PPPexpoMapper = s.PPPexpoMapper.New(w)
 	s.foragerLoadPPPMapper = s.foragerLoadPPPMapper.New(w)
-
-	s.etoxExchanger = s.etoxExchanger.New(w)
 
 	storeParams := ecs.GetResource[params.Stores](w)
 	energyParams := ecs.GetResource[params.EnergyContent](w)
@@ -127,18 +121,6 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 
 func (s *Foraging_etox) Update(w *ecs.World) {
 	s.foragingStats.Reset()
-
-	// adding etox components to the newly initialized forager entities from the base model
-	agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
-	for agequery.Next() {
-		s.toAdd = append(s.toAdd, agequery.Entity())
-	}
-	//exchanger := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())      // maybe later check this why exchanger results in bugs, works the way it is right now though
-	for _, entity := range s.toAdd {
-		s.PPPexpoMapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.PPPLoad{})
-		s.etoxExchanger.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
-	}
-	s.toAdd = s.toAdd[:0]
 
 	if s.foragePeriod.SecondsToday <= 0 ||
 		(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {

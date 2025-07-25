@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"os"
 
+	"github.com/fzeitner/beecs_masterthesis/GUTS"
 	"github.com/fzeitner/beecs_masterthesis/comp"
 	"github.com/fzeitner/beecs_masterthesis/comp_etox"
 	"github.com/fzeitner/beecs_masterthesis/data"
@@ -15,6 +16,7 @@ import (
 	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/fzeitner/beecs_masterthesis/params_etox"
 	"github.com/fzeitner/beecs_masterthesis/util"
+
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
@@ -24,6 +26,7 @@ import (
 type Init_etox struct {
 	larvae_etox globals_etox.Larvae_etox
 	inHive_etox globals_etox.InHive_etox
+	etox        *params_etox.ETOXparams
 
 	foragerfilter    *ecs.Filter1[comp.Activity]
 	patchfilter      *ecs.Filter1[comp.Coords]
@@ -40,6 +43,7 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	aff := ecs.GetResource[params.AgeFirstForaging](w)
 	workerDev := ecs.GetResource[params.WorkerDevelopment](w)
 	droneDev := ecs.GetResource[params.DroneDevelopment](w)
+	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 
 	s.larvae_etox = globals_etox.Larvae_etox{
 		WorkerCohortDose: make([]float64, workerDev.LarvaeTime),
@@ -48,8 +52,10 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	ecs.AddResource(w, &s.larvae_etox)
 
 	s.inHive_etox = globals_etox.InHive_etox{
-		WorkerCohortDose: make([]float64, aff.Max+1),
-		DroneCohortDose:  make([]float64, droneDev.MaxLifespan),
+		WorkerCohortDose:        make([]float64, aff.Max+1),
+		DroneCohortDose:         make([]float64, droneDev.MaxLifespan),
+		WorkerCohortITthreshold: make([]float64, aff.Max+1),
+		WorkerCohortC_i:         make([]float64, aff.Max+1),
 	}
 	ecs.AddResource(w, &s.inHive_etox)
 
@@ -93,7 +99,11 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	exchange := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())
 	rng := rand.New(s.source)
 	for _, entity := range toAdd {
-		s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.PPPLoad{PPPLoad: 0.})
+		if !s.etox.GUTS {
+			s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.PPPLoad{PPPLoad: 0.})
+		} else {
+			s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0., RmdSurvivalIT: GUTS.Calc_F(rng.Float64(), &ecs.World{})}, &comp_etox.PPPLoad{PPPLoad: 0.})
+		}
 		exchange.Exchange(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
 	}
 	toAdd = toAdd[:0]

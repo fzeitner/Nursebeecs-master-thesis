@@ -12,11 +12,14 @@ type PPPLoad struct {
 
 // PPP exposure for forager squadrons.
 type PPPExpo struct {
-	OralDose    float64 // Current oral dose of this squadron to PPP (foraging) [µg]
-	ContactDose float64 // Current contact dose of this squadron to PPP [µg]
+	OralDose    float64 // Current daily oral dose of this squadron to PPP used in dose-respnse of BEEHAVE_ecotox [µg]
+	ContactDose float64 // Current daily contact dose of this squadron to PPP used in dose-respnse of BEEHAVE_ecotox [µg]
 
 	RdmSurvivalContact float64 // Survival chance or "resilience" of the squadron to PPP contact exposure
 	RdmSurvivalOral    float64 // Survival chance or "resilience" of the squadron to PPP oral exposure
+
+	C_i           float64 // Current effective exposure per forager squadron to PPP; uses BeeGUTS rate constants to calculate an equilibrium concentration based on honey stomach
+	RmdSurvivalIT float64 // log-logistically drawn survival threshold for ITmodel
 }
 
 type KnownPatch_etox struct {
