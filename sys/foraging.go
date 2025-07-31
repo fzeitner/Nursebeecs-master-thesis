@@ -32,6 +32,9 @@ type Foraging struct {
 	stores        *globals.Stores
 	popStats      *globals.PopulationStats
 	foragingStats *globals.ForagingStats
+	newCohorts    *globals.NewCohorts
+	aff           *globals.AgeFirstForaging
+	factory       *globals.ForagerFactory
 
 	patches  []patchCandidate
 	toRemove []ecs.Entity
@@ -69,6 +72,9 @@ func (s *Foraging) Initialize(w *ecs.World) {
 	s.foragingStats = ecs.GetResource[globals.ForagingStats](w)
 	s.foragePeriod = ecs.GetResource[globals.ForagingPeriod](w)
 	s.stores = ecs.GetResource[globals.Stores](w)
+	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
+	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
+	s.factory = ecs.GetResource[globals.ForagerFactory](w)
 
 	s.activityFilter = s.activityFilter.New(w)
 	s.loadFilter = s.loadFilter.New(w)
@@ -102,6 +108,8 @@ func (s *Foraging) Update(w *ecs.World) {
 		return
 	}
 
+	s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
+
 	query := s.foragerFilter.Query()
 	for query.Next() {
 		_, _, milage := query.Get()
@@ -113,7 +121,7 @@ func (s *Foraging) Update(w *ecs.World) {
 		forageProb := s.calcForagingProb()
 
 		// TODO: Lazy winter bees.
-
+		s.stores.DecentHoney = math.Max(float64(s.popStats.WorkersInHive+s.popStats.WorkersForagers), 1) * s.storeParams.DecentHoneyPerWorker * s.energyParams.Honey // added this because counting proc happens in between last decent honey calc and now --> recalc necessary
 		round := 0
 		totalDuration := 0.0
 		for {
@@ -143,6 +151,13 @@ func (s *Foraging) Update(w *ecs.World) {
 
 func (s *Foraging) Finalize(w *ecs.World) {}
 
+func (s *Foraging) newForagers(w *ecs.World) {
+	if s.newCohorts.Foragers > 0 {
+		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff)
+	}
+	s.newCohorts.Foragers = 0
+}
+
 func (s *Foraging) calcForagingProb() float64 {
 	if s.stores.Pollen/s.stores.IdealPollen > 0.5 && s.stores.Honey/s.stores.DecentHoney > 1 {
 		return 0
@@ -160,7 +175,6 @@ func (s *Foraging) calcForagingProb() float64 {
 func (s *Foraging) foragingRound(w *ecs.World, forageProb float64) (duration float64, foragers int) {
 	probCollectPollen := (1.0 - s.stores.Pollen/s.stores.IdealPollen) * s.danceParams.MaxProportionPollenForagers
 
-	s.stores.DecentHoney = math.Max(float64(s.popStats.WorkersInHive+s.popStats.WorkersForagers), 1) * s.storeParams.DecentHoneyPerWorker * s.energyParams.Honey // added this because counting proc happens in between last decent honey calc and now --> recalc necessary
 	if s.stores.Honey/s.stores.DecentHoney < 0.5 {
 		probCollectPollen *= s.stores.Honey / s.stores.DecentHoney
 	}

@@ -1,8 +1,6 @@
 package sys
 
 import (
-	"math"
-
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/mlange-42/ark-tools/resource"
@@ -51,7 +49,7 @@ func (s *HoneyConsumption) Update(w *ecs.World) {
 		consumptionEnergy := 0.001 * consumption * s.energyParams.Honey
 
 		s.stores.Honey -= consumptionEnergy
-		s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey
+		//s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey
 		s.cons.HoneyDaily = consumption
 	}
 }

@@ -35,6 +35,7 @@ type Foraging_etox struct {
 	waterParams *params_etox.WaterParams
 	etox        *params_etox.ETOXparams
 	toxic       *params_etox.Toxicityparams
+	guts        *params_etox.GUTSParams
 
 	foragePeriod  *globals.ForagingPeriod
 	stores        *globals.Stores
@@ -42,8 +43,12 @@ type Foraging_etox struct {
 	foragingStats *globals_etox.ForagingStats_etox
 	waterneeds    *globals_etox.WaterNeeds
 	pop           *globals.PopulationStats
+	newCohorts    *globals.NewCohorts
+	aff           *globals.AgeFirstForaging
+	factory       *globals.ForagerFactory
 
 	patches        []patchCandidate_etox
+	toAdd          []ecs.Entity
 	toRemove       []ecs.Entity
 	resting        []ecs.Entity
 	foragershuffle []ecs.Entity
@@ -58,6 +63,8 @@ type Foraging_etox struct {
 	patchConfigMapperEtox *ecs.Map3[comp.PatchProperties, comp_etox.PatchProperties_etox, comp.Trip]
 	foragerMapper         *ecs.Map2[comp_etox.Activity_etox, comp_etox.KnownPatch_etox]
 	foragerLoadPPPMapper  *ecs.Map6[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage, comp.NectarLoad, comp_etox.PPPLoad, comp_etox.PPPExpo]
+	pppExpoAdder          *ecs.Map2[comp_etox.PPPExpo, comp_etox.PPPLoad]
+	etoxPatchAdder        *ecs.Map2[comp_etox.KnownPatch_etox, comp_etox.Activity_etox]
 
 	activityFilter       *ecs.Filter1[comp_etox.Activity_etox]
 	ageFilter            *ecs.Filter1[comp.Age]
@@ -83,6 +90,7 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.waterParams = ecs.GetResource[params_etox.WaterParams](w)
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
+	s.guts = ecs.GetResource[params_etox.GUTSParams](w)
 
 	s.foragingStats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
 	s.foragePeriod = ecs.GetResource[globals.ForagingPeriod](w)
@@ -90,6 +98,9 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
 	s.waterneeds = ecs.GetResource[globals_etox.WaterNeeds](w)
 	s.pop = ecs.GetResource[globals.PopulationStats](w)
+	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
+	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
+	s.factory = ecs.GetResource[globals.ForagerFactory](w)
 
 	s.activityFilter = s.activityFilter.New(w)
 	s.ageFilter = s.ageFilter.New(w)
@@ -109,6 +120,8 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.patchConfigMapperEtox = s.patchConfigMapperEtox.New(w)
 	s.foragerMapper = s.foragerMapper.New(w)
 	s.foragerLoadPPPMapper = s.foragerLoadPPPMapper.New(w)
+	s.pppExpoAdder = s.pppExpoAdder.New(w)
+	s.etoxPatchAdder = s.etoxPatchAdder.New(w)
 
 	storeParams := ecs.GetResource[params.Stores](w)
 	energyParams := ecs.GetResource[params.EnergyContent](w)
@@ -127,6 +140,8 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 		return
 	}
 
+	s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
+
 	query := s.foragerFilter.Query()
 	for query.Next() {
 		_, patch, milage := query.Get()
@@ -141,7 +156,7 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 		s.foragingStats.Prob = forageProb // added these for debugging
 
 		// TODO: Lazy winter bees.
-
+		s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey // added this because counting proc happens in between last decent honey calc and now --> recalc necessary
 		round := 0
 		totalDuration := 0.0
 		for {
@@ -173,6 +188,40 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 
 func (s *Foraging_etox) Finalize(w *ecs.World) {}
 
+func (s *Foraging_etox) newForagers(w *ecs.World) {
+	if s.newCohorts.Foragers > 0 {
+		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff)
+	}
+	s.newCohorts.Foragers = 0
+	if s.etox.Application {
+		// adding etox components to the newly initialized forager entities
+		agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
+		for agequery.Next() {
+			s.toAdd = append(s.toAdd, agequery.Entity())
+		}
+		//exchanger := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())      // maybe later check this why exchanger results in bugs, works the way it is right now though
+		for _, entity := range s.toAdd {
+			if s.etox.GUTS && s.guts.Type == "IT" {
+				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.PPPLoad{PPPLoad: 0.})
+			} else if s.etox.GUTS && s.guts.Type == "SD" {
+				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i}, &comp_etox.PPPLoad{PPPLoad: 0.})
+			} else {
+				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.PPPLoad{PPPLoad: 0.})
+			}
+			s.etoxPatchAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
+
+		}
+		s.toAdd = s.toAdd[:0]
+		if s.etox.GUTS {
+			if s.guts.Type == "IT" {
+				s.newCohorts.NewForITthreshold = 0.
+			}
+			s.newCohorts.NewForC_i = 0.
+			s.newCohorts.NewForOralDose = 0.
+		}
+	}
+}
+
 func (s *Foraging_etox) calcForagingProb() float64 {
 	if s.stores.Pollen/s.stores.IdealPollen > 0.5 && s.stores.Honey/s.stores.DecentHoney > 1 {
 		return 0
@@ -190,7 +239,6 @@ func (s *Foraging_etox) calcForagingProb() float64 {
 func (s *Foraging_etox) foragingRound(w *ecs.World, forageProb float64) (duration float64, foragers int) {
 	probCollectPollen := (1.0 - s.stores.Pollen/s.stores.IdealPollen) * s.danceParams.MaxProportionPollenForagers
 
-	s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey // added this because counting proc happens in between last decent honey calc and now --> recalc necessary
 	if s.stores.Honey/s.stores.DecentHoney < 0.5 {
 		probCollectPollen *= s.stores.Honey / s.stores.DecentHoney
 	}

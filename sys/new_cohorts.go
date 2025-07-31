@@ -15,8 +15,6 @@ import (
 type NewCohorts struct {
 	inHive     *globals.InHive
 	newCohorts *globals.NewCohorts
-	factory    *globals.ForagerFactory
-	aff        *globals.AgeFirstForaging
 
 	time *resource.Tick
 }
@@ -24,8 +22,6 @@ type NewCohorts struct {
 func (s *NewCohorts) Initialize(w *ecs.World) {
 	s.inHive = ecs.GetResource[globals.InHive](w)
 	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
-	s.factory = ecs.GetResource[globals.ForagerFactory](w)
-	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
 
 	s.time = ecs.GetResource[resource.Tick](w)
 }
@@ -35,13 +31,8 @@ func (s *NewCohorts) Update(w *ecs.World) {
 		s.inHive.Drones[0] = s.newCohorts.Drones
 		s.inHive.Workers[0] = s.newCohorts.IHbees
 
-		if s.newCohorts.Foragers > 0 {
-			s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff)
-		}
-
 		s.newCohorts.Drones = 0
 		s.newCohorts.IHbees = 0
-		s.newCohorts.Foragers = 0
 	}
 }
 
