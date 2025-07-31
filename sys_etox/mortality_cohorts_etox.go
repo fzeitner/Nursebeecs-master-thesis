@@ -60,8 +60,7 @@ func (s *MortalityCohorts_etox) Update(w *ecs.World) {
 		s.applyMortalityEtox(s.larvae.Drones, s.larvae_etox.DroneCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
 
 		if s.etox.GUTS {
-			r := rand.New(s.rng)
-			s.applyMortalityGUTS(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.inHive_etox.WorkerCohortC_i, r)
+			s.applyMortalityGUTS(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.inHive_etox.WorkerCohortC_i, w)
 		} else {
 			s.applyMortalityEtox(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
 		}
@@ -96,17 +95,29 @@ func (s *MortalityCohorts_etox) applyMortalityEtox(coh []int, dose []float64, sl
 	}
 }
 
-func (s *MortalityCohorts_etox) applyMortalityGUTS(coh []int, dose []float64, C_i []float64, rand *rand.Rand) {
-	for i := range coh {
-		num := coh[i]
-		toDie := 0
-
-		if s.guts.Type == "IT" {
-			_, dose[i], _, C_i[i] = GUTS.IT(s.inHive_etox.WorkerCohortITthreshold[i], dose[i], 0, C_i[i], &ecs.World{})
-
-		} else { // then SD
-			_, dose[i], _, C_i[i] = GUTS.SD_IHbee(dose[i], 0, C_i[i], rand, &ecs.World{}) // this does not work yet
+func (s *MortalityCohorts_etox) applyMortalityGUTS(coh []int, dose []float64, C_i []float64, w *ecs.World) {
+	if s.guts.Type == "SD" {
+		r := rand.New(s.rng)
+		for i := range coh {
+			if coh[i] != 0 && dose[i]+C_i[i] > 0 {
+				coh[i], dose[i], _, C_i[i] = GUTS.SD_IHbee(coh[i], dose[i], 0, C_i[i], r, w) // this might work now
+			}
+			if coh[i] == 0 {
+				C_i[i] = 0.
+				dose[i] = 0.
+			}
 		}
-		coh[i] = util.MaxInt(0, num-toDie)
+	} else {
+		for i := range coh {
+			lethaldose := false
+			if coh[i] != 0 && dose[i]+C_i[i] > 0 {
+				lethaldose, dose[i], _, C_i[i] = GUTS.IT(s.inHive_etox.WorkerCohortITthreshold[i], dose[i], 0, C_i[i], w)
+			}
+			if lethaldose {
+				coh[i] = 0
+				C_i[i] = 0.
+				dose[i] = 0.
+			}
+		}
 	}
 }

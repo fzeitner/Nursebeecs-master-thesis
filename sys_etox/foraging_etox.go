@@ -496,15 +496,16 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 				s.foragingStats.ContactExp_once++
 				patch.VisitedthisDay = true
 			}
-
-			if PPPexpo.ContactDose > 0 {
-				if s.etox.ContactSum {
-					PPPexpo.ContactDose += etoxprops.PPPcontactDose
+			if s.etox.AppDay == int(s.time.Tick) || !s.etox.ContactExposureOneDay { // this should a) always enable contactexp on AppDay and b) prevent exposure from diluting if ContactExposureOneDay == True for the GUTS model that does not reset ContactDose
+				if PPPexpo.ContactDose > 0 {
+					if s.etox.ContactSum {
+						PPPexpo.ContactDose += etoxprops.PPPcontactDose
+					} else {
+						PPPexpo.ContactDose = (PPPexpo.ContactDose + etoxprops.PPPcontactDose) / 2
+					}
 				} else {
-					PPPexpo.ContactDose = (PPPexpo.ContactDose + etoxprops.PPPcontactDose) / 2
+					PPPexpo.ContactDose += etoxprops.PPPcontactDose
 				}
-			} else {
-				PPPexpo.ContactDose += etoxprops.PPPcontactDose
 			}
 		}
 
@@ -526,15 +527,16 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 				s.foragingStats.ContactExp_once++
 				patch.VisitedthisDay = true
 			}
-
-			if PPPexpo.ContactDose > 0 {
-				if s.etox.ContactSum {
-					PPPexpo.ContactDose += etoxprops.PPPcontactDose
+			if s.etox.AppDay == int(s.time.Tick) || !s.etox.ContactExposureOneDay { // this should a) always enable contactexp on AppDay and b) prevent exposure from diluting if ContactExposureOneDay == True for the GUTS model that does not reset ContactDose
+				if PPPexpo.ContactDose > 0 {
+					if s.etox.ContactSum {
+						PPPexpo.ContactDose += etoxprops.PPPcontactDose
+					} else {
+						PPPexpo.ContactDose = (PPPexpo.ContactDose + etoxprops.PPPcontactDose) / 2
+					}
 				} else {
-					PPPexpo.ContactDose = (PPPexpo.ContactDose + etoxprops.PPPcontactDose) / 2
+					PPPexpo.ContactDose += etoxprops.PPPcontactDose
 				}
-			} else {
-				PPPexpo.ContactDose += etoxprops.PPPcontactDose
 			}
 		}
 	}

@@ -147,19 +147,20 @@ if __name__ == "__main__":
     ### change test folder and day of application manually here, applicationday is only relevant for 
     ### adding a visual indicator in plots, does not change anything regarding the results
     appdays = {"default_etox" : 0,                     # appday = 0 for no application
-              "default_dimethoate": 188, 
+              "default_dimethoate": 189, 
+              "default_dimethoate_GUTS": 189, 
               "etox_tunnel_control": 0,
-              "etox_tunnel_dimethoate": 216, 
-              "Rothamsted2009_fenoxycarb": 188, 
+              "etox_tunnel_dimethoate": 217, 
+              "Rothamsted2009_fenoxycarb": 189, 
               "Rothamsted2009_noPPP": 0,
     }
-    testfolders = ["default_etox", "default_dimethoate", "etox_tunnel_control",
+    testfolders = ["default_etox", "default_dimethoate", "default_dimethoate_GUTS", "etox_tunnel_control",
                    "etox_tunnel_dimethoate", "Rothamsted2009_fenoxycarb", "Rothamsted2009_noPPP", ]
     folder = testfolders[2]
 
 
 
-    run_all = True                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
+    run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand. netlogo.csv's are provided
     agg_all = False
     agg_net = False
     agg_bee = True
@@ -195,7 +196,7 @@ if __name__ == "__main__":
             "etox_validation_testing/" + folder + "/netlogo.csv",
             "etox_validation_testing/" + folder + "/beecs.csv",
             "etox_validation_testing/" + folder ,
-            #"png",
-            "svg",
+            "png",
+            #"svg",
             appdays[folder],
         )

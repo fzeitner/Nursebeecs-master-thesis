@@ -21,6 +21,7 @@ func main() {
 	pe := params_etox.Default_etox()
 	pe.ETOXparams = params_etox.ETOXparams{
 		Application:               true,
+		GUTS:                      false,
 		ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
@@ -31,7 +32,7 @@ func main() {
 		PPPconcentrationPollen: 26631,
 		PPPcontactExposure:     0.3, // contact exposure at patch
 
-		AppDay:         188,   // Day of the year in which application starts [d].
+		AppDay:         189,   // Day of the year in which application starts [d].
 		ExposurePeriod: 8,     // Duration of exposure happening (irrespective of DT50) [d].
 		SpinupPhase:    0,     // Number of years before exposure starts (to stabilize colony; 0 = first year) [y].
 		ExposurePhase:  3,     // Number of years in which exposure takes place [y].

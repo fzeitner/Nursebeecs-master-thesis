@@ -7,10 +7,10 @@ package globals_etox
 type PopulationStats_etox struct {
 	NumberIHbeeCohorts int // only for debugging, will probably remove this later
 
-	MeanDoseIHBees      float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
-	MeanDoseLarvae      float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
-	MeanDoseDrones      float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
-	MeanDoseDroneLarvae float64 // to avoid creating any more ECS entities only for PPP dosage/vulnerability for now, may need to change
+	MeanDoseIHBees      float64 // doesn´t do anything, just there for debugging
+	MeanDoseLarvae      float64 // doesn´t do anything, just there for debugging
+	MeanDoseDrones      float64 // doesn´t do anything, just there for debugging
+	MeanDoseDroneLarvae float64 // doesn´t do anything, just there for debugging
 	MeanDoseForager     float64 // doesn´t do anything, just there for debugging
 
 	CumDoseIHBees      float64 // cumulative dose before calculating a mean, used for debugging

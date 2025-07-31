@@ -80,11 +80,21 @@ func Default_etox() DefaultParams_etox {
 			Builtin:     true,
 			RandomYears: false,
 		},
-		GUTSParams: GUTSParams{
+		GUTSParams: GUTSParams{ // default values are taken from supplementary information of Baas et al. 2022; params are specified for dimethoate
 			Type: "IT",  // GUTS mode
 			K_SR: 0.625, //default values taken from Baas et al. 2022
 			K_CA: 0.4,   //default values taken from Baas et al. 2022
+			T:    24,    // amount of timesteps per day for numeric GUTS approximation
 
+			// IT params
+			Kd_IT: 0.012,  // Dominant rate constant for the reduced-IT-model
+			MW_IT: 0.0024, // Median of the distribution of thresholds for calculating IT threshold distribution; adjusted from ng/bee (Baas et al. 2022) to mug/bee as this model uses mug as primary unit
+			F_S:   3,      // Fraction spread in distribution of thresholds; used to calculate beta for the threshold distribution calc
+
+			// SD params
+			Kd_SD: 0.36,  // Dominant rate constant for the reduced-SD-model
+			MW_SD: 0.014, // Median of the distribution of thresholds for calculating h in the red-SD-model; adjusted from ng/bee (Baas et al. 2022) to mug/bee as this model uses mug as primary unit
+			BW_SD: 21.,   // Killing rate for calculating h in the red-SD-model; adjusted from 1/(ng/bee d) (Baas et al. 2022) to 1/(mug/bee d) as this model uses mug as primary unit
 		},
 	}
 }

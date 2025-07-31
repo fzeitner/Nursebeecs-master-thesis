@@ -30,7 +30,7 @@ func (s *MortalityForagers) Initialize(w *ecs.World) {
 	s.workerMort = ecs.GetResource[params.WorkerMortality](w)
 	s.workerDev = ecs.GetResource[params.WorkerDevelopment](w)
 	s.foragerFilter = s.foragerFilter.New(w)
-	s.forstats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
+	//s.forstats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
 }
 
 func (s *MortalityForagers) Update(w *ecs.World) {
@@ -48,7 +48,7 @@ func (s *MortalityForagers) Update(w *ecs.World) {
 				s.toRemove = append(s.toRemove, query.Entity())
 			}
 		}
-		s.forstats.ForagerDiedLifespan += len(s.toRemove)
+		//s.forstats.ForagerDiedLifespan += len(s.toRemove)
 		for _, e := range s.toRemove {
 			w.RemoveEntity(e)
 		}

@@ -40,9 +40,9 @@ func (s *PPPApplication) Initialize(w *ecs.World) {
 }
 
 func (s *PPPApplication) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		dayOfYear := int((s.time.Tick - 1) % 365)
-		etox_year := int(s.time.Tick-1) / 365
+	if s.time.Tick > 0 && s.etox.Application {
+		dayOfYear := int((s.time.Tick) % 365)
+		etox_year := int(s.time.Tick) / 365
 
 		constQuery := s.constantFilter.Query()
 		for constQuery.Next() {
@@ -51,11 +51,6 @@ func (s *PPPApplication) Update(w *ecs.World) {
 			props.PPPconcentrationNectar = res.PPPconcentrationNectar
 			props.PPPconcentrationPollen = res.PPPconcentrationPollen
 			props.PPPcontactDose = res.PPPcontactDose
-
-			// TODO: implement read in file with pesticide data (-> scripted patches ?!?) and fit globals/parameters to this format; Water foraging (?)
-			if !s.etox.Application {
-				continue
-			}
 
 			if etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase ||
 				props.PPPconcentrationNectar+props.PPPconcentrationPollen+props.PPPcontactDose > 0 {
@@ -91,11 +86,6 @@ func (s *PPPApplication) Update(w *ecs.World) {
 			props.PPPconcentrationNectar = res.PPPconcentrationNectar
 			props.PPPconcentrationPollen = res.PPPconcentrationPollen
 			props.PPPcontactDose = res.PPPcontactDose
-
-			// TODO: implement read in file with pesticide data and fit globals/parameters to this format; Water foraging
-			if !s.etox.Application {
-				continue
-			}
 
 			if etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase ||
 				props.PPPconcentrationNectar+props.PPPconcentrationPollen+props.PPPcontactDose > 0 {

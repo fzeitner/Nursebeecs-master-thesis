@@ -27,6 +27,7 @@ type Init_etox struct {
 	larvae_etox globals_etox.Larvae_etox
 	inHive_etox globals_etox.InHive_etox
 	etox        *params_etox.ETOXparams
+	guts        *params_etox.GUTSParams
 
 	foragerfilter    *ecs.Filter1[comp.Activity]
 	patchfilter      *ecs.Filter1[comp.Coords]
@@ -44,6 +45,7 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	workerDev := ecs.GetResource[params.WorkerDevelopment](w)
 	droneDev := ecs.GetResource[params.DroneDevelopment](w)
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
+	s.guts = ecs.GetResource[params_etox.GUTSParams](w)
 
 	s.larvae_etox = globals_etox.Larvae_etox{
 		WorkerCohortDose: make([]float64, workerDev.LarvaeTime),
@@ -84,6 +86,13 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	forstats_etox := globals_etox.ForagingStats_etox{}
 	ecs.AddResource(w, &forstats_etox)
 
+	if s.etox.Application && s.etox.GUTS && s.guts.Type == "IT" {
+		GUTSdist := globals_etox.GUTSDistribution{
+			Dist: GUTS.Calc_distribution(w),
+		}
+		ecs.AddResource(w, &GUTSdist)
+	}
+
 	// add the PPPExpo component for all foragers
 	s.foragerfilter = s.foragerfilter.New(w)
 	s.source = rand.New(ecs.GetResource[resource.Rand](w))
@@ -102,7 +111,11 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 		if !s.etox.GUTS {
 			s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.PPPLoad{PPPLoad: 0.})
 		} else {
-			s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0., RmdSurvivalIT: GUTS.Calc_F(rng.Float64(), &ecs.World{})}, &comp_etox.PPPLoad{PPPLoad: 0.})
+			if s.guts.Type == "IT" {
+				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0., RmdSurvivalIT: GUTS.Calc_F(rng.Float64(), w)}, &comp_etox.PPPLoad{PPPLoad: 0.})
+			} else {
+				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0.}, &comp_etox.PPPLoad{PPPLoad: 0.})
+			}
 		}
 		exchange.Exchange(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
 	}

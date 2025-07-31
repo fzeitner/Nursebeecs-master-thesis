@@ -52,6 +52,11 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 		query := s.foragerFilter.Query()
 		s.etoxstats.MeanDoseForager = 0.
 		s.etoxstats.CumDoseForagers = 0.
+		reset_contact := false
+
+		if s.etox.AppDay+10 == int(s.time.Tick) {
+			reset_contact = true // reset contact dose on 10th day after application. Will need to adjust for multiple application scenarios
+		}
 
 		for query.Next() {
 			p := query.Get()
@@ -75,11 +80,21 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 					p.ContactDose = 0. // therefore exposure from foraging of the current day and exposure from food of the previous day is relevant for lethal effects only
 
 				} else { // BeeGUTS gets called; still in developement and to be tested
-					if s.guts.Type == "IT" {
-						lethaldose, p.OralDose, p.ContactDose, p.C_i = GUTS.IT(p.RmdSurvivalIT, p.OralDose, p.ContactDose, p.C_i, &ecs.World{})
-					} else {
-						lethaldose, p.OralDose, p.ContactDose, p.C_i = GUTS.SD_for(p.OralDose, p.ContactDose, p.C_i, r, &ecs.World{})
+					if s.time.Tick == int64(s.etox.AppDay) { // debugging anchor
+						x := 1
+						x += 1
 					}
+					if reset_contact {
+						p.ContactDose = 0.
+					}
+					if p.OralDose+p.ContactDose+p.C_i > 0 {
+						if s.guts.Type == "IT" {
+							lethaldose, p.OralDose, p.ContactDose, p.C_i = GUTS.IT(p.RmdSurvivalIT, p.OralDose, p.ContactDose, p.C_i, w)
+						} else {
+							lethaldose, p.OralDose, p.ContactDose, p.C_i = GUTS.SD_for(p.OralDose, p.ContactDose, p.C_i, r, w)
+						}
+					}
+					s.etoxstats.CumDoseForagers += p.OralDose // probably wil have to readjust dosage metrics
 				}
 			}
 

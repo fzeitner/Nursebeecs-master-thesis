@@ -7,7 +7,7 @@ type ETOXparams struct {
 	ForagerImmediateMortality bool // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 	DegradationHoney          bool // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 	ContactSum                bool // Determines whether contact exposures of different flower visits shall be summed up.
-	ContactExposureOneDay     bool // Determines whether contact exposure shall only be relevant on the one day of application
+	ContactExposureOneDay     bool // Determines whether contact exposure shall only be relevant on the one day of application. NEED TO TEST IF THIS MAKES SENSE WITH GUTS VERSION
 
 	PPPname                string  // Identifier for the PPP used.
 	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kg]
@@ -69,12 +69,12 @@ type GUTSParams struct {
 	T    int     // amount of timesteps per day for numeric GUTS approximation
 
 	// IT params
+	Kd_IT float64 // Dominant rate constant for the reduced-IT-model
 	MW_IT float64 // Median of the distribution of thresholds for calculating IT threshold distribution
 	F_S   float64 // Fraction spread in distribution of thresholds; used to calculate beta for the threshold distribution calc
-	Kd_IT float64 //
 
 	// SD params
-	Kd_SD float64 //
-	MW_SD float64 //
-	BW_SD float64 //
+	Kd_SD float64 // Dominant rate constant for the reduced-SD-model
+	MW_SD float64 // Median of the distribution of thresholds for calculating h in the red-SD-model
+	BW_SD float64 // Killing rate for calculating h in the red-SD-model
 }
