@@ -6,6 +6,7 @@ import (
 
 	"github.com/fzeitner/beecs_masterthesis/globals_etox"
 	"github.com/fzeitner/beecs_masterthesis/params_etox"
+	"github.com/fzeitner/beecs_masterthesis/util"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -52,8 +53,6 @@ func SD_IHbee(num int, Oraldose float64, Contactdose float64, C_i float64, rng *
 
 	i := 0
 	for i < gutsparams.T {
-		num -= toDie
-		toDie = 0
 		C_oral *= math.Exp(-gutsparams.K_SR / float64(gutsparams.T))
 		C_contact *= math.Exp(-gutsparams.K_CA / float64(gutsparams.T))
 		current_dose := C_contact + C_oral
@@ -72,9 +71,12 @@ func SD_IHbee(num int, Oraldose float64, Contactdose float64, C_i float64, rng *
 				j++
 			}
 		}
+		num -= toDie
+		toDie = 0
+
 		i++
 	}
-	survivors = int(math.Max(0, float64(num)))
+	survivors = util.MaxInt(0, num)
 	return
 }
 

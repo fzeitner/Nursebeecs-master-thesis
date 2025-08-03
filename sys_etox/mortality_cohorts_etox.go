@@ -76,19 +76,28 @@ func (s *MortalityCohorts_etox) Finalize(w *ecs.World) {}
 // adapted the mortaliy function for cohorts that can be exposed to PPP, after the normal background mortality there is now
 // etox-based mortality depending on the dose of the cohort and a simple dose-response relationship; dose reset every tick
 func (s *MortalityCohorts_etox) applyMortalityEtox(coh []int, dose []float64, slope float64, LD50 float64) {
+	r := rand.New(s.rng)
 	for i := range coh {
 		num := coh[i]
 		toDie := 0
 		if dose[i] > 1e-20 { // simple dose response relationship for all larvae/IHBees/drones
 			num = coh[i]
-
 			ldx := (1 - (1 / (1 + math.Pow((dose[i]/LD50), slope))))
-
 			if ldx > 0.99 { // introduced this because netlogo-version behaves the same way. This makes it much less likely to have single digit cohorts left over after lethal PPP events
 				ldx = 1
 			}
 
-			toDie = int((float64(num) * ldx))
+			if num > 100 { // introduced this to make survival for lower numbers of cohorts more realisitcally stochastic
+				toDie = int((float64(num) * ldx))
+			} else {
+				i := 0
+				for i < num {
+					if r.Float64() < ldx {
+						toDie++
+					}
+					i++
+				}
+			}
 		}
 		coh[i] = util.MaxInt(0, num-toDie)
 		dose[i] = 0. // doses get reset to 0 after the mortality check in every timestep, only dose from previous day is ever relevant
