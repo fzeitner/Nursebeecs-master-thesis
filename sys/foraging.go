@@ -101,22 +101,22 @@ func (s *Foraging) Initialize(w *ecs.World) {
 }
 
 func (s *Foraging) Update(w *ecs.World) {
-	s.foragingStats.Reset()
-
-	if s.foragePeriod.SecondsToday <= 0 ||
-		(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
-		return
-	}
-
-	s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
-
-	query := s.foragerFilter.Query()
-	for query.Next() {
-		_, _, milage := query.Get()
-		milage.Today = 0
-	}
-
 	if s.time.Tick > 0 {
+		s.foragingStats.Reset()
+
+		s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
+
+		if s.foragePeriod.SecondsToday <= 0 ||
+			(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
+			return
+		}
+
+		query := s.foragerFilter.Query()
+		for query.Next() {
+			_, _, milage := query.Get()
+			milage.Today = 0
+		}
+
 		hangAroundDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
 		forageProb := s.calcForagingProb()
 
@@ -140,12 +140,12 @@ func (s *Foraging) Update(w *ecs.World) {
 
 			round++
 		}
-	}
 
-	query = s.foragerFilter.Query()
-	for query.Next() {
-		act, _, _ := query.Get()
-		act.Current = activity.Resting
+		query = s.foragerFilter.Query()
+		for query.Next() {
+			act, _, _ := query.Get()
+			act.Current = activity.Resting
+		}
 	}
 }
 

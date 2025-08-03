@@ -133,23 +133,22 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 }
 
 func (s *Foraging_etox) Update(w *ecs.World) {
-	s.foragingStats.Reset()
-
-	if s.foragePeriod.SecondsToday <= 0 ||
-		(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
-		return
-	}
-
-	s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
-
-	query := s.foragerFilter.Query()
-	for query.Next() {
-		_, patch, milage := query.Get()
-		milage.Today = 0
-		patch.VisitedthisDay = false
-	}
-
 	if s.time.Tick > 0 {
+		s.foragingStats.Reset()
+
+		s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
+
+		if s.foragePeriod.SecondsToday <= 0 ||
+			(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
+			return
+		}
+
+		query := s.foragerFilter.Query()
+		for query.Next() {
+			_, patch, milage := query.Get()
+			milage.Today = 0
+			patch.VisitedthisDay = false
+		}
 
 		hangAroundDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
 		forageProb := s.calcForagingProb()
@@ -199,7 +198,6 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 		for agequery.Next() {
 			s.toAdd = append(s.toAdd, agequery.Entity())
 		}
-		//exchanger := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())      // maybe later check this why exchanger results in bugs, works the way it is right now though
 		for _, entity := range s.toAdd {
 			if s.etox.GUTS && s.guts.Type == "IT" {
 				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.PPPLoad{PPPLoad: 0.})

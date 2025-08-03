@@ -53,4 +53,4 @@ def agg_beecs(file_pattern, out_file):
 
 
 if __name__ == "__main__":
-    agg_beecs("etox_validation_testing/default_beecs/out/beecs-%04d.csv", "etox_validation_testing/default_beecs/beecs.csv")
+    agg_beecs("etox_validation_testing/tunnel_beecs/out/beecs-%04d.csv", "etox_validation_testing/tunnel_beecs/beecs.csv")
