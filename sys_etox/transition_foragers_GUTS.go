@@ -42,16 +42,19 @@ func (s *TransitionForagers_GUTS) Update(w *ecs.World) {
 		newForagers := 0
 		squadrons := 0
 		remainder := 0
-		if s.etox.Application && s.etox.GUTS && s.GUTS.Type == "IT" { // ToDo: clean this up
+		if s.etox.Application && s.etox.GUTS && s.GUTS.Type == "IT" { // GUTS-RED-IT; ToDo: clean this up
 			c := 0
 			newITval := 0.
 			newCival := 0.
 			newOraldose := 0.
 			for i := aff; i < len(s.inHive.Workers); i++ {
+				if s.inHive.Workers[i] == 0 {
+					continue
+				}
 				newForagers = s.inHive.Workers[i]
 				s.inHive.Workers[i] = 0
-				squadrons += newForagers / s.params.SquadronSize // need to test this
-				remainder += newForagers % s.params.SquadronSize // need to test this
+				squadrons += newForagers / s.params.SquadronSize
+				remainder += newForagers % s.params.SquadronSize
 
 				newITval += s.inHive_etox.WorkerCohortITthreshold[i] * float64(newForagers)
 				s.inHive_etox.WorkerCohortITthreshold[i] = 0.
@@ -75,9 +78,7 @@ func (s *TransitionForagers_GUTS) Update(w *ecs.World) {
 				s.inHive_etox.WorkerCohortITthreshold[aff-1] = CalcRemainderDose(remainder, s.inHive.Workers[aff-1], s.inHive_etox.WorkerCohortITthreshold[aff-1], newITval)
 				s.inHive_etox.WorkerCohortC_i[aff-1] = CalcRemainderDose(remainder, s.inHive.Workers[aff-1], s.inHive_etox.WorkerCohortC_i[aff-1], newCival)
 				s.inHive_etox.WorkerCohortDose[aff-1] = CalcRemainderDose(remainder, s.inHive.Workers[aff-1], s.inHive_etox.WorkerCohortDose[aff-1], newOraldose)
-
 				s.inHive.Workers[aff-1] += remainder
-
 			} else {
 				s.inHive.Workers[aff-1] = remainder
 				s.inHive_etox.WorkerCohortITthreshold[aff-1] = newITval
@@ -86,16 +87,19 @@ func (s *TransitionForagers_GUTS) Update(w *ecs.World) {
 			}
 			s.newCohorts.Foragers = squadrons
 
-		} else if s.etox.Application && s.etox.GUTS && s.GUTS.Type == "SD" { // clean this up
+		} else if s.etox.Application && s.etox.GUTS && s.GUTS.Type == "SD" { // GUTS-RED-SD; ToDo: clean this up
 			c := 0
 			newCival := 0.
 			newOraldose := 0.
 
 			for i := aff; i < len(s.inHive.Workers); i++ {
+				if s.inHive.Workers[i] == 0 {
+					continue
+				}
 				newForagers = s.inHive.Workers[i]
 				s.inHive.Workers[i] = 0
-				squadrons += newForagers / s.params.SquadronSize // need to test this
-				remainder += newForagers % s.params.SquadronSize // need to test this
+				squadrons += newForagers / s.params.SquadronSize
+				remainder += newForagers % s.params.SquadronSize
 
 				newCival += s.inHive_etox.WorkerCohortC_i[i] * float64(newForagers)
 				s.inHive_etox.WorkerCohortC_i[i] = 0.
@@ -114,7 +118,6 @@ func (s *TransitionForagers_GUTS) Update(w *ecs.World) {
 			if s.inHive.Workers[aff-1] > 0 {
 				s.inHive_etox.WorkerCohortC_i[aff-1] = CalcRemainderDose(remainder, s.inHive.Workers[aff-1], s.inHive_etox.WorkerCohortC_i[aff-1], newCival)
 				s.inHive_etox.WorkerCohortDose[aff-1] = CalcRemainderDose(remainder, s.inHive.Workers[aff-1], s.inHive_etox.WorkerCohortDose[aff-1], newOraldose)
-
 				s.inHive.Workers[aff-1] += remainder
 			} else {
 				s.inHive.Workers[aff-1] = remainder
@@ -123,12 +126,15 @@ func (s *TransitionForagers_GUTS) Update(w *ecs.World) {
 			}
 			s.newCohorts.Foragers = squadrons
 
-		} else {
+		} else { // no GUTSparams need to be shifted, simple dose-response or normal baseline model
 			for i := aff; i < len(s.inHive.Workers); i++ {
+				if s.inHive.Workers[i] == 0 {
+					continue
+				}
 				newForagers = s.inHive.Workers[i]
 				s.inHive.Workers[i] = 0
-				squadrons += newForagers / s.params.SquadronSize // need to test this
-				remainder += newForagers % s.params.SquadronSize // need to test this
+				squadrons += newForagers / s.params.SquadronSize
+				remainder += newForagers % s.params.SquadronSize
 			}
 
 			s.inHive.Workers[aff-1] += remainder

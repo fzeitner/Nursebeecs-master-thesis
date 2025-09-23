@@ -87,7 +87,7 @@ func (s *MortalityCohorts_etox) applyMortalityEtox(coh []int, dose []float64, sl
 				ldx = 1
 			}
 
-			if num > 100 { // introduced this to make survival for lower numbers of cohorts more realisitcally stochastic
+			if num > 100 { // introduced this to make survival for lower numbers of individuals in cohorts more realisitcally stochastic
 				toDie = int((float64(num) * ldx))
 			} else {
 				i := 0
@@ -109,7 +109,7 @@ func (s *MortalityCohorts_etox) applyMortalityGUTS(coh []int, dose []float64, C_
 		r := rand.New(s.rng)
 		for i := range coh {
 			if coh[i] != 0 && dose[i]+C_i[i] > 0 {
-				coh[i], dose[i], _, C_i[i] = GUTS.SD_IHbee(coh[i], dose[i], 0, C_i[i], r, w) // this might work now
+				coh[i], dose[i], C_i[i] = GUTS.SD_IHbee(coh[i], dose[i], C_i[i], r, w) // this might work now
 			}
 			if coh[i] == 0 {
 				C_i[i] = 0.

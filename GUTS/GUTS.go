@@ -41,21 +41,21 @@ func SD_for(Oraldose float64, Contactdose float64, C_i float64, rng *rand.Rand, 
 	return
 }
 
-func SD_IHbee(num int, Oraldose float64, Contactdose float64, C_i float64, rng *rand.Rand, w *ecs.World) (survivors int, C_oral float64, C_contact float64, Ci float64) {
+func SD_IHbee(num int, Oraldose float64, C_i float64, rng *rand.Rand, w *ecs.World) (survivors int, C_oral float64, Ci float64) {
 	// runs GUTS-RED-SD based on BeeGUTS (Baas et al. 2022) and the GUTS model framework created by Jager et al. 2011
 	// uses... to return...
 	gutsparams := ecs.GetResource[params_etox.GUTSParams](w)
 
 	toDie := 0
 	C_oral = Oraldose
-	C_contact = Contactdose
+	//C_contact = Contactdose
 	Ci = C_i
 
 	i := 0
 	for i < gutsparams.T {
 		C_oral *= math.Exp(-gutsparams.K_SR / float64(gutsparams.T))
-		C_contact *= math.Exp(-gutsparams.K_CA / float64(gutsparams.T))
-		current_dose := C_contact + C_oral
+		//C_contact *= math.Exp(-gutsparams.K_CA / float64(gutsparams.T))
+		current_dose := C_oral //+ C_contact
 
 		Ci = math.Max(0, Ci+(gutsparams.Kd_SD*(current_dose-Ci))*1/float64(gutsparams.T))
 		h := math.Max(0, gutsparams.BW_SD*(Ci-gutsparams.MW_SD)*1/float64(gutsparams.T))

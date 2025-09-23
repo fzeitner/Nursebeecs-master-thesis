@@ -56,10 +56,3 @@ func shiftCohorts(coh []int, add int) {
 	}
 	coh[0] = add
 }
-
-func shiftCohortsFloat(coh []float64, add float64) {
-	for i := len(coh) - 1; i > 0; i-- {
-		coh[i] = coh[i-1]
-	}
-	coh[0] = add
-}
