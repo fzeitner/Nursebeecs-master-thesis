@@ -28,8 +28,8 @@ func SD_for(Oraldose float64, Contactdose float64, C_i float64, rng *rand.Rand, 
 		C_contact *= math.Exp(-gutsparams.K_CA / float64(gutsparams.T))
 		current_dose := C_contact + C_oral
 
-		Ci = math.Max(0, Ci+(gutsparams.Kd_SD*(current_dose-Ci))*1/float64(gutsparams.T))
-		h := math.Max(0, gutsparams.BW_SD*(Ci-gutsparams.MW_SD)*1/float64(gutsparams.T))
+		Ci = math.Max(0, Ci + (gutsparams.Kd_SD*(current_dose-Ci))/float64(gutsparams.T))
+		h := math.Max(0, gutsparams.BW_SD*(Ci-gutsparams.MW_SD)/float64(gutsparams.T))
 
 		if rng.Float64() > math.Exp(-h) {
 			lethaldose = true

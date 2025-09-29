@@ -45,6 +45,10 @@ func (s *HoneyConsumption) Update(w *ecs.World) {
 		needAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.needs.WorkerResting + float64(s.pop.DronesInHive)*s.needs.Drone
 		needLarvae := float64(s.pop.WorkerLarvae)*needLarva + float64(s.pop.DroneLarvae)*s.needs.DroneLarva
 
+		if s.pop.WorkersInHive + s.pop.WorkersForagers == 0 { // to prevent bugs; if there are no adults there cannot be honey used to warm brood; hive is dead anyways
+			thermoRegBrood = 0
+		}
+
 		consumption := needAdult + needLarvae + float64(s.pop.TotalBrood)*thermoRegBrood
 		consumptionEnergy := 0.001 * consumption * s.energyParams.Honey
 

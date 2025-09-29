@@ -88,8 +88,6 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 
 		consumed_honey := 0. // tracker for total amount of honey consumed in this subsystem
 
-		// shuffle here probs
-
 		// foragers, pretty straigt forward
 
 		forquery := s.foragerFilter.Query()

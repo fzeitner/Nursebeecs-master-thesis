@@ -57,9 +57,9 @@ def plot_column(data_beehave, data_beecs, column, quantiles, image_file):
 
 if __name__ == "__main__":
     plot_quantiles(
-        "etox_validation_testing/tunnel_beecs/netlogo.csv",
-        "etox_validation_testing/tunnel_beecs/beecs.csv",
-        "etox_validation_testing/tunnel_beecs",
-        #"png",
-        "svg",
+        "etox_validation_testing/default_beecs/netlogo.csv",
+        "etox_validation_testing/default_beecs/beecs.csv",
+        "etox_validation_testing/default_beecs",
+        "png",
+        #"svg",
     )

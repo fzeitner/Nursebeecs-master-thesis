@@ -148,15 +148,16 @@ if __name__ == "__main__":
     ### adding a visual indicator in plots, does not change anything regarding the results
     appdays = {"default_etox" : 0,                     # appday = 0 for no application
               "default_dimethoate": 189, 
-              "default_dimethoate_GUTS": 189, 
+              "default_dimethoate_GUTS_IT": 189, 
+              "default_dimethoate_GUTS_SD": 189, 
               "etox_tunnel_control": 0,
               "etox_tunnel_dimethoate": 217, 
               "Rothamsted2009_fenoxycarb": 189, 
               "Rothamsted2009_noPPP": 0,
     }
-    testfolders = ["default_etox", "default_dimethoate", "default_dimethoate_GUTS", "etox_tunnel_control",
+    testfolders = ["default_etox", "default_dimethoate", "default_dimethoate_GUTS_IT", "default_dimethoate_GUTS_SD", "etox_tunnel_control",
                    "etox_tunnel_dimethoate", "Rothamsted2009_fenoxycarb", "Rothamsted2009_noPPP", ]
-    folder = testfolders[2]
+    folder = testfolders[3]
 
 
 
@@ -186,12 +187,12 @@ if __name__ == "__main__":
             )
     else:
         if agg_all:
-                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
-                agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
+            agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
+            agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
         elif agg_net:
             agg_netlogo("etox_validation_testing/" + folder + "/out/netlogo.csv", "etox_validation_testing/" + folder + "/netlogo.csv")
         elif agg_bee:
-                agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
+            agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
         plot_quantiles(
             "etox_validation_testing/" + folder + "/netlogo.csv",
             "etox_validation_testing/" + folder + "/beecs.csv",
