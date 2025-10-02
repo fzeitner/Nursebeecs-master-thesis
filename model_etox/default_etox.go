@@ -30,7 +30,6 @@ func Default(p params.Params, pe params_etox.Params_etox, app *app.App) *app.App
 	app.AddSystem(&sys_etox.Init_etox{}) // inits all the changes necessary for the etox module
 
 	// Sub-models
-
 	app.AddSystem(&sys.CalcAff{})
 	app.AddSystem(&sys.CalcForagingPeriod{})
 	app.AddSystem(&sys_etox.CalcWaterForagingPeriod{}) // might as well be disabled atm because no function actually uses water data as of yet, because water foraging seems irrelevant/untested in netlogo as well

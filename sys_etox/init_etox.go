@@ -28,12 +28,13 @@ type Init_etox struct {
 	inHive_etox globals_etox.InHive_etox
 	etox        *params_etox.ETOXparams
 	guts        *params_etox.GUTSParams
+	nursecons   *params_etox.ConsumptionRework
 
 	foragerfilter    *ecs.Filter1[comp.Activity]
 	patchfilter      *ecs.Filter1[comp.Coords]
 	etoxExchanger    *ecs.Exchange2[comp_etox.KnownPatch_etox, comp_etox.Activity_etox]
 	source           rand.Source
-	foragerPPPmapper *ecs.Map2[comp_etox.PPPExpo, comp_etox.PPPLoad]
+	foragerPPPmapper *ecs.Map2[comp_etox.PPPExpo, comp_etox.EtoxLoad]
 	patchPPPmapper   *ecs.Map2[comp_etox.PatchProperties_etox, comp_etox.Resource_etox]
 
 	waterperiodData globals_etox.WaterForagingPeriodData
@@ -80,6 +81,43 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	}
 	ecs.AddResource(w, &storages_etox)
 
+	// nursebeecs consumption changes to larvae get initializd here
+	s.nursecons = ecs.GetResource[params_etox.ConsumptionRework](w)
+	// assume total honey need of 65.4 mg based on Rortais et al. 2005 and original BEEHAVE, but spread throughout the different stages
+	// of development. Brouwers & Beetsma 1987 show the sugar and protein content of jelly provided to different larvae over time; multiple authors
+	// provide information on exponential larval growth. This combines to the following intake estimates:
+	Workerhoneytotal := 65.4
+	s.nursecons.HoneyWorkerLarva[0] = 0.025 * Workerhoneytotal // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyWorkerLarva[1] = 0.05 * Workerhoneytotal  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyWorkerLarva[2] = 0.125 * Workerhoneytotal // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyWorkerLarva[3] = 0.4 * Workerhoneytotal   // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyWorkerLarva[4] = 0.3 * Workerhoneytotal   // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyWorkerLarva[5] = 0.1 * Workerhoneytotal   // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	// assume total protein need of 80 - 100 mg, still need to decide
+	Workerpollentotal := 100.
+	s.nursecons.PollenWorkerLarva[0] = 0.05 * Workerpollentotal // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenWorkerLarva[1] = 0.1 * Workerpollentotal  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenWorkerLarva[2] = 0.3 * Workerpollentotal  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenWorkerLarva[3] = 0.4 * Workerpollentotal  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenWorkerLarva[4] = 0.1 * Workerpollentotal  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenWorkerLarva[5] = 0.05 * Workerpollentotal // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	// drone intake is simply estimated to be roughly twice the need of worker larvae; there is evidence for this to be adequate (Hrassnigg&Crailsheim 2005)
+	s.nursecons.HoneyDroneLarva[0] = 0.025 * Workerhoneytotal * 2 // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyDroneLarva[1] = 0.05 * Workerhoneytotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyDroneLarva[2] = 0.075 * Workerhoneytotal * 2 // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyDroneLarva[3] = 0.15 * Workerhoneytotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyDroneLarva[4] = 0.35 * Workerhoneytotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyDroneLarva[5] = 0.3 * Workerhoneytotal * 2   // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyDroneLarva[6] = 0.05 * Workerhoneytotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+
+	s.nursecons.PollenDroneLarva[0] = 0.05 * Workerpollentotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenDroneLarva[1] = 0.1 * Workerpollentotal * 2   // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenDroneLarva[2] = 0.25 * Workerpollentotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenDroneLarva[3] = 0.35 * Workerpollentotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenDroneLarva[4] = 0.15 * Workerpollentotal * 2  // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenDroneLarva[5] = 0.075 * Workerpollentotal * 2 // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenDroneLarva[6] = 0.025 * Workerpollentotal * 2 // xx% of total intake on this day, based on Brouwers&Beetsma (1987)
+
 	stats_etox := globals_etox.PopulationStats_etox{}
 	ecs.AddResource(w, &stats_etox)
 
@@ -93,7 +131,7 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 		ecs.AddResource(w, &GUTSdist)
 	}
 
-	// add the PPPExpo component for all foragers
+	// add the PPPExpo component to all foragers
 	s.foragerfilter = s.foragerfilter.New(w)
 	s.source = rand.New(ecs.GetResource[resource.Rand](w))
 	s.foragerPPPmapper = s.foragerPPPmapper.New(w)
@@ -104,17 +142,17 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	for query.Next() {
 		toAdd = append(toAdd, query.Entity())
 	}
-
+	// also adds GUTS related components here if GUTS is enabled
 	exchange := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())
 	rng := rand.New(s.source)
 	for _, entity := range toAdd {
 		if !s.etox.GUTS {
-			s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.PPPLoad{PPPLoad: 0.})
+			s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 		} else {
 			if s.guts.Type == "IT" {
-				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0., RmdSurvivalIT: GUTS.Calc_F(rng.Float64(), w)}, &comp_etox.PPPLoad{PPPLoad: 0.})
+				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0., RmdSurvivalIT: GUTS.Calc_F(rng.Float64(), w)}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 			} else {
-				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0.}, &comp_etox.PPPLoad{PPPLoad: 0.})
+				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0.}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 			}
 		}
 		exchange.Exchange(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})

@@ -27,6 +27,7 @@ type DefaultParams_etox struct {
 	WaterForagingPeriod WaterForagingPeriod
 	Toxicityparams      Toxicityparams
 	GUTSParams          GUTSParams
+	ConsumptionRework   ConsumptionRework
 }
 
 // Default returns the complete default parameter set of BEEHAVE.
@@ -81,7 +82,7 @@ func Default_etox() DefaultParams_etox {
 			RandomYears: false,
 		},
 		GUTSParams: GUTSParams{ // default values are taken from supplementary information of Baas et al. 2022; params are specified for dimethoate
-			Type: "IT",  // GUTS mode
+			Type: "SD",  // GUTS mode
 			K_SR: 0.625, //default values taken from Baas et al. 2022
 			K_CA: 0.4,   //default values taken from Baas et al. 2022
 			T:    24,    // amount of timesteps per day for numeric GUTS approximation
@@ -95,6 +96,22 @@ func Default_etox() DefaultParams_etox {
 			Kd_SD: 0.36,  // Dominant rate constant for the reduced-SD-model
 			MW_SD: 0.014, // Median of the distribution of thresholds for calculating h in the red-SD-model; adjusted from ng/bee (Baas et al. 2022) to mug/bee as this model uses mug as primary unit
 			BW_SD: 21.,   // Killing rate for calculating h in the red-SD-model; adjusted from 1/(ng/bee d) (Baas et al. 2022) to 1/(mug/bee d) as this model uses mug as primary unit
+		},
+		ConsumptionRework: ConsumptionRework{
+			HoneyAdultWorker:  5.1, // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5mg honey
+			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline
+
+			MaxPollenNurse: 12., // mg/day; cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992
+			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurate. This value is probably unknown and 60 is probably too high
+
+			HoneyAdultDrone:  10., // mg/day; taken from BEEHAVE, though the origin of this value is very unclear; this might be another placeholder
+			PollenAdultDrone: 2.,  // mg/day; taken from BEEHAVE, already just a rough estimate; there appears to be no clear value anywhere, though it is known that they have an increased need for the first 9 days to reach maturity
+
+			HoneyWorkerLarva:  make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
+			PollenWorkerLarva: make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
+
+			HoneyDroneLarva:  make([]float64, 7), // gets initialized in sys.init_etox for now because I do not know how else to do this
+			PollenDroneLarva: make([]float64, 7), // gets initialized in sys.init_etox for now because I do not know how else to do this
 		},
 	}
 }
@@ -133,4 +150,5 @@ func (p *DefaultParams_etox) Apply(world *ecs.World) {
 	ecs.AddResource(world, &pCopy.Toxicityparams)
 	ecs.AddResource(world, &pCopy.WaterParams)
 	ecs.AddResource(world, &pCopy.GUTSParams)
+	ecs.AddResource(world, &pCopy.ConsumptionRework)
 }

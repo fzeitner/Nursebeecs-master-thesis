@@ -63,6 +63,9 @@ type ForagingStats_etox struct {
 	Foragerdied            int     // debugging global
 	TotalSearches          int     //debugging global
 	ForagerDiedLifespan    int     //debugging global
+
+	MaxEnergyExpenditure  float64 // for tracking the energy use of foragers per foraging day
+	MeanEnergyExpenditure float64 // for tracking the energy use of foragers per foraging day
 }
 
 // Reset all stats.
@@ -78,4 +81,7 @@ func (s *ForagingStats_etox) Reset() {
 	s.Foragerdied = 0
 	s.TotalSearches = 0
 	s.ForagerDiedLifespan = 0
+
+	s.MaxEnergyExpenditure = 0.
+	s.MeanEnergyExpenditure = 0.
 }

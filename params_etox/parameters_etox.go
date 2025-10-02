@@ -78,3 +78,21 @@ type GUTSParams struct {
 	MW_SD float64 // Median of the distribution of thresholds for calculating h in the red-SD-model
 	BW_SD float64 // Killing rate for calculating h in the red-SD-model
 }
+
+// this contains all the adjusted new estimates for consumption that became necessary in the nurse rework
+type ConsumptionRework struct {
+	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses)
+	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses)
+
+	MaxPollenNurse float64 // maximum of pollen that nurses can theoretically take in
+	MaxHoneyNurse  float64 // maximum of honey that nurses can theoretically take in
+
+	HoneyAdultDrone  float64 // daily intake needs for drones
+	PollenAdultDrone float64 // daily intake needs for drones
+
+	HoneyWorkerLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage
+	PollenWorkerLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage
+
+	HoneyDroneLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage
+	PollenDroneLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage
+}

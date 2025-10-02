@@ -6,8 +6,10 @@ import (
 )
 
 // NectarLoad component for forager squadrons.
-type PPPLoad struct {
+type EtoxLoad struct {
 	PPPLoad float64 // Current amount of PPP in the load [µg]
+
+	EnergyUsed float64 // amount of energy used this day (from foraging/scouting only)
 }
 
 // PPP exposure for forager squadrons.

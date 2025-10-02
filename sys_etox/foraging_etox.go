@@ -62,15 +62,15 @@ type Foraging_etox struct {
 	patchConfigMapper     *ecs.Map2[comp.PatchProperties, comp.Trip]
 	patchConfigMapperEtox *ecs.Map3[comp.PatchProperties, comp_etox.PatchProperties_etox, comp.Trip]
 	foragerMapper         *ecs.Map2[comp_etox.Activity_etox, comp_etox.KnownPatch_etox]
-	foragerLoadPPPMapper  *ecs.Map6[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage, comp.NectarLoad, comp_etox.PPPLoad, comp_etox.PPPExpo]
-	pppExpoAdder          *ecs.Map2[comp_etox.PPPExpo, comp_etox.PPPLoad]
+	foragerLoadPPPMapper  *ecs.Map6[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage, comp.NectarLoad, comp_etox.EtoxLoad, comp_etox.PPPExpo]
+	pppExpoAdder          *ecs.Map2[comp_etox.PPPExpo, comp_etox.EtoxLoad]
 	etoxPatchAdder        *ecs.Map2[comp_etox.KnownPatch_etox, comp_etox.Activity_etox]
 
 	activityFilter       *ecs.Filter1[comp_etox.Activity_etox]
 	ageFilter            *ecs.Filter1[comp.Age]
-	loadFilter           *ecs.Filter3[comp_etox.Activity_etox, comp.NectarLoad, comp_etox.PPPLoad]
+	loadFilter           *ecs.Filter3[comp_etox.Activity_etox, comp.NectarLoad, comp_etox.EtoxLoad]
 	foragerFilter        *ecs.Filter3[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage]
-	foragerFilterLoadPPP *ecs.Filter6[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage, comp.NectarLoad, comp_etox.PPPLoad, comp_etox.PPPExpo]
+	foragerFilterLoadPPP *ecs.Filter6[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage, comp.NectarLoad, comp_etox.EtoxLoad, comp_etox.PPPExpo]
 	foragerFilterSimple  *ecs.Filter2[comp_etox.Activity_etox, comp_etox.KnownPatch_etox]
 	patchFilter          *ecs.Filter2[comp.Resource, comp.PatchProperties]
 	patchUpdateFilter    *ecs.Filter7[comp.PatchProperties, comp.PatchDistance, comp.Resource, comp.HandlingTime, comp.Trip, comp.Mortality, comp.Dance]
@@ -176,12 +176,18 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 
 			round++
 		}
-
-		query = s.foragerFilter.Query()
-		for query.Next() {
-			act, _, _ := query.Get()
+		query2 := s.loadFilter.Query() // changed this to a query that also checks load to track mean and max energy expended by foragers per day
+		c := query2.Count()
+		for query2.Next() {
+			act, _, load := query2.Get()
 			act.Current = activity.Resting
+
+			s.foragingStats.MeanEnergyExpenditure += load.EnergyUsed
+			if load.EnergyUsed > s.foragingStats.MaxEnergyExpenditure {
+				s.foragingStats.MaxEnergyExpenditure = load.EnergyUsed
+			}
 		}
+		s.foragingStats.MeanEnergyExpenditure /= float64(c)
 	}
 }
 
@@ -200,11 +206,11 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 		}
 		for _, entity := range s.toAdd {
 			if s.etox.GUTS && s.guts.Type == "IT" {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.PPPLoad{PPPLoad: 0.})
+				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 			} else if s.etox.GUTS && s.guts.Type == "SD" {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i}, &comp_etox.PPPLoad{PPPLoad: 0.})
+				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 			} else {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.PPPLoad{PPPLoad: 0.})
+				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 			}
 			s.etoxPatchAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
 
@@ -606,7 +612,7 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 	s.rng.Shuffle(len(s.foragershuffle), func(i, j int) { s.foragershuffle[i], s.foragershuffle[j] = s.foragershuffle[j], s.foragershuffle[i] })
 
 	for _, e := range s.foragershuffle {
-		act, patch, milage, _, _, ppp := s.foragerLoadPPPMapper.Get(e)
+		act, patch, milage, _, eload, ppp := s.foragerLoadPPPMapper.Get(e)
 
 		if act.Current == activity.Searching {
 			dist := s.forageParams.SearchLength / 1000.0
@@ -615,6 +621,7 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 
 			en := s.forageParams.SearchLength * s.foragerParams.FlightCostPerM
 			s.stores.Honey -= en * float64(s.foragerParams.SquadronSize)
+			eload.EnergyUsed += en
 
 			ppp.OralDose += s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
 
@@ -632,7 +639,7 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 				en = trip.CostNectar
 			}
 			s.stores.Honey -= en * float64(s.foragerParams.SquadronSize)
-
+			eload.EnergyUsed += en
 			ppp.OralDose += s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
 
 			foragers++
@@ -654,7 +661,7 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 
 		// Acute toxicity during flight
 		lethaldose := false
-		if s.etox.ForagerImmediateMortality {
+		if s.etox.ForagerImmediateMortality { // always false for now; might as well be deactivateds
 			if PPPexpo.RdmSurvivalOral < 1-(1/(1+math.Pow(PPPexpo.OralDose/s.toxic.ForagerOralLD50, s.toxic.ForagerOralSlope))) {
 				lethaldose = true
 			}
