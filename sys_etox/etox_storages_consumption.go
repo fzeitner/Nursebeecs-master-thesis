@@ -28,7 +28,7 @@ type EtoxStorages struct {
 	etox          *params_etox.ETOXparams
 	toxic         *params_etox.Toxicityparams
 	waterParams   *params_etox.WaterParams
-	cons          *globals.ConsumptionStats
+	newCons       *params_etox.ConsumptionRework
 
 	beecsstores *globals.Stores
 	stores      *globals_etox.Storages_etox
@@ -39,6 +39,7 @@ type EtoxStorages struct {
 	inHive_etox *globals_etox.InHive_etox
 	Larvae      *globals.Larvae
 	Larvae_etox *globals_etox.Larvae_etox
+	cons        *globals.ConsumptionStats
 
 	foragerMapper  *ecs.Map1[comp_etox.PPPExpo]
 	foragerFilter  *ecs.Filter1[comp_etox.PPPExpo]
@@ -59,7 +60,7 @@ func (s *EtoxStorages) Initialize(w *ecs.World) {
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
 	s.waterParams = ecs.GetResource[params_etox.WaterParams](w)
-	s.cons = ecs.GetResource[globals.ConsumptionStats](w)
+	s.newCons = ecs.GetResource[params_etox.ConsumptionRework](w)
 
 	s.beecsstores = ecs.GetResource[globals.Stores](w)
 	s.stores = ecs.GetResource[globals_etox.Storages_etox](w)
@@ -70,6 +71,7 @@ func (s *EtoxStorages) Initialize(w *ecs.World) {
 	s.inHive_etox = ecs.GetResource[globals_etox.InHive_etox](w)
 	s.Larvae = ecs.GetResource[globals.Larvae](w)
 	s.Larvae_etox = ecs.GetResource[globals_etox.Larvae_etox](w)
+	s.cons = ecs.GetResource[globals.ConsumptionStats](w)
 
 	s.foragerMapper = s.foragerMapper.New(w)
 	s.foragerFilter = s.foragerFilter.New(w)
@@ -89,7 +91,6 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		consumed_honey := 0. // tracker for total amount of honey consumed in this subsystem
 
 		// foragers, pretty straigt forward
-
 		forquery := s.foragerFilter.Query()
 		for forquery.Next() {
 			s.foragershuffle = append(s.foragershuffle, forquery.Entity())
@@ -110,66 +111,71 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		}
 		s.foragershuffle = s.foragershuffle[:0]
 
-		// inhive bees, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
-		c := 0
-		h := 0.
-		ETOX_Consumed_Honey := s.stores.ETOX_EnergyThermo // may already be set to 0 from forager query
-		s.stores.ETOX_EnergyThermo = 0.
-		s.etoxStats.CumDoseIHBees, c, h = s.CalcDosePerCohort(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, ETOX_Consumed_Honey, s.needs.WorkerResting, s.needspollen.Worker, float64(1), float64(1))
-		if s.pop.WorkersInHive > 0 {
-			s.etoxStats.MeanDoseIHBees = s.etoxStats.CumDoseIHBees / float64(c)
-		} else {
-			s.etoxStats.MeanDoseIHBees = 0.
+		if s.newCons.Nursebeecs { // if nursebeecs is turned on exosure gets calculated here
+			// continue implementing nursebeecs here
+		} else { // classic BEEHAVE_ecotox calculation of exposure
+
+			// inhive bees, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
+			c := 0
+			h := 0.
+			ETOX_Consumed_Honey := s.stores.ETOX_EnergyThermo // may already be set to 0 from forager query
+			s.stores.ETOX_EnergyThermo = 0.
+			s.etoxStats.CumDoseIHBees, c, h = s.CalcDosePerCohort(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, ETOX_Consumed_Honey, s.needs.WorkerResting, s.needspollen.Worker, float64(1), float64(1))
+			if s.pop.WorkersInHive > 0 {
+				s.etoxStats.MeanDoseIHBees = s.etoxStats.CumDoseIHBees / float64(c)
+			} else {
+				s.etoxStats.MeanDoseIHBees = 0.
+			}
+			s.etoxStats.NumberIHbeeCohorts = c
+
+			consumed_honey += h
+
+			// inhive larvae, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
+			// larvae exposure considers the nursebee-filtering effect
+			ETOX_Consumed_Honey = 0.
+			s.etoxStats.CumDoseLarvae, c, h = s.CalcDosePerCohort(w, s.Larvae.Workers, s.Larvae_etox.WorkerCohortDose, ETOX_Consumed_Honey, (s.needs.WorkerLarvaTotal / float64(s.workerDev.LarvaeTime)), (s.needspollen.WorkerLarvaTotal / float64(s.workerDev.LarvaeTime)), s.toxic.NursebeesNectar, s.toxic.NursebeesPollen)
+			if s.pop.WorkerLarvae > 0 {
+				s.etoxStats.MeanDoseLarvae = s.etoxStats.CumDoseLarvae / float64(c)
+			} else {
+				s.etoxStats.MeanDoseLarvae = 0.
+			}
+
+			consumed_honey += h
+
+			// inhive dronelarvae, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
+			// larvae exposure considers the nursebee-filtering effect
+			s.etoxStats.CumDoseDroneLarvae, c, h = s.CalcDosePerCohort(w, s.Larvae.Drones, s.Larvae_etox.DroneCohortDose, ETOX_Consumed_Honey, s.needs.DroneLarva, s.needspollen.DroneLarva, s.toxic.NursebeesNectar, s.toxic.NursebeesPollen)
+			if s.pop.DroneLarvae > 0 {
+				s.etoxStats.MeanDoseDroneLarvae = s.etoxStats.CumDoseDroneLarvae / float64(c)
+			} else {
+				s.etoxStats.MeanDoseDroneLarvae = 0.
+			}
+
+			consumed_honey += h
+
+			// inhive drones, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
+			s.etoxStats.CumDoseDrones, c, h = s.CalcDosePerCohort(w, s.inHive.Drones, s.inHive_etox.DroneCohortDose, ETOX_Consumed_Honey, s.needs.Drone, s.needspollen.Drone, float64(1), float64(1))
+			if s.pop.DroneLarvae > 0 {
+				s.etoxStats.MeanDoseDrones = s.etoxStats.CumDoseDrones / float64(c)
+			} else {
+				s.etoxStats.MeanDoseDrones = 0.
+			}
+
+			consumed_honey += h
+
+			if s.etox.DegradationHoney {
+				s.DegradeHoney(w)
+			}
+
+			// leftovers from debugging
+			_ = s.pop.DroneLarvae + s.pop.DronesInHive + s.pop.WorkerLarvae + s.pop.WorkersForagers + s.pop.WorkersInHive + forcount
+			// checkpoint for bugfixing honey consumption in etox
+			if math.Round(consumed_honey) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey) {
+				panic("Fatal error in honey store dose calculations, model output will be wrong!")
+			}
+
+			s.ShiftHoney(w)
 		}
-		s.etoxStats.NumberIHbeeCohorts = c
-
-		consumed_honey += h
-
-		// inhive larvae, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
-		// larvae exposure considers the nursebee-filtering effect
-		ETOX_Consumed_Honey = 0.
-		s.etoxStats.CumDoseLarvae, c, h = s.CalcDosePerCohort(w, s.Larvae.Workers, s.Larvae_etox.WorkerCohortDose, ETOX_Consumed_Honey, (s.needs.WorkerLarvaTotal / float64(s.workerDev.LarvaeTime)), (s.needspollen.WorkerLarvaTotal / float64(s.workerDev.LarvaeTime)), s.toxic.NursebeesNectar, s.toxic.NursebeesPollen)
-		if s.pop.WorkerLarvae > 0 {
-			s.etoxStats.MeanDoseLarvae = s.etoxStats.CumDoseLarvae / float64(c)
-		} else {
-			s.etoxStats.MeanDoseLarvae = 0.
-		}
-
-		consumed_honey += h
-
-		// inhive dronelarvae, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
-		// larvae exposure considers the nursebee-filtering effect
-		s.etoxStats.CumDoseDroneLarvae, c, h = s.CalcDosePerCohort(w, s.Larvae.Drones, s.Larvae_etox.DroneCohortDose, ETOX_Consumed_Honey, s.needs.DroneLarva, s.needspollen.DroneLarva, s.toxic.NursebeesNectar, s.toxic.NursebeesPollen)
-		if s.pop.DroneLarvae > 0 {
-			s.etoxStats.MeanDoseDroneLarvae = s.etoxStats.CumDoseDroneLarvae / float64(c)
-		} else {
-			s.etoxStats.MeanDoseDroneLarvae = 0.
-		}
-
-		consumed_honey += h
-
-		// inhive drones, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
-		s.etoxStats.CumDoseDrones, c, h = s.CalcDosePerCohort(w, s.inHive.Drones, s.inHive_etox.DroneCohortDose, ETOX_Consumed_Honey, s.needs.Drone, s.needspollen.Drone, float64(1), float64(1))
-		if s.pop.DroneLarvae > 0 {
-			s.etoxStats.MeanDoseDrones = s.etoxStats.CumDoseDrones / float64(c)
-		} else {
-			s.etoxStats.MeanDoseDrones = 0.
-		}
-
-		consumed_honey += h
-
-		if s.etox.DegradationHoney {
-			s.DegradeHoney(w)
-		}
-
-		// leftovers from debugging
-		_ = s.pop.DroneLarvae + s.pop.DronesInHive + s.pop.WorkerLarvae + s.pop.WorkersForagers + s.pop.WorkersInHive + forcount
-		// checkpoint for bugfixing honey consumption in etox
-		if math.Round(consumed_honey) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey) {
-			panic("Fatal error in honey store dose calculations, model output will be wrong!")
-		}
-
-		s.ShiftHoney(w)
 	}
 }
 

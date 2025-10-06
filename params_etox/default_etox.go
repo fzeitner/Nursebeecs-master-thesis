@@ -98,20 +98,30 @@ func Default_etox() DefaultParams_etox {
 			BW_SD: 21.,   // Killing rate for calculating h in the red-SD-model; adjusted from 1/(ng/bee d) (Baas et al. 2022) to 1/(mug/bee d) as this model uses mug as primary unit
 		},
 		ConsumptionRework: ConsumptionRework{
-			HoneyAdultWorker:  5.1, // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5mg honey
-			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline
+			Nursebeecs: false, // turned off to keep basic model as default
+
+			HoneyAdultWorker:  5.1, // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5.1mg honey
+			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline for now; maybe adjust down the line
 
 			MaxPollenNurse: 12., // mg/day; cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992
-			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurate. This value is probably unknown and 60 is probably too high
+			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurately interpreted by BeeREX authors. This value is probably unknown and 60 is probably too high
 
 			HoneyAdultDrone:  10., // mg/day; taken from BEEHAVE, though the origin of this value is very unclear; this might be another placeholder
 			PollenAdultDrone: 2.,  // mg/day; taken from BEEHAVE, already just a rough estimate; there appears to be no clear value anywhere, though it is known that they have an increased need for the first 9 days to reach maturity
 
 			HoneyWorkerLarva:  make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
 			PollenWorkerLarva: make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
+			HWLtotal:          75.5,               // mg over a total of 6 days; increased from old BEEHVE value, taken from Rortais et al. 2005
+			PWLtotal:          100.,               // mg over a total of 6 days; this is a lowered estimate as opposed to original BEEHAVE (used 142 mg), because some of the budged gets shifted to the first few days of adult development
+			PFPworker:         42,                 // mg over the first 4 days of life; this gets taken in by nurses if possible, if not the bees eat it themselves. 42 mg makes the pollen budget turn out exactly the same as before
 
 			HoneyDroneLarva:  make([]float64, 7), // gets initialized in sys.init_etox for now because I do not know how else to do this
 			PollenDroneLarva: make([]float64, 7), // gets initialized in sys.init_etox for now because I do not know how else to do this
+			HDLtotal:         124.9,              // mg over a total of 7 days; the old BEEHAVE value, taken from ROrtais et al. 2005
+			PDLtotal:         250.,               // mg over a total of 7 days; there is no proper estimate, this is lowered as opposed to original BEEHAVE (used 350 mg), because that is most likely too high. It is estimated that drones larvae weigh 1.8 - 2.6 more than workers (Hrassnigg and Crailsheim 2005)
+			PFPdrone:         100.,               // mg over the first 9 days of adult life; this gets taken in by nurses, as drones do not really eat any pollen by themselves. 100 mg makes the pollen budget turn out exactly the same as before
+			// Hrassnigg and Crailsheim (2005) use the same values for carbohydrates as Rortais for both larvae, but use a higher pollen budged than I estimated here. I could also simply adopt their budgets, but that would not be completely biologically accurate for modeling dynamics,
+			// because both worker and drones have an increased need of pollen after emerging (worker for 3-5 days, drones for ca. 8-10 days) to reach complete maturity. The authors mention this as well, it is hard to estimate how much of the budget is allocated to priming as adults.
 		},
 	}
 }

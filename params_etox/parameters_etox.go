@@ -81,6 +81,8 @@ type GUTSParams struct {
 
 // this contains all the adjusted new estimates for consumption that became necessary in the nurse rework
 type ConsumptionRework struct {
+	Nursebeecs bool // switch to turn on this rework of consumption behavior via nursebees
+
 	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses)
 	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses)
 
@@ -92,7 +94,13 @@ type ConsumptionRework struct {
 
 	HoneyWorkerLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage
 	PollenWorkerLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage
+	HWLtotal          float64   // HoneyWorkerLarva_total --> total amount of honey necessary to rear one worker larva
+	PWLtotal          float64   // PollenWorkerLarva_total --> total amount of pollen necessary to rear one worker larva
+	PFPworker         float64   // PollenForPriming of HG (hypopharyngeal glands) of workers, added on consumption over the first 4 days of adult life
 
 	HoneyDroneLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage
 	PollenDroneLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage
+	HDLtotal         float64   // HoneyDroneLarva_total --> total amount of honey necessary to rear one drone larva
+	PDLtotal         float64   // PollenDroneLarva_total --> total amount of pollen necessary to rear one drone larva
+	PFPdrone         float64   // PollenForPriming sexual maturity in drones, added on baseline consumption over the first 9 days of adult life
 }
