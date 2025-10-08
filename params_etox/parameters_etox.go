@@ -103,4 +103,11 @@ type ConsumptionRework struct {
 	HDLtotal         float64   // HoneyDroneLarva_total --> total amount of honey necessary to rear one drone larva
 	PDLtotal         float64   // PollenDroneLarva_total --> total amount of pollen necessary to rear one drone larva
 	PFPdrone         float64   // PollenForPriming sexual maturity in drones, added on baseline consumption over the first 9 days of adult life
+
+	Nursingcapabiliies []float64 // this is an array full of factors defining efficiency/capabiliy of the nurse cohort depending on age
+}
+
+type Nursing struct {
+	MinWL_ratio     float64 // target of minimum necessary worker:larva ratio that the colony tries to go back to if possible; goes back to Eischen et al. 1982, 1983, 1984
+	NurseAgeCeiling int     // baseline age until model assumes that workers will act as nurses
 }

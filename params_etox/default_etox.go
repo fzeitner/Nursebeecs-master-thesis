@@ -28,6 +28,7 @@ type DefaultParams_etox struct {
 	Toxicityparams      Toxicityparams
 	GUTSParams          GUTSParams
 	ConsumptionRework   ConsumptionRework
+	Nursing             Nursing
 }
 
 // Default returns the complete default parameter set of BEEHAVE.
@@ -103,8 +104,8 @@ func Default_etox() DefaultParams_etox {
 			HoneyAdultWorker:  5.1, // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5.1mg honey
 			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline for now; maybe adjust down the line
 
-			MaxPollenNurse: 12., // mg/day; cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992
-			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurately interpreted by BeeREX authors. This value is probably unknown and 60 is probably too high
+			MaxPollenNurse: 4.5, // + 1.5 per adult = 6 mg/day; this should be a field realistic total for a normal peak; Crailsheim reported up to 8 as a max, 12 as the highes statistical 95% bound under controlled conditions. 12 is cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992;
+			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurately interpreted by BeeREX authors. This value is probably unknown and 60 is probably far too high. It should not really matter though, as pollen intake will regulate amount of nurses and honey intake will be emergent property
 
 			HoneyAdultDrone:  10., // mg/day; taken from BEEHAVE, though the origin of this value is very unclear; this might be another placeholder
 			PollenAdultDrone: 2.,  // mg/day; taken from BEEHAVE, already just a rough estimate; there appears to be no clear value anywhere, though it is known that they have an increased need for the first 9 days to reach maturity
@@ -122,6 +123,12 @@ func Default_etox() DefaultParams_etox {
 			PFPdrone:         100.,               // mg over the first 9 days of adult life; this gets taken in by nurses, as drones do not really eat any pollen by themselves. 100 mg makes the pollen budget turn out exactly the same as before
 			// Hrassnigg and Crailsheim (2005) use the same values for carbohydrates as Rortais for both larvae, but use a higher pollen budged than I estimated here. I could also simply adopt their budgets, but that would not be completely biologically accurate for modeling dynamics,
 			// because both worker and drones have an increased need of pollen after emerging (worker for 3-5 days, drones for ca. 8-10 days) to reach complete maturity. The authors mention this as well, it is hard to estimate how much of the budget is allocated to priming as adults.
+
+			Nursingcapabiliies: make([]float64, 51),
+		},
+		Nursing: Nursing{
+			MinWL_ratio:     2,  // see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
+			NurseAgeCeiling: 13, // default age at which nurses stop working as nurses, unless model dynamics increase this
 		},
 	}
 }
@@ -161,4 +168,5 @@ func (p *DefaultParams_etox) Apply(world *ecs.World) {
 	ecs.AddResource(world, &pCopy.WaterParams)
 	ecs.AddResource(world, &pCopy.GUTSParams)
 	ecs.AddResource(world, &pCopy.ConsumptionRework)
+	ecs.AddResource(world, &pCopy.Nursing)
 }

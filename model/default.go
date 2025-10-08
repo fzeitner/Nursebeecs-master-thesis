@@ -36,12 +36,12 @@ func Default(p params.Params, app *app.App) *app.App {
 	app.AddSystem(&sys.TransitionForagers{})
 
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
-	app.AddSystem(&sys.BroodCare{})       // Moved before any other population changes for now, to avoid counting more than once.
+	app.AddSystem(&sys.BroodCare{})
 
 	app.AddSystem(&sys.NewCohorts{})      // here the new cohorts get initialized now
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model (miteproc), necessary to capture new Cohorts for foraging
 
-	app.AddSystem(&sys.Foraging{})
+	app.AddSystem(&sys.Foraging{}) // also initializes foragers now
 	app.AddSystem(&sys.MortalityForagers{})
 
 	app.AddSystem(&sys.CountPopulation{})

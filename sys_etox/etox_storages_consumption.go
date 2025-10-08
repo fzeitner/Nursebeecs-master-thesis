@@ -18,28 +18,30 @@ import (
 )
 
 type EtoxStorages struct {
-	needs         *params.HoneyNeeds
-	needspollen   *params.PollenNeeds
-	workerDev     *params.WorkerDevelopment
-	nurseParams   *params.Nursing
-	energyParams  *params.EnergyContent
-	storesParams  *params.Stores
-	foragerParams *params.Foragers
-	etox          *params_etox.ETOXparams
-	toxic         *params_etox.Toxicityparams
-	waterParams   *params_etox.WaterParams
-	newCons       *params_etox.ConsumptionRework
+	needs          *params.HoneyNeeds
+	needspollen    *params.PollenNeeds
+	workerDev      *params.WorkerDevelopment
+	oldNurseParams *params.Nursing
+	energyParams   *params.EnergyContent
+	storesParams   *params.Stores
+	foragerParams  *params.Foragers
+	etox           *params_etox.ETOXparams
+	toxic          *params_etox.Toxicityparams
+	waterParams    *params_etox.WaterParams
+	newCons        *params_etox.ConsumptionRework
 
-	beecsstores *globals.Stores
-	stores      *globals_etox.Storages_etox
-	pop         *globals.PopulationStats
-	etoxStats   *globals_etox.PopulationStats_etox
-	waterNeeds  *globals_etox.WaterNeeds
-	inHive      *globals.InHive
-	inHive_etox *globals_etox.InHive_etox
-	Larvae      *globals.Larvae
-	Larvae_etox *globals_etox.Larvae_etox
-	cons        *globals.ConsumptionStats
+	beecsstores   *globals.Stores
+	stores        *globals_etox.Storages_etox
+	pop           *globals.PopulationStats
+	etoxStats     *globals_etox.PopulationStats_etox
+	waterNeeds    *globals_etox.WaterNeeds
+	inHive        *globals.InHive
+	inHive_etox   *globals_etox.InHive_etox
+	Larvae        *globals.Larvae
+	Larvae_etox   *globals_etox.Larvae_etox
+	cons          *globals.ConsumptionStats
+	nglobals      *globals_etox.Nursing_globals
+	Nursing_stats *globals_etox.Nursing_stats
 
 	foragerMapper  *ecs.Map1[comp_etox.PPPExpo]
 	foragerFilter  *ecs.Filter1[comp_etox.PPPExpo]
@@ -53,7 +55,7 @@ func (s *EtoxStorages) Initialize(w *ecs.World) {
 	s.needs = ecs.GetResource[params.HoneyNeeds](w)
 	s.needspollen = ecs.GetResource[params.PollenNeeds](w)
 	s.workerDev = ecs.GetResource[params.WorkerDevelopment](w)
-	s.nurseParams = ecs.GetResource[params.Nursing](w)
+	s.oldNurseParams = ecs.GetResource[params.Nursing](w)
 	s.energyParams = ecs.GetResource[params.EnergyContent](w)
 	s.storesParams = ecs.GetResource[params.Stores](w)
 	s.foragerParams = ecs.GetResource[params.Foragers](w)
@@ -72,6 +74,8 @@ func (s *EtoxStorages) Initialize(w *ecs.World) {
 	s.Larvae = ecs.GetResource[globals.Larvae](w)
 	s.Larvae_etox = ecs.GetResource[globals_etox.Larvae_etox](w)
 	s.cons = ecs.GetResource[globals.ConsumptionStats](w)
+	s.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
+	s.Nursing_stats = ecs.GetResource[globals_etox.Nursing_stats](w)
 
 	s.foragerMapper = s.foragerMapper.New(w)
 	s.foragerFilter = s.foragerFilter.New(w)
@@ -82,15 +86,7 @@ func (s *EtoxStorages) Initialize(w *ecs.World) {
 
 func (s *EtoxStorages) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
-		thermoRegBrood := (s.needs.WorkerNurse - s.needs.WorkerResting) / s.nurseParams.MaxBroodNurseRatio
-		s.stores.ETOX_EnergyThermo = float64(s.pop.TotalBrood) * thermoRegBrood * 0.001 * s.energyParams.Honey
-
-		s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc // used in debugging and as a helpful metric
-		s.stores.Nectarconcbeforeeating = s.stores.ETOX_HES_C_D0       // used in debugging and as a helpful metric
-
 		consumed_honey := 0. // tracker for total amount of honey consumed in this subsystem
-
-		// foragers, pretty straigt forward
 		forquery := s.foragerFilter.Query()
 		for forquery.Next() {
 			s.foragershuffle = append(s.foragershuffle, forquery.Entity())
@@ -98,22 +94,71 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		s.rng.Shuffle(len(s.foragershuffle), func(i, j int) { s.foragershuffle[i], s.foragershuffle[j] = s.foragershuffle[j], s.foragershuffle[i] })
 
 		forcount := len(s.foragershuffle) * 100
-		for _, e := range s.foragershuffle {
-			ppp := s.foragerMapper.Get(e)
-			ppp.OralDose += s.stores.PPPInHivePollenConc * s.needspollen.Worker * 0.001 // * float64(s.foragerParams.SquadronSize)    // original model does not take sz into account, somehow PPPintake from pollen only assumes squadrons/cohorts to intake pollen once and not per individual
 
-			ETOX_Consumed := s.needs.WorkerResting * 0.001 * s.energyParams.Honey * float64(s.foragerParams.SquadronSize)
-			ETOX_Consumed += s.stores.ETOX_EnergyThermo
-			s.stores.ETOX_EnergyThermo = 0.
-			ppp.OralDose += s.FeedOnHoneyStores(w, ETOX_Consumed, float64(s.foragerParams.SquadronSize), false)
+		if s.newCons.Nursebeecs { // if nursebeecs is turned on exposure gets calculated here
+			thermoRegBrood := (s.needs.WorkerNurse - s.needs.WorkerResting) / s.oldNurseParams.MaxBroodNurseRatio // maybe rethink this somewhere down the line
+			s.stores.ETOX_EnergyThermo = float64(s.pop.TotalBrood) * thermoRegBrood * 0.001 * s.energyParams.Honey
 
-			consumed_honey += ETOX_Consumed
-		}
-		s.foragershuffle = s.foragershuffle[:0]
+			s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc // used in debugging and as a helpful metric
+			s.stores.Nectarconcbeforeeating = s.stores.ETOX_HES_C_D0       // used in debugging and as a helpful metric
 
-		if s.newCons.Nursebeecs { // if nursebeecs is turned on exosure gets calculated here
-			// continue implementing nursebeecs here
+			// foragers, pretty straigt forward
+			for _, e := range s.foragershuffle {
+				ppp := s.foragerMapper.Get(e)
+				ppp.OralDose += s.stores.PPPInHivePollenConc * s.needspollen.Worker * 0.001 // * float64(s.foragerParams.SquadronSize)    // original model does not take sz into account, somehow PPPintake from pollen only assumes squadrons/cohorts to intake pollen once and not per individual
+
+				ETOX_Consumed := s.needs.WorkerResting * 0.001 * s.energyParams.Honey * float64(s.foragerParams.SquadronSize)
+				ETOX_Consumed += s.stores.ETOX_EnergyThermo
+				s.stores.ETOX_EnergyThermo = 0.
+				ppp.OralDose += s.FeedOnHoneyStores(w, ETOX_Consumed, float64(s.foragerParams.SquadronSize), false)
+
+				consumed_honey += ETOX_Consumed
+			}
+			s.foragershuffle = s.foragershuffle[:0]
+
+			h := 0. // for tracking honey in between cohorts
+			// first go at implementing nursebeecs here
+			if s.nglobals.SuffNurses {
+				// inhive bees, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
+				baselineworkerneed := s.needs.WorkerResting + s.stores.ETOX_EnergyThermo/float64(s.pop.WorkersInHive)
+				s.stores.ETOX_EnergyThermo = 0.
+				c := 0
+				s.etoxStats.CumDoseIHBees, c, h = s.CalcDosePerCohort(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, 0, baselineworkerneed, s.needspollen.Worker, float64(1), float64(1))
+				if s.pop.WorkersInHive > 0 {
+					s.etoxStats.MeanDoseIHBees = s.etoxStats.CumDoseIHBees / float64(c) // rethink if this makes any sense while nurse specific exposure is a thing
+				} else {
+					s.etoxStats.MeanDoseIHBees = 0.
+				}
+				s.etoxStats.NumberIHbeeCohorts = c
+				consumed_honey += h
+
+				// nurse specific consumption here
+				s.etoxStats.CumDoseIHBees, s.Nursing_stats.TotalNurses, h = s.CalcDosePerCohort_nursing(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.nglobals.Total_honey, s.nglobals.Total_pollen)
+				consumed_honey += h
+
+				// continue with larvae here
+			} // continue here with case: not sufficient nurses --> young workers eat their own food probably
+
 		} else { // classic BEEHAVE_ecotox calculation of exposure
+			thermoRegBrood := (s.needs.WorkerNurse - s.needs.WorkerResting) / s.oldNurseParams.MaxBroodNurseRatio // maybe rethink this somewhere down the line
+			s.stores.ETOX_EnergyThermo = float64(s.pop.TotalBrood) * thermoRegBrood * 0.001 * s.energyParams.Honey
+
+			s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc // used in debugging and as a helpful metric
+			s.stores.Nectarconcbeforeeating = s.stores.ETOX_HES_C_D0       // used in debugging and as a helpful metric
+
+			// foragers, pretty straigt forward
+			for _, e := range s.foragershuffle {
+				ppp := s.foragerMapper.Get(e)
+				ppp.OralDose += s.stores.PPPInHivePollenConc * s.needspollen.Worker * 0.001 // * float64(s.foragerParams.SquadronSize)    // original model does not take sz into account, somehow PPPintake from pollen only assumes squadrons/cohorts to intake pollen once and not per individual
+
+				ETOX_Consumed := s.needs.WorkerResting * 0.001 * s.energyParams.Honey * float64(s.foragerParams.SquadronSize)
+				ETOX_Consumed += s.stores.ETOX_EnergyThermo
+				s.stores.ETOX_EnergyThermo = 0.
+				ppp.OralDose += s.FeedOnHoneyStores(w, ETOX_Consumed, float64(s.foragerParams.SquadronSize), false)
+
+				consumed_honey += ETOX_Consumed
+			}
+			s.foragershuffle = s.foragershuffle[:0]
 
 			// inhive bees, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
 			c := 0
@@ -167,16 +212,45 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 				s.DegradeHoney(w)
 			}
 
-			// leftovers from debugging
-			_ = s.pop.DroneLarvae + s.pop.DronesInHive + s.pop.WorkerLarvae + s.pop.WorkersForagers + s.pop.WorkersInHive + forcount
-			// checkpoint for bugfixing honey consumption in etox
-			if math.Round(consumed_honey) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey) {
-				panic("Fatal error in honey store dose calculations, model output will be wrong!")
-			}
+		}
+		// leftovers from debugging
+		_ = s.pop.DroneLarvae + s.pop.DronesInHive + s.pop.WorkerLarvae + s.pop.WorkersForagers + s.pop.WorkersInHive + forcount
+		// checkpoint for bugfixing honey consumption in etox
+		if math.Round(consumed_honey) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey) {
+			panic("Fatal error in honey store dose calculations, model output will be wrong!")
+		}
 
-			s.ShiftHoney(w)
+		s.ShiftHoney(w)
+
+	}
+}
+
+func (s *EtoxStorages) CalcDosePerCohort_nursing(w *ecs.World, coh []int, dose []float64, honey_need float64, pollen_need float64) (CumDose float64, Ncounter int, consumed float64) {
+	CumDose = 0.
+	Ncounter = 0
+	consumed = 0.
+
+	//order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	for i := 4; i <= s.nglobals.NurseAgeMax; i++ {
+		ETOX_PPPOralDose := 0.
+		ETOX_Consumed_Honey := 0.
+		Ncounter += coh[i]
+
+		if coh[i] != 0 {
+			ETOX_Consumed_Honey += honey_need * s.newCons.Nursingcapabiliies[i] * s.nglobals.NurseWorkLoad * 0.001 * s.energyParams.Honey * float64(coh[i])
+			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[i]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
+
+			consumed += ETOX_Consumed_Honey
+
+			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollen_need * 0.001 * s.newCons.Nursingcapabiliies[i] * s.nglobals.NurseWorkLoad // intake from pollen
+
+			dose[i] = ETOX_PPPOralDose
+			CumDose += ETOX_PPPOralDose
+		} else {
+			dose[i] = 0
 		}
 	}
+	return
 }
 
 func (s *EtoxStorages) CalcDosePerCohort(w *ecs.World, coh []int, dose []float64, init_honey_need float64, honey_need float64, pollen_need float64, nursebeefactorHoney float64, nursebeefactorPollen float64) (CumDose float64, cohortcounter int, consumed float64) {
@@ -185,16 +259,16 @@ func (s *EtoxStorages) CalcDosePerCohort(w *ecs.World, coh []int, dose []float64
 	consumed = 0.
 
 	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
-	for _, val := range order {
+	for _, i := range order {
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := init_honey_need
 
-		if coh[val] != 0 {
+		if coh[i] != 0 {
 			init_honey_need = 0.
 			cohortcounter += 1
 
-			ETOX_Consumed_Honey += honey_need * 0.001 * s.energyParams.Honey * float64(coh[val])
-			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[val]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
+			ETOX_Consumed_Honey += honey_need * 0.001 * s.energyParams.Honey * float64(coh[i])
+			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[i]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
 			s.etoxStats.PPPNursebees += ETOX_PPPOralDose * (1 - nursebeefactorHoney)
 			ETOX_PPPOralDose = ETOX_PPPOralDose * nursebeefactorHoney
 
@@ -203,10 +277,10 @@ func (s *EtoxStorages) CalcDosePerCohort(w *ecs.World, coh []int, dose []float64
 			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollen_need * 0.001 * nursebeefactorPollen // intake from pollen
 			s.etoxStats.PPPNursebees += s.stores.PPPInHivePollenConc * pollen_need * 0.001 * (1 - nursebeefactorPollen)
 
-			dose[val] = ETOX_PPPOralDose
+			dose[i] = ETOX_PPPOralDose
 			CumDose += ETOX_PPPOralDose
 		} else {
-			dose[val] = 0
+			dose[i] = 0
 		}
 	}
 	return
