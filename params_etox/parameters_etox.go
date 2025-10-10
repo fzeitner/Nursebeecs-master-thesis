@@ -81,7 +81,8 @@ type GUTSParams struct {
 
 // this contains all the adjusted new estimates for consumption that became necessary in the nurse rework
 type ConsumptionRework struct {
-	Nursebeecs bool // switch to turn on this rework of consumption behavior via nursebees
+	Nursebeecs   bool // switch to turn on this rework of consumption behavior via nursebees
+	NewBroodCare bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
 
 	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses)
 	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses)
@@ -104,7 +105,8 @@ type ConsumptionRework struct {
 	PDLtotal         float64   // PollenDroneLarva_total --> total amount of pollen necessary to rear one drone larva
 	PFPdrone         float64   // PollenForPriming sexual maturity in drones, added on baseline consumption over the first 9 days of adult life
 
-	Nursingcapabiliies []float64 // this is an array full of factors defining efficiency/capabiliy of the nurse cohort depending on age
+	DynamicProteinNursing bool      // switch to turn on dynamic nursing capability
+	Nursingcapabiliies    []float64 // this is an array full of factors defining efficiency/capabiliy of the nurse cohort depending on age
 }
 
 type Nursing struct {

@@ -29,7 +29,7 @@ func main() {
 		PPPname:                "fenoxycarb", // Identifier for the PPP used.
 		PPPconcentrationNectar: 990,
 		PPPconcentrationPollen: 27150,
-		PPPcontactExposure:     0.3, // contact exposure at patch
+		PPPcontactExposure:     0.3, // kg/ha; contact exposure at patch
 
 		AppDay:         189,   // Day of the year in which application starts [d].
 		ExposurePeriod: 8,     // Duration of exposure happening (irrespective of DT50) [d].

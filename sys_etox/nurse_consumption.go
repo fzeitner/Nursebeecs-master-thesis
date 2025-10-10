@@ -57,15 +57,19 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		if s.pop.WorkersInHive+s.pop.WorkersForagers == 0 { // to prevent bugs; if there are no adults there cannot be honey used to warm brood; hive is dead anyways
 			thermoRegBrood = 0
 		}
-		s.nglobals.Total_pollen = 0
 		hneedLarvae := 0.
 		for i := 0; i < len(s.larvae.Workers); i++ {
 			hneedLarvae += s.newCons.HoneyWorkerLarva[i] * float64(s.larvae.Workers[i])
 		}
+		s.nglobals.Total_honey = hneedLarvae * 0.95 // assume 95% of pollen predigested by nurses
+		s.nglobals.WLHoney = hneedLarvae * 0.05     // 5% of pollen eaten directly
+		hneedLarvae = 0.
 		for i := 0; i < len(s.larvae.Drones); i++ {
 			hneedLarvae += s.newCons.HoneyDroneLarva[i] * float64(s.larvae.Drones[i])
 		}
-		s.nglobals.Total_honey = hneedLarvae * 0.95 // assume 95% of honey need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
+		s.nglobals.DLHoney = hneedLarvae * 0.05      // 5% of pollen eaten directly
+		s.nglobals.Total_honey += hneedLarvae * 0.95 // assume 95% of honey need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
+
 		hneedAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.newCons.HoneyAdultWorker + float64(s.pop.DronesInHive)*s.newCons.HoneyAdultDrone
 
 		hconsumption := hneedAdult + hneedLarvae + float64(s.pop.TotalBrood)*thermoRegBrood
@@ -79,21 +83,25 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		for i := 0; i < len(s.larvae.Workers); i++ {
 			pneedLarvae += s.newCons.PollenWorkerLarva[i] * float64(s.larvae.Workers[i])
 		}
+		s.nglobals.Total_pollen = pneedLarvae * 0.95 // assume 95% of pollen predigested by nurses
+		s.nglobals.WLPollen = pneedLarvae * 0.05     // 5% of pollen eaten directly
+		pneedLarvae = 0.
 		for i := 0; i < len(s.larvae.Drones); i++ {
 			pneedLarvae += s.newCons.PollenDroneLarva[i] * float64(s.larvae.Drones[i])
 		}
-		s.nglobals.Total_pollen = pneedLarvae * 0.95 // assume 95% of pollen need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
+		s.nglobals.DLPollen = pneedLarvae * 0.05      // 5% of pollen eaten directly
+		s.nglobals.Total_pollen += pneedLarvae * 0.95 // assume 95% of pollen need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
 
 		pneedAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.newCons.PollenAdultWorker + float64(s.pop.DronesInHive)*s.newCons.PollenAdultDrone
 		for i := 0; i < 9; i++ {
 			pneedAdult += s.newCons.PFPdrone / 9 * float64(s.inHive.Drones[i])
 			s.nglobals.Total_pollen += s.newCons.PFPdrone / 9 * float64(s.inHive.Drones[i]) // assume that young drones get fed by nurse bees as well, but not the biggest priority when nurtients are scarce --> maybe change
 		}
-		WorkerPriming := 0.
+		s.nglobals.WorkerPriming = 0.
 		for i := 0; i < 4; i++ {
-			WorkerPriming += s.newCons.PFPworker / 4 * float64(s.inHive.Workers[i]) // assume that young workers get fed by nurses as well. In times of high brood levels young adults do eat pollen themselves already though
-			pneedAdult += WorkerPriming
-			s.nglobals.Total_pollen += WorkerPriming
+			s.nglobals.WorkerPriming += s.newCons.PFPworker / 4 * float64(s.inHive.Workers[i]) // assume that young workers get fed by nurses as well. In times of high brood levels young adults do eat pollen themselves already though
+			pneedAdult += s.nglobals.WorkerPriming
+			s.nglobals.Total_pollen += s.nglobals.WorkerPriming
 		}
 		pconsumption := (pneedAdult + pneedLarvae) / 1000.0
 		s.cons.PollenDaily = pconsumption

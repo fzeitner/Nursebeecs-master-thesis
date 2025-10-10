@@ -26,9 +26,11 @@ import (
 type Init_etox struct {
 	larvae_etox globals_etox.Larvae_etox
 	inHive_etox globals_etox.InHive_etox
+	nglobals    globals_etox.Nursing_globals
 	etox        *params_etox.ETOXparams
 	guts        *params_etox.GUTSParams
 	nursecons   *params_etox.ConsumptionRework
+	nurseparams *params_etox.Nursing
 
 	foragerfilter    *ecs.Filter1[comp.Activity]
 	patchfilter      *ecs.Filter1[comp.Coords]
@@ -118,17 +120,32 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	s.nursecons.PollenDroneLarva[5] = 0.24 * s.nursecons.PDLtotal  // 24% of total intake on this day, based on Brouwers&Beetsma (1987)
 	s.nursecons.PollenDroneLarva[6] = 0.048 * s.nursecons.PDLtotal // 4.8% of total intake on this day, based on Brouwers&Beetsma (1987)
 	// define capabilities to digest pollen and nurse brood depending on the age (mostly based on Crailsheim et al. 1992 and Hrassnigg&Crailsheim 1998)
-	for i := 4; i < 51; i++ {
-		s.nursecons.Nursingcapabiliies[i] = 0.9 // assume a maximum efficiency of 90% for returned nurse bees independent of age
+	if s.nursecons.DynamicProteinNursing {
+		for i := 4; i < 51; i++ {
+			s.nursecons.Nursingcapabiliies[i] = 0.9 // assume a maximum efficiency of 90% for returned nurse bees independent of age
+		}
+		s.nursecons.Nursingcapabiliies[4] = 0.5   // HPG function is still ramping up
+		s.nursecons.Nursingcapabiliies[5] = 0.7   // HPG function is still ramping up
+		s.nursecons.Nursingcapabiliies[6] = 0.9   // HPG function is still ramping up
+		s.nursecons.Nursingcapabiliies[7] = 1     // peak of nursing ablity
+		s.nursecons.Nursingcapabiliies[8] = 1     // peak of nursing ablity
+		s.nursecons.Nursingcapabiliies[9] = 1     // peak of nursing ablity
+		s.nursecons.Nursingcapabiliies[10] = 0.95 // slowly decent to "normal" maximum
+		s.nursecons.Nursingcapabiliies[11] = 0.95 // slowly decent to "normal" maximum
+	} else {
+		for i := 0; i < 51; i++ {
+			s.nursecons.Nursingcapabiliies[i] = 1. // assume the same capability for nurse bees independent of age
+		}
+
 	}
-	s.nursecons.Nursingcapabiliies[4] = 0.5   // HPG function is still ramping up
-	s.nursecons.Nursingcapabiliies[5] = 0.7   // HPG function is still ramping up
-	s.nursecons.Nursingcapabiliies[6] = 0.9   // HPG function is still ramping up
-	s.nursecons.Nursingcapabiliies[7] = 1     // peak of nursing ablity
-	s.nursecons.Nursingcapabiliies[8] = 1     // peak of nursing ablity
-	s.nursecons.Nursingcapabiliies[9] = 1     // peak of nursing ablity
-	s.nursecons.Nursingcapabiliies[10] = 0.95 // slowly decent to "normal" maximum
-	s.nursecons.Nursingcapabiliies[11] = 0.95 // slowly decent to "normal" maximum
+
+	s.nurseparams = ecs.GetResource[params_etox.Nursing](w)
+
+	s.nglobals = globals_etox.Nursing_globals{
+		SuffNurses:  true,                          // assume that first stimestep there simply are enough nurses, maybe change at some point
+		NurseAgeMax: s.nurseparams.NurseAgeCeiling, // initialize with baseline nurse max age from params
+		// rest probably won´t need to be initialized here because it should get set with a value before any other subsystem calls for a value
+	}
 
 	stats_etox := globals_etox.PopulationStats_etox{}
 	ecs.AddResource(w, &stats_etox)

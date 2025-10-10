@@ -99,7 +99,8 @@ func Default_etox() DefaultParams_etox {
 			BW_SD: 21.,   // Killing rate for calculating h in the red-SD-model; adjusted from 1/(ng/bee d) (Baas et al. 2022) to 1/(mug/bee d) as this model uses mug as primary unit
 		},
 		ConsumptionRework: ConsumptionRework{
-			Nursebeecs: false, // turned off to keep basic model as default
+			Nursebeecs:   false, // turned off to keep basic model as default
+			NewBroodCare: false,
 
 			HoneyAdultWorker:  5.1, // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5.1mg honey
 			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline for now; maybe adjust down the line
@@ -112,7 +113,7 @@ func Default_etox() DefaultParams_etox {
 
 			HoneyWorkerLarva:  make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
 			PollenWorkerLarva: make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
-			HWLtotal:          75.5,               // mg over a total of 6 days; increased from old BEEHVE value, taken from Rortais et al. 2005
+			HWLtotal:          75.5,               // mg over a total of 6 days; increased from old BEEHAVE value, taken from Rortais et al. 2005
 			PWLtotal:          100.,               // mg over a total of 6 days; this is a lowered estimate as opposed to original BEEHAVE (used 142 mg), because some of the budged gets shifted to the first few days of adult development
 			PFPworker:         42,                 // mg over the first 4 days of life; this gets taken in by nurses if possible, if not the bees eat it themselves. 42 mg makes the pollen budget turn out exactly the same as before
 
@@ -124,10 +125,11 @@ func Default_etox() DefaultParams_etox {
 			// Hrassnigg and Crailsheim (2005) use the same values for carbohydrates as Rortais for both larvae, but use a higher pollen budged than I estimated here. I could also simply adopt their budgets, but that would not be completely biologically accurate for modeling dynamics,
 			// because both worker and drones have an increased need of pollen after emerging (worker for 3-5 days, drones for ca. 8-10 days) to reach complete maturity. The authors mention this as well, it is hard to estimate how much of the budget is allocated to priming as adults.
 
-			Nursingcapabiliies: make([]float64, 51),
+			DynamicProteinNursing: false, // determines if nursing capability shall be dynamically adjusted based on worker age (there is evidence of a peaking in capability by age 6-10 roughly)
+			Nursingcapabiliies:    make([]float64, 51),
 		},
 		Nursing: Nursing{
-			MinWL_ratio:     2,  // see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
+			MinWL_ratio:     2,  // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
 			NurseAgeCeiling: 13, // default age at which nurses stop working as nurses, unless model dynamics increase this
 		},
 	}
