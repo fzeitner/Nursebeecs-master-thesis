@@ -34,7 +34,7 @@ type Init_etox struct {
 
 	foragerfilter    *ecs.Filter1[comp.Activity]
 	patchfilter      *ecs.Filter1[comp.Coords]
-	etoxExchanger    *ecs.Exchange2[comp_etox.KnownPatch_etox, comp_etox.Activity_etox]
+	etoxAdder        *ecs.Map2[comp_etox.KnownPatch_etox, comp_etox.Activity_etox]
 	source           rand.Source
 	foragerPPPmapper *ecs.Map2[comp_etox.PPPExpo, comp_etox.EtoxLoad]
 	patchPPPmapper   *ecs.Map2[comp_etox.PatchProperties_etox, comp_etox.Resource_etox]
@@ -90,35 +90,36 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	// provide information on exponential larval growth. This combines to the following intake estimates:
 
 	// worker honey intake; estimated growth rate based on Bishop (1961) and data of Brouwers&Beetsma (1987)
-	s.nursecons.HoneyWorkerLarva[0] = 0.05 * s.nursecons.HWLtotal  // 5% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyWorkerLarva[1] = 0.125 * s.nursecons.HWLtotal // 12.5% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyWorkerLarva[2] = 0.187 * s.nursecons.HWLtotal // 18.7% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyWorkerLarva[3] = 0.311 * s.nursecons.HWLtotal // 31.1% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyWorkerLarva[4] = 0.21 * s.nursecons.HWLtotal  // 21% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyWorkerLarva[5] = 0.117 * s.nursecons.HWLtotal // 11.7% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.HoneyWorkerLarva[0] = 0.0036 * s.nursecons.HWLtotal // <1% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.HoneyWorkerLarva[1] = 0.0091 * s.nursecons.HWLtotal // +-1% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.HoneyWorkerLarva[2] = 0.0288 * s.nursecons.HWLtotal // +-3% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.HoneyWorkerLarva[3] = 0.1953 * s.nursecons.HWLtotal // +-20% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.HoneyWorkerLarva[4] = 0.5498 * s.nursecons.HWLtotal // +-55% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.HoneyWorkerLarva[5] = 0.2134 * s.nursecons.HWLtotal // +-21% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
 	// worker pollen intake; estimated growth rate based on Bishop (1961) and data of Brouwers&Beetsma (1987)
-	s.nursecons.PollenWorkerLarva[0] = 0.05 * s.nursecons.PWLtotal  // 5% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenWorkerLarva[1] = 0.165 * s.nursecons.PWLtotal // 16.5% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenWorkerLarva[2] = 0.315 * s.nursecons.PWLtotal // 31.5% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenWorkerLarva[3] = 0.255 * s.nursecons.PWLtotal // 25.5% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenWorkerLarva[4] = 0.155 * s.nursecons.PWLtotal // 15.5% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenWorkerLarva[5] = 0.06 * s.nursecons.PWLtotal  // 6% of total intake on this day, based on Brouwers&Beetsma (1987)
-	// drone honey intake; estimated from growth relative to worker larvae and data of Brouwers&Beetsma (1987)
-	s.nursecons.HoneyDroneLarva[0] = 0.016 * s.nursecons.HDLtotal // 1.6% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyDroneLarva[1] = 0.024 * s.nursecons.HDLtotal // 2.4% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyDroneLarva[2] = 0.104 * s.nursecons.HDLtotal // 10.4% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyDroneLarva[3] = 0.2 * s.nursecons.HDLtotal   // 20% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyDroneLarva[4] = 0.28 * s.nursecons.HDLtotal  // 28% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyDroneLarva[5] = 0.28 * s.nursecons.HDLtotal  // 28% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.HoneyDroneLarva[6] = 0.096 * s.nursecons.HDLtotal // 9.6% of total intake on this day, based on Brouwers&Beetsma (1987)
-	// drone pollen intake; estimated from growth relative to worker larvae and data of Brouwers&Beetsma (1987)
-	s.nursecons.PollenDroneLarva[0] = 0.016 * s.nursecons.PDLtotal // 1.6% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenDroneLarva[1] = 0.032 * s.nursecons.PDLtotal // 3.2% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenDroneLarva[2] = 0.12 * s.nursecons.PDLtotal  // 12% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenDroneLarva[3] = 0.24 * s.nursecons.PDLtotal  // 24% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenDroneLarva[4] = 0.304 * s.nursecons.PDLtotal // 30.4% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenDroneLarva[5] = 0.24 * s.nursecons.PDLtotal  // 24% of total intake on this day, based on Brouwers&Beetsma (1987)
-	s.nursecons.PollenDroneLarva[6] = 0.048 * s.nursecons.PDLtotal // 4.8% of total intake on this day, based on Brouwers&Beetsma (1987)
+	s.nursecons.PollenWorkerLarva[0] = 0.0148 * s.nursecons.PWLtotal // +-1.5% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.PollenWorkerLarva[1] = 0.0454 * s.nursecons.PWLtotal // +-4.5% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.PollenWorkerLarva[2] = 0.1320 * s.nursecons.PWLtotal // +-13% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.PollenWorkerLarva[3] = 0.3905 * s.nursecons.PWLtotal // +-39% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.PollenWorkerLarva[4] = 0.3299 * s.nursecons.PWLtotal // +-33% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+	s.nursecons.PollenWorkerLarva[5] = 0.0874 * s.nursecons.PWLtotal // +-9% of total intake on this day, estimate based on Brouwers&Beetsma (1987), Bishop (1961) and scientific guess of total amount necessary
+
+	// drone honey intake; estimated from growth relative to worker larvae and data of Matsuka et al. (1973)
+	s.nursecons.HoneyDroneLarva[0] = 0.0024 * s.nursecons.HDLtotal // <1% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.HoneyDroneLarva[1] = 0.0049 * s.nursecons.HDLtotal // <1% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.HoneyDroneLarva[2] = 0.0229 * s.nursecons.HDLtotal // +-2% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.HoneyDroneLarva[3] = 0.0697 * s.nursecons.HDLtotal // +-7% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.HoneyDroneLarva[4] = 0.3303 * s.nursecons.HDLtotal // +-33% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.HoneyDroneLarva[5] = 0.4943 * s.nursecons.HDLtotal // +-50% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.HoneyDroneLarva[6] = 0.0755 * s.nursecons.HDLtotal // +-8% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	// drone pollen intake; estimated from growth relative to worker larvae and data of Matsuka et al. (1973)
+	s.nursecons.PollenDroneLarva[0] = 0.0060 * s.nursecons.PDLtotal // <1% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.PollenDroneLarva[1] = 0.0253 * s.nursecons.PDLtotal // +-2.5% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.PollenDroneLarva[2] = 0.0707 * s.nursecons.PDLtotal // +-7% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.PollenDroneLarva[3] = 0.1927 * s.nursecons.PDLtotal // +-20% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.PollenDroneLarva[4] = 0.3923 * s.nursecons.PDLtotal // +-40% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.PollenDroneLarva[5] = 0.2637 * s.nursecons.PDLtotal // +-25% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
+	s.nursecons.PollenDroneLarva[6] = 0.0493 * s.nursecons.PDLtotal // +-5% of total intake on this day, estimate based on Matsuka et al. (1973) and scientific guess of total amount necessary
 	// define capabilities to digest pollen and nurse brood depending on the age (mostly based on Crailsheim et al. 1992 and Hrassnigg&Crailsheim 1998)
 	if s.nursecons.DynamicProteinNursing {
 		for i := 4; i < 51; i++ {
@@ -161,18 +162,18 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	}
 
 	// add the PPPExpo component to all foragers
-	s.foragerfilter = s.foragerfilter.New(w)
 	s.source = rand.New(ecs.GetResource[resource.Rand](w))
 	s.foragerPPPmapper = s.foragerPPPmapper.New(w)
-	s.etoxExchanger = s.etoxExchanger.New(w)
+	s.etoxAdder = s.etoxAdder.New(w)
+	s.foragerfilter = s.foragerfilter.New(w)
 
-	query := s.foragerfilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
+	query := s.foragerfilter.Query()
 	toAdd := []ecs.Entity{}
+
 	for query.Next() {
 		toAdd = append(toAdd, query.Entity())
 	}
 	// also adds GUTS related components here if GUTS is enabled
-	exchange := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())
 	rng := rand.New(s.source)
 	for _, entity := range toAdd {
 		if !s.etox.GUTS {
@@ -184,7 +185,12 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0.}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 			}
 		}
-		exchange.Exchange(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
+		// add winterbee characteristic here depending on parameter value
+		if s.nurseparams.StartWinterBees {
+			s.etoxAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true})
+		} else {
+			s.etoxAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: false})
+		}
 	}
 	toAdd = toAdd[:0]
 

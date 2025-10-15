@@ -3,6 +3,7 @@ package sys_etox
 import (
 	"math"
 
+	"github.com/fzeitner/beecs_masterthesis/comp_etox"
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/globals_etox"
 	"github.com/fzeitner/beecs_masterthesis/params"
@@ -30,6 +31,8 @@ type NurseConsumption struct {
 	pop      *globals.PopulationStats
 	cons     *globals.ConsumptionStats
 	time     *resource.Tick
+
+	foragerfilter *ecs.Filter1[comp_etox.Activity_etox]
 }
 
 func (s *NurseConsumption) Initialize(w *ecs.World) {
@@ -47,6 +50,8 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 	s.pop = ecs.GetResource[globals.PopulationStats](w)
 	s.cons = ecs.GetResource[globals.ConsumptionStats](w)
 	s.time = ecs.GetResource[resource.Tick](w)
+
+	s.foragerfilter = s.foragerfilter.New(w)
 }
 
 func (s *NurseConsumption) Update(w *ecs.World) {
@@ -58,21 +63,28 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			thermoRegBrood = 0
 		}
 		hneedLarvae := 0.
+		s.nglobals.WLHoney = 0
 		for i := 0; i < len(s.larvae.Workers); i++ {
 			hneedLarvae += s.newCons.HoneyWorkerLarva[i] * float64(s.larvae.Workers[i])
+			if i > 2 {
+				s.nglobals.WLHoney += s.newCons.HoneyWorkerLarva[i] * float64(s.larvae.Workers[i]) * s.newCons.HoneyDirect // assumes a fraction of honey gets taken in directly from age 3 onwards
+			}
 		}
-		s.nglobals.Total_honey = hneedLarvae * 0.95 // assume 95% of pollen predigested by nurses
-		s.nglobals.WLHoney = hneedLarvae * 0.05     // 5% of pollen eaten directly
+		s.nglobals.Total_honey = hneedLarvae - s.nglobals.WLHoney // other honey needs to be predigested by nurses
+
 		hneedLarvae = 0.
+		s.nglobals.DLHoney = 0
 		for i := 0; i < len(s.larvae.Drones); i++ {
 			hneedLarvae += s.newCons.HoneyDroneLarva[i] * float64(s.larvae.Drones[i])
+			if i > 2 {
+				s.nglobals.DLHoney += s.newCons.HoneyDroneLarva[i] * float64(s.larvae.Drones[i]) * s.newCons.HoneyDirect // assumes a fraction of honey gets taken in directly from age 3 onwards
+			}
 		}
-		s.nglobals.DLHoney = hneedLarvae * 0.05      // 5% of pollen eaten directly
-		s.nglobals.Total_honey += hneedLarvae * 0.95 // assume 95% of honey need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
+		s.nglobals.Total_honey += hneedLarvae - s.nglobals.DLHoney // other honey needs to be predigested by nurses
 
 		hneedAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.newCons.HoneyAdultWorker + float64(s.pop.DronesInHive)*s.newCons.HoneyAdultDrone
 
-		hconsumption := hneedAdult + hneedLarvae + float64(s.pop.TotalBrood)*thermoRegBrood
+		hconsumption := hneedAdult + s.nglobals.Total_honey + s.nglobals.WLHoney + s.nglobals.DLHoney + float64(s.pop.TotalBrood)*thermoRegBrood
 		consumptionEnergy := 0.001 * hconsumption * s.energyParams.Honey
 
 		s.stores.Honey -= consumptionEnergy
@@ -80,60 +92,77 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 		// new pollen consumption
 		pneedLarvae := 0.
+		s.nglobals.WLPollen = 0
 		for i := 0; i < len(s.larvae.Workers); i++ {
 			pneedLarvae += s.newCons.PollenWorkerLarva[i] * float64(s.larvae.Workers[i])
+			if i > 2 {
+				s.nglobals.WLPollen += s.newCons.PollenWorkerLarva[i] * float64(s.larvae.Workers[i]) * s.newCons.PollenDirect // assumes a fraction of pollen gets taken in directly from age 3 onwards
+			}
 		}
-		s.nglobals.Total_pollen = pneedLarvae * 0.95 // assume 95% of pollen predigested by nurses
-		s.nglobals.WLPollen = pneedLarvae * 0.05     // 5% of pollen eaten directly
+		s.nglobals.Total_pollen = pneedLarvae - s.nglobals.WLPollen // assume 95% of pollen predigested by nurses
+
 		pneedLarvae = 0.
+		s.nglobals.DLPollen = 0
 		for i := 0; i < len(s.larvae.Drones); i++ {
 			pneedLarvae += s.newCons.PollenDroneLarva[i] * float64(s.larvae.Drones[i])
+			if i > 2 {
+				s.nglobals.DLPollen += s.newCons.PollenDroneLarva[i] * float64(s.larvae.Drones[i]) * s.newCons.PollenDirect // assumes a fraction of pollen gets taken in directly from age 3 onwards
+			}
 		}
-		s.nglobals.DLPollen = pneedLarvae * 0.05      // 5% of pollen eaten directly
-		s.nglobals.Total_pollen += pneedLarvae * 0.95 // assume 95% of pollen need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
+		s.nglobals.Total_pollen += pneedLarvae - s.nglobals.DLPollen // assume 95% of pollen need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
 
 		pneedAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.newCons.PollenAdultWorker + float64(s.pop.DronesInHive)*s.newCons.PollenAdultDrone
+		DronePriming := 0.
 		for i := 0; i < 9; i++ {
-			pneedAdult += s.newCons.PFPdrone / 9 * float64(s.inHive.Drones[i])
-			s.nglobals.Total_pollen += s.newCons.PFPdrone / 9 * float64(s.inHive.Drones[i]) // assume that young drones get fed by nurse bees as well, but not the biggest priority when nurtients are scarce --> maybe change
+			DronePriming += s.newCons.PFPdrone / 9 * float64(s.inHive.Drones[i])
 		}
+		s.nglobals.Total_pollen += DronePriming // assume that young drones get fed by nurse bees as well, but not the biggest priority when nurtients are scarce --> maybe change
+
 		s.nglobals.WorkerPriming = 0.
 		for i := 0; i < 4; i++ {
 			s.nglobals.WorkerPriming += s.newCons.PFPworker / 4 * float64(s.inHive.Workers[i]) // assume that young workers get fed by nurses as well. In times of high brood levels young adults do eat pollen themselves already though
-			pneedAdult += s.nglobals.WorkerPriming
-			s.nglobals.Total_pollen += s.nglobals.WorkerPriming
 		}
-		pconsumption := (pneedAdult + pneedLarvae) / 1000.0
+		s.nglobals.Total_pollen += s.nglobals.WorkerPriming
+
+		pconsumption := (pneedAdult + s.nglobals.Total_pollen + s.nglobals.WLPollen + s.nglobals.DLPollen) / 1000.0
 		s.cons.PollenDaily = pconsumption
 		s.stores.Pollen = math.Max(s.stores.Pollen-pconsumption, 0)
 		s.stores.IdealPollen = math.Max(pconsumption*float64(s.storeParams.IdealPollenStoreDays), s.storeParams.MinIdealPollenStore)
 
-		// REWPORK FROM HERE: ProteinFactorNurses
-
-		if s.stores.Pollen > 0 { // REWORK STILL NECESSARY
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + 1.0/s.storeParams.ProteinStoreNurse
-		} else {
-			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-				s.oldNurseParams.MaxBroodNurseRatio // this will need to be reworked still
-			workLoad := 0.0
-			if maxBrood > 0 {
-				workLoad = float64(s.pop.TotalBrood) / maxBrood
-			}
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse
-		}
-		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
-
 		// calculate  nurse intake capacity
 		TotalNurseCap := 0.
-		for i := 4; i >= s.nglobals.NurseAgeMax; i++ {
+		for i := 4; i <= s.nglobals.NurseAgeMax; i++ {
 			TotalNurseCap += float64(s.inHive.Workers[i]) * s.newCons.MaxPollenNurse * s.newCons.Nursingcapabiliies[i]
 		}
+		query := s.foragerfilter.Query() // this is just a bandaid fix to make the model logic work in winterbee time; if there is enough time winterbees could be given actual "jobs"; right now all of them can feed AND forage at the same time
+		for query.Next() {
+			act := query.Get()
+			if act.Winterbee {
+				s.nglobals.WinterBees = append(s.nglobals.WinterBees, query.Entity())
+			}
+		}
+		TotalNurseCap += float64(len(s.nglobals.WinterBees)) * 100 * s.newCons.MaxPollenNurse // * Winterbeefactor // could add a consumption capability factor here
 		s.nglobals.NurseWorkLoad = s.nglobals.Total_pollen / TotalNurseCap
 
+		// define if the model assumes nurse amount to be sufficient
 		s.nglobals.SuffNurses = false // insufficient nurses; this makes young workers eat their own pollen and increaeses the nurse threshold next day
 		if s.nglobals.NurseWorkLoad < 1.0 {
 			s.nglobals.SuffNurses = true // we have sufficient nurses; this influences if nurses also eat pollen to prime young workers and does not increase nurse threshold next day
 		}
+
+		// REWPORK FROM HERE: ProteinFactorNurses
+		if s.stores.Pollen > 0 { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + 1.0/s.storeParams.ProteinStoreNurse // this still makes sense
+		} else {
+			//maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+			//	s.oldNurseParams.MaxBroodNurseRatio // this will probably need to be reworked still
+			//workLoad := 0.0 // not necessary anymore because workload is now defined directly via forced protein intake of nurses which adresses the same idea
+			//if maxBrood > 0 {
+			//	workLoad = float64(s.pop.TotalBrood) / maxBrood
+			//}
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - s.nglobals.NurseWorkLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+		}
+		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
 	}
 }
 

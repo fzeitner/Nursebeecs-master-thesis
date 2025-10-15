@@ -1,5 +1,7 @@
 package globals_etox
 
+import "github.com/mlange-42/ark/ecs"
+
 // this will keep all the necessary globals to calculate and track nursing dynamics
 
 type Nursing_globals struct {
@@ -17,6 +19,8 @@ type Nursing_globals struct {
 	DLPollen float64 // amount of direct pollen drone larvae take in this timestep
 
 	WorkerPriming float64 // amount of pollen needed for young workers to prime their HPG this timestep
+
+	WinterBees []ecs.Entity
 }
 
 type Nursing_stats struct {

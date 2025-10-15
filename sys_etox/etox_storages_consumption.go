@@ -124,17 +124,20 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 				baselineworkerneed := s.newCons.HoneyAdultWorker + s.stores.ETOX_EnergyThermo/float64(s.pop.WorkersInHive)
 				s.stores.ETOX_EnergyThermo = 0.
 				s.etoxStats.CumDoseIHBees, c, h = s.CalcDosePerCohort(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, 0, baselineworkerneed, s.newCons.PollenAdultWorker, float64(1), float64(1))
-				if s.pop.WorkersInHive > 0 {
+				consumed_honey += h
+
+				// nurse specific consumption here
+				dose := 0.
+				dose, s.Nursing_stats.TotalNurses, h = s.CalcDosePerCohortNursing(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.nglobals.Total_honey, s.nglobals.Total_pollen)
+				s.etoxStats.CumDoseIHBees += dose
+				consumed_honey += h
+
+				if s.pop.WorkersInHive > 0 { // probably rethink all the PPP metrics later
 					s.etoxStats.MeanDoseIHBees = s.etoxStats.CumDoseIHBees / float64(c) // rethink if this makes any sense while nurse specific exposure is a thing
 				} else {
 					s.etoxStats.MeanDoseIHBees = 0.
 				}
 				s.etoxStats.NumberIHbeeCohorts = c
-				consumed_honey += h
-
-				// nurse specific consumption here
-				s.etoxStats.CumDoseIHBees, s.Nursing_stats.TotalNurses, h = s.CalcDosePerCohortNursing(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.nglobals.Total_honey, s.nglobals.Total_pollen)
-				consumed_honey += h
 
 			} else { // continue here with case: not sufficient nurses --> young workers eat their own food
 				baselineworkerneed := s.newCons.HoneyAdultWorker + s.stores.ETOX_EnergyThermo/float64(s.pop.WorkersInHive)
@@ -264,11 +267,11 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 }
 
 func (s *EtoxStorages) CalcDosePerCohortNursing(w *ecs.World, coh []int, dose []float64, honey_need float64, pollen_need float64) (CumDose float64, Ncounter int, consumed float64) {
+	// dose calculation for nurses only dependent on the honey and pollen they additionally eat to provide nutrient secretions to larvae and other young adults
 	CumDose = 0.
 	Ncounter = 0
 	consumed = 0.
 
-	//order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
 	for i := 4; i <= s.nglobals.NurseAgeMax; i++ {
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := 0.
@@ -282,6 +285,39 @@ func (s *EtoxStorages) CalcDosePerCohortNursing(w *ecs.World, coh []int, dose []
 
 			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollen_need * 0.001 * s.newCons.Nursingcapabiliies[i] * s.nglobals.NurseWorkLoad // intake from pollen
 
+			dose[i] += ETOX_PPPOralDose // add to the dose because consumption based IHbee-dose already resets and gets calced before this
+			CumDose += ETOX_PPPOralDose
+		} else {
+			dose[i] = 0
+		}
+	}
+	return
+}
+
+func (s *EtoxStorages) CalcDosePerCohortHPGWorkers(w *ecs.World, coh []int, dose []float64, honey_need float64, pollen_need float64) (CumDose float64, cohortcounter int, consumed float64) {
+	// dose calculation for worker aged <4 days when nurses cannot provide enough protein for them and they eat increased pollen themselves
+	CumDose = 0.
+	cohortcounter = 0
+	consumed = 0.
+
+	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	for _, i := range order {
+		ETOX_PPPOralDose := 0.
+		ETOX_Consumed_Honey := 0.
+		pollentoeat := pollen_need
+		if coh[i] != 0 {
+			cohortcounter += 1
+
+			ETOX_Consumed_Honey += honey_need * 0.001 * s.energyParams.Honey * float64(coh[i])
+			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[i]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
+
+			consumed += ETOX_Consumed_Honey
+
+			if i < 4 {
+				pollentoeat += s.newCons.PFPworker / 4
+			}
+			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollentoeat * 0.001 // intake from pollen
+
 			dose[i] = ETOX_PPPOralDose
 			CumDose += ETOX_PPPOralDose
 		} else {
@@ -292,81 +328,60 @@ func (s *EtoxStorages) CalcDosePerCohortNursing(w *ecs.World, coh []int, dose []
 }
 
 func (s *EtoxStorages) CalcDosePerCohortNursingWLarvae(w *ecs.World, coh []int, dose []float64, honey float64, pollen float64) (CumDose float64, cohortcounter int, consumed float64) {
+	// dose calculation for worker larvae with nursing
 	CumDose = 0.
 	consumed = 0.
+	pconsumed := 0.
 
-	for _, i := range coh {
+	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	for _, i := range order {    // range of a slice iterates over 2 values, first the index and then a copy of the actual val that we use as the index within the for loop
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := 0.
 
-		if coh[i] != 0 {
+		if i > 2 && coh[i] != 0 {
 			cohortcounter += 1
 
-			ETOX_Consumed_Honey += honey * s.newCons.HoneyWorkerLarva[i] / s.newCons.HWLtotal * 0.001 * s.energyParams.Honey * float64(coh[i])
+			ETOX_Consumed_Honey += s.newCons.HoneyWorkerLarva[i] * float64(coh[i]) * s.newCons.HoneyDirect * 0.001 * s.energyParams.Honey
 			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[i]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
 
 			consumed += ETOX_Consumed_Honey
+			pconsumed += s.newCons.PollenWorkerLarva[i] * s.newCons.PollenDirect * float64(coh[i])
 
-			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollen * 0.001 * s.newCons.PollenWorkerLarva[i] / s.newCons.PWLtotal // intake from pollen
+			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * s.newCons.PollenWorkerLarva[i] * s.newCons.PollenDirect * 0.001 // intake from pollen
 
 			dose[i] = ETOX_PPPOralDose
 			CumDose += ETOX_PPPOralDose
 		} else {
 			dose[i] = 0
 		}
+	}
+	if consumed/(0.001*s.energyParams.Honey) != honey || pconsumed != pollen {
+		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
 }
 
 func (s *EtoxStorages) CalcDosePerCohortNursingDLarvae(w *ecs.World, coh []int, dose []float64, honey float64, pollen float64) (CumDose float64, cohortcounter int, consumed float64) {
+	// dose calculation for drone larvae with nursing
 	CumDose = 0.
 	consumed = 0.
-
-	for _, i := range coh {
-		ETOX_PPPOralDose := 0.
-		ETOX_Consumed_Honey := 0.
-
-		if coh[i] != 0 {
-			cohortcounter += 1
-
-			ETOX_Consumed_Honey += honey * s.newCons.HoneyDroneLarva[i] / s.newCons.HDLtotal * 0.001 * s.energyParams.Honey * float64(coh[i])
-			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[i]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
-
-			consumed += ETOX_Consumed_Honey
-
-			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollen * 0.001 * s.newCons.PollenDroneLarva[i] / s.newCons.PDLtotal // intake from pollen
-
-			dose[i] = ETOX_PPPOralDose
-			CumDose += ETOX_PPPOralDose
-		} else {
-			dose[i] = 0
-		}
-	}
-	return
-}
-
-func (s *EtoxStorages) CalcDosePerCohortHPGWorkers(w *ecs.World, coh []int, dose []float64, honey_need float64, pollen_need float64) (CumDose float64, cohortcounter int, consumed float64) {
-	CumDose = 0.
-	cohortcounter = 0
-	consumed = 0.
+	pconsumed := 0.
 
 	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
-	for _, i := range order {
+	for _, i := range order {    // range of a slice iterates over 2 values, first the index and then a copy of the actual val that we use as the index within the for loop
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := 0.
 
-		if coh[i] != 0 {
+		if i > 2 && coh[i] != 0 {
 			cohortcounter += 1
 
-			ETOX_Consumed_Honey += honey_need * 0.001 * s.energyParams.Honey * float64(coh[i])
+			ETOX_Consumed_Honey += s.newCons.HoneyDroneLarva[i] * float64(coh[i]) * s.newCons.HoneyDirect * 0.001 * s.energyParams.Honey
 			ETOX_PPPOralDose += s.FeedOnHoneyStores(w, ETOX_Consumed_Honey, float64(coh[i]), s.waterParams.WaterForaging) // calculates the exposition from consumption of honey storage
 
 			consumed += ETOX_Consumed_Honey
+			pconsumed += s.newCons.PollenDroneLarva[i] * s.newCons.PollenDirect * float64(coh[i])
 
-			if i < 4 {
-				pollen_need += s.newCons.PFPworker / 4
-			}
-			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * pollen_need * 0.001 // intake from pollen
+			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * s.newCons.PollenDroneLarva[i] * s.newCons.PollenDirect * 0.001 // intake from pollen
 
 			dose[i] = ETOX_PPPOralDose
 			CumDose += ETOX_PPPOralDose
@@ -374,10 +389,15 @@ func (s *EtoxStorages) CalcDosePerCohortHPGWorkers(w *ecs.World, coh []int, dose
 			dose[i] = 0
 		}
 	}
+	if consumed/(0.001*s.energyParams.Honey) != honey || pconsumed != pollen {
+		panic("Fatal error in dose calculations, model output will be wrong!")
+	}
+
 	return
 }
 
 func (s *EtoxStorages) CalcDosePerCohort(w *ecs.World, coh []int, dose []float64, init_honey_need float64, honey_need float64, pollen_need float64, nursebeefactorHoney float64, nursebeefactorPollen float64) (CumDose float64, cohortcounter int, consumed float64) {
+	// this is the baseline version with the logic of the original BEEHAVE_ecotox function
 	CumDose = 0.
 	cohortcounter = 0
 	consumed = 0.
@@ -510,7 +530,7 @@ func (s *EtoxStorages) ShiftHoney(w *ecs.World) {
 		s.stores.ETOX_HES_E_D4 = 0
 	}
 
-	// adjusted this panic to 0.1% acceptable deviation from the honey store in each timestep, because simple rounding triggered the error, probably because of floating point error
+	// adjusted this panic to 0.1% acceptable deviation from the honey store in each timestep, because of floating point error
 	if math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*1.001 <= math.Round(s.beecsstores.Honey) ||
 		math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*0.999 >= math.Round(s.beecsstores.Honey) {
 		panic("Fatal error in honey store dose calculations, model output will be wrong!")

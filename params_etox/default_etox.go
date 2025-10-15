@@ -99,10 +99,9 @@ func Default_etox() DefaultParams_etox {
 			BW_SD: 21.,   // Killing rate for calculating h in the red-SD-model; adjusted from 1/(ng/bee d) (Baas et al. 2022) to 1/(mug/bee d) as this model uses mug as primary unit
 		},
 		ConsumptionRework: ConsumptionRework{
-			Nursebeecs:   false, // turned off to keep basic model as default
-			NewBroodCare: false,
+			Nursebeecs: false, // turned off to keep basic model as default
 
-			HoneyAdultWorker:  5.1, // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5.1mg honey
+			HoneyAdultWorker:  11., // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5.1mg honey; old BEEHAVE val is 11 (Rortais Winterbees)
 			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline for now; maybe adjust down the line
 
 			MaxPollenNurse: 4.5, // + 1.5 per adult = 6 mg/day; this should be a field realistic total for a normal peak; Crailsheim reported up to 8 as a max, 12 as the highes statistical 95% bound under controlled conditions. 12 is cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992;
@@ -113,13 +112,16 @@ func Default_etox() DefaultParams_etox {
 
 			HoneyWorkerLarva:  make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
 			PollenWorkerLarva: make([]float64, 6), // gets initialized in sys.init_etox for now because I do not know how else to do this
-			HWLtotal:          75.5,               // mg over a total of 6 days; increased from old BEEHAVE value, taken from Rortais et al. 2005
+			HWLtotal:          65.4,               // mg over a total of 6 days --> old BEEHAVE value; an increase to 75.5 might make sense, value taken from Rortais et al. 2005
 			PWLtotal:          100.,               // mg over a total of 6 days; this is a lowered estimate as opposed to original BEEHAVE (used 142 mg), because some of the budged gets shifted to the first few days of adult development
 			PFPworker:         42,                 // mg over the first 4 days of life; this gets taken in by nurses if possible, if not the bees eat it themselves. 42 mg makes the pollen budget turn out exactly the same as before
+			HoneyDirect:       0.05,               // unknown, therefore same estimate as pollen value below for now
+			PollenDirect:      0.05,               // 5% of pollen get taken in directly, estimated by Hrassnigg & Crailsheim (2005); for now assumes the same value for worker and drone larvae from day 3 onwards and thus has a bigger effect on drones that take 1 day longer to pupation
+			// this should be okay though as many studies found that drone food has higher residues than worker food, which in turn is higher than royal jelly of queen larvae (example: Wueppenhorst et al. 2024). This should be a somewhat realistic and defensible assumption.
 
 			HoneyDroneLarva:  make([]float64, 7), // gets initialized in sys.init_etox for now because I do not know how else to do this
 			PollenDroneLarva: make([]float64, 7), // gets initialized in sys.init_etox for now because I do not know how else to do this
-			HDLtotal:         124.9,              // mg over a total of 7 days; the old BEEHAVE value, taken from ROrtais et al. 2005
+			HDLtotal:         124.9,              // mg over a total of 7 days; the old BEEHAVE value, taken from Rortais et al. 2005
 			PDLtotal:         250.,               // mg over a total of 7 days; there is no proper estimate, this is lowered as opposed to original BEEHAVE (used 350 mg), because that is most likely too high. It is estimated that drones larvae weigh 1.8 - 2.6 more than workers (Hrassnigg and Crailsheim 2005)
 			PFPdrone:         100.,               // mg over the first 9 days of adult life; this gets taken in by nurses, as drones do not really eat any pollen by themselves. 100 mg makes the pollen budget turn out exactly the same as before
 			// Hrassnigg and Crailsheim (2005) use the same values for carbohydrates as Rortais for both larvae, but use a higher pollen budged than I estimated here. I could also simply adopt their budgets, but that would not be completely biologically accurate for modeling dynamics,
@@ -129,8 +131,13 @@ func Default_etox() DefaultParams_etox {
 			Nursingcapabiliies:    make([]float64, 51),
 		},
 		Nursing: Nursing{
-			MinWL_ratio:     2,  // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
-			NurseAgeCeiling: 13, // default age at which nurses stop working as nurses, unless model dynamics increase this
+			MinWL_ratio:            2,                                           // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
+			NurseAgeCeiling:        13,                                          // default age at which nurses stop working as nurses, unless model dynamics increase this
+			BroodCannibalismChance: []float64{0.1, 0.35, 0.5, 0.05, 0., 0., 0.}, // just a assumption to start from, based on data from Schmickl&Crailsheim (2001, 2002)
+
+			StartWinterBees: true,
+			NewBroodCare:    false,
+			ScrambleComp:    false,
 		},
 	}
 }

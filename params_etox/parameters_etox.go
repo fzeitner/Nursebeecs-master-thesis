@@ -81,8 +81,7 @@ type GUTSParams struct {
 
 // this contains all the adjusted new estimates for consumption that became necessary in the nurse rework
 type ConsumptionRework struct {
-	Nursebeecs   bool // switch to turn on this rework of consumption behavior via nursebees
-	NewBroodCare bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
+	Nursebeecs bool // switch to turn on this rework of consumption behavior via nursebees
 
 	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses)
 	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses)
@@ -98,6 +97,8 @@ type ConsumptionRework struct {
 	HWLtotal          float64   // HoneyWorkerLarva_total --> total amount of honey necessary to rear one worker larva
 	PWLtotal          float64   // PollenWorkerLarva_total --> total amount of pollen necessary to rear one worker larva
 	PFPworker         float64   // PollenForPriming of HG (hypopharyngeal glands) of workers, added on consumption over the first 4 days of adult life
+	HoneyDirect       float64   // fraction of direct honey intake per larva from age 3 onwards
+	PollenDirect      float64   // fraction of direct pollen intake per larvae from age 3 onwards
 
 	HoneyDroneLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage
 	PollenDroneLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage
@@ -110,6 +111,11 @@ type ConsumptionRework struct {
 }
 
 type Nursing struct {
-	MinWL_ratio     float64 // target of minimum necessary worker:larva ratio that the colony tries to go back to if possible; goes back to Eischen et al. 1982, 1983, 1984
-	NurseAgeCeiling int     // baseline age until model assumes that workers will act as nurses
+	MinWL_ratio            float64 // target of minimum necessary worker:larva ratio that the colony tries to go back to if possible; goes back to Eischen et al. 1982, 1983, 1984
+	NurseAgeCeiling        int     // baseline age until model assumes that workers will act as nurses
+	BroodCannibalismChance []float64
+
+	StartWinterBees bool // switch to turn starting foragers into winter bees --> necessary if we start simulating at the beginning of the year
+	NewBroodCare    bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
+	ScrambleComp    bool // switch to turn on scramble competition mechanism within new brood care which kicks in if nurse workload is too high
 }

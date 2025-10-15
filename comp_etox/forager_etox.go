@@ -37,6 +37,7 @@ type KnownPatch_etox struct {
 type Activity_etox struct {
 	Current       activity.ForagerActivity // Current activity.
 	PollenForager bool                     // Whether it is currently foraging for pollen.
+	Winterbee     bool
 
 	WaterForager bool // Whether it is currently foraging for water.
 }
