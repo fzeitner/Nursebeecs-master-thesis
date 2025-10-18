@@ -104,7 +104,7 @@ func Default_etox() DefaultParams_etox {
 			HoneyAdultWorker:  11., // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5.1mg honey; old BEEHAVE val is 11 (Rortais Winterbees)
 			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline for now; maybe adjust down the line
 
-			MaxPollenNurse: 4.5, // + 1.5 per adult = 6 mg/day; this should be a field realistic total for a normal peak; Crailsheim reported up to 8 as a max, 12 as the highes statistical 95% bound under controlled conditions. 12 is cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992;
+			MaxPollenNurse: 6.5, // + 1.5 per adult = 8 mg/day; this should be a field realistic total for a normal peak; Crailsheim reported up to 8 as a max, 12 as the highes statistical 95% bound under controlled conditions. 12 is cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992;
 			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurately interpreted by BeeREX authors. This value is probably unknown and 60 is probably far too high. It should not really matter though, as pollen intake will regulate amount of nurses and honey intake will be emergent property
 
 			HoneyAdultDrone:  10., // mg/day; taken from BEEHAVE, though the origin of this value is very unclear; this might be another placeholder

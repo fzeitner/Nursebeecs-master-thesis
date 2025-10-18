@@ -5,6 +5,7 @@ import (
 
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/params"
+	"github.com/fzeitner/beecs_masterthesis/util"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
@@ -40,7 +41,7 @@ func (s *BroodCare) Update(w *ecs.World) {
 		maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
 			s.nurseParams.MaxBroodNurseRatio
 
-		excessBrood := int(math.Ceil(float64(s.pop.TotalBrood) - maxBrood))
+		excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood)-maxBrood)), 0)
 		lacksNurses := excessBrood > 0
 
 		starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses))))

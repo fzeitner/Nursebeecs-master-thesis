@@ -26,7 +26,7 @@ import (
 type Init_etox struct {
 	larvae_etox globals_etox.Larvae_etox
 	inHive_etox globals_etox.InHive_etox
-	nglobals    globals_etox.Nursing_globals
+	nglobals    *globals_etox.Nursing_globals
 	etox        *params_etox.ETOXparams
 	guts        *params_etox.GUTSParams
 	nursecons   *params_etox.ConsumptionRework
@@ -137,16 +137,15 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 		for i := 0; i < 51; i++ {
 			s.nursecons.Nursingcapabiliies[i] = 1. // assume the same capability for nurse bees independent of age
 		}
-
 	}
+	s.nursecons.Nursingcapabiliies[0] = 0. // this needs to be 0 for a calc in nurse_consumption and freshly emerged bees never nurse immediately so this does make sense biologically as well
 
 	s.nurseparams = ecs.GetResource[params_etox.Nursing](w)
 
-	s.nglobals = globals_etox.Nursing_globals{
-		SuffNurses:  true,                          // assume that first stimestep there simply are enough nurses, maybe change at some point
-		NurseAgeMax: s.nurseparams.NurseAgeCeiling, // initialize with baseline nurse max age from params
-		// rest probably won´t need to be initialized here because it should get set with a value before any other subsystem calls for a value
-	}
+	s.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
+	s.nglobals.SuffNurses = true                           // assume that first stimestep there simply are enough nurses, maybe change at some point
+	s.nglobals.NurseAgeMax = s.nurseparams.NurseAgeCeiling // initialize with baseline nurse max age from params
+	// rest probably won´t need to be initialized here because it should get set with a value before any other subsystem calls for a value
 
 	stats_etox := globals_etox.PopulationStats_etox{}
 	ecs.AddResource(w, &stats_etox)

@@ -5,7 +5,11 @@ import "github.com/mlange-42/ark/ecs"
 // this will keep all the necessary globals to calculate and track nursing dynamics
 
 type Nursing_globals struct {
-	SuffNurses bool // were there sufficient nurses last consumption proc?
+	SuffNurses        bool // were there sufficient nurses last consumption proc?
+	Reductionpossible bool // is a reduction in the nursing force possible?
+
+	LastPollenInflux   int     // days/ticks since the lase pollen influx --> regulates cannibalism in times of reudced pollen income
+	PollenStoreLastDay float64 // amount of pollen in store yesterday to calculate if any fresh pollen were added without changing foraging submodule
 
 	NurseAgeMax   int     // current upper bound age of nurses
 	NurseWorkLoad float64 // ratio of protein nurses need to provide to the amount they on average can provide as a metric for their workload
@@ -20,7 +24,7 @@ type Nursing_globals struct {
 
 	WorkerPriming float64 // amount of pollen needed for young workers to prime their HPG this timestep
 
-	WinterBees []ecs.Entity
+	WinterBees []ecs.Entity // saves all the current winterbees and could be used to specify their consumption/jobs further
 }
 
 type Nursing_stats struct {
@@ -28,4 +32,5 @@ type Nursing_stats struct {
 	MeanPollenIntake float64 // mean pollen intake per nurse
 	NL_ratio         float64 // current nurse:larva ratio; probably only to be used as a analytical metric
 	TotalNurses      int     // amount of nurses today
+	NurseFraction    float64 // fraction of nurses from total adult population
 }
