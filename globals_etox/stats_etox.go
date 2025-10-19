@@ -7,11 +7,11 @@ package globals_etox
 type PopulationStats_etox struct {
 	NumberIHbeeCohorts int // only for debugging, will probably remove this later
 
-	MeanDoseIHBees      float64 // doesn´t do anything, just there for debugging
-	MeanDoseLarvae      float64 // doesn´t do anything, just there for debugging
-	MeanDoseDrones      float64 // doesn´t do anything, just there for debugging
-	MeanDoseDroneLarvae float64 // doesn´t do anything, just there for debugging
-	MeanDoseForager     float64 // doesn´t do anything, just there for debugging
+	MeanDoseIHBees      float64 // per COHORT; doesn´t do anything, just there for debugging
+	MeanDoseLarvae      float64 // per COHORT; doesn´t do anything, just there for debugging
+	MeanDoseDrones      float64 // per COHORT; doesn´t do anything, just there for debugging
+	MeanDoseDroneLarvae float64 // per COHORT; doesn´t do anything, just there for debugging
+	MeanDoseForager     float64 // per COHORT; doesn´t do anything, just there for debugging
 
 	CumDoseIHBees      float64 // cumulative dose before calculating a mean, used for debugging
 	CumDoseLarvae      float64 // cumulative dose before calculating a mean, used for debugging
@@ -19,7 +19,10 @@ type PopulationStats_etox struct {
 	CumDoseDrones      float64 // cumulative dose before calculating a mean, used for debugging
 	CumDoseDroneLarvae float64 // cumulative dose before calculating a mean, used for debugging
 
-	PPPNursebees float64 // variable for debugging and finding out how much PPP is "lost" to nursebees, who are not explicitely modeled
+	CumDoseNurses  float64
+	MeanDoseNurses float64
+
+	PPPNursebees float64 // variable for debugging and finding out how much PPP is "lost" to nursebees in old etox model version, who are not explicitely modeled
 }
 
 // Reset all stats to zero.
@@ -33,6 +36,9 @@ func (s *PopulationStats_etox) Reset() {
 	s.CumDoseLarvae = 0      // cumulative dose before calculating a mean, used for debugging
 	s.CumDoseDrones = 0      // cumulative dose before calculating a mean, used for debugging
 	s.CumDoseDroneLarvae = 0 // cumulative dose before calculating a mean, used for debugging
+
+	s.CumDoseNurses = 0
+	s.MeanDoseNurses = 0
 
 	s.PPPNursebees = 0
 }

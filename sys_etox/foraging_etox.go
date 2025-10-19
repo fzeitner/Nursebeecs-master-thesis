@@ -41,11 +41,11 @@ type Foraging_etox struct {
 	stores        *globals.Stores
 	stores_etox   *globals_etox.Storages_etox
 	foragingStats *globals_etox.ForagingStats_etox
-	waterneeds    *globals_etox.WaterNeeds
-	pop           *globals.PopulationStats
-	newCohorts    *globals.NewCohorts
-	aff           *globals.AgeFirstForaging
-	factory       *globals.ForagerFactory
+	//waterneeds    *globals_etox.WaterNeeds
+	pop        *globals.PopulationStats
+	newCohorts *globals.NewCohorts
+	aff        *globals.AgeFirstForaging
+	factory    *globals.ForagerFactory
 
 	patches        []patchCandidate_etox
 	toAdd          []ecs.Entity
@@ -96,7 +96,7 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.foragePeriod = ecs.GetResource[globals.ForagingPeriod](w)
 	s.stores = ecs.GetResource[globals.Stores](w)
 	s.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
-	s.waterneeds = ecs.GetResource[globals_etox.WaterNeeds](w)
+	//s.waterneeds = ecs.GetResource[globals_etox.WaterNeeds](w)
 	s.pop = ecs.GetResource[globals.PopulationStats](w)
 	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
 	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
@@ -198,31 +198,29 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff)
 	}
 	s.newCohorts.Foragers = 0
-	if s.etox.Application {
-		// adding etox components to the newly initialized forager entities
-		agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
-		for agequery.Next() {
-			s.toAdd = append(s.toAdd, agequery.Entity())
+	// adding etox components to the newly initialized forager entities
+	agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
+	for agequery.Next() {
+		s.toAdd = append(s.toAdd, agequery.Entity())
+	}
+	for _, entity := range s.toAdd {
+		if s.etox.GUTS && s.guts.Type == "IT" {
+			s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
+		} else if s.etox.GUTS && s.guts.Type == "SD" {
+			s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
+		} else {
+			s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 		}
-		for _, entity := range s.toAdd {
-			if s.etox.GUTS && s.guts.Type == "IT" {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			} else if s.etox.GUTS && s.guts.Type == "SD" {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			} else {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			}
-			s.etoxPatchAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
+		s.etoxPatchAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
 
+	}
+	s.toAdd = s.toAdd[:0]
+	if s.etox.GUTS {
+		if s.guts.Type == "IT" {
+			s.newCohorts.NewForITthreshold = 0.
 		}
-		s.toAdd = s.toAdd[:0]
-		if s.etox.GUTS {
-			if s.guts.Type == "IT" {
-				s.newCohorts.NewForITthreshold = 0.
-			}
-			s.newCohorts.NewForC_i = 0.
-			s.newCohorts.NewForOralDose = 0.
-		}
+		s.newCohorts.NewForC_i = 0.
+		s.newCohorts.NewForOralDose = 0.
 	}
 }
 

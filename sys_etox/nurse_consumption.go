@@ -143,13 +143,13 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 		// calculate  nurse intake capacity
 		TotalNurseCap := 0.
-		nonZeroCohort := 0 // to track how old the second oldest IHbee cohort is that is still alive
+		//nonZeroCohort := 0 // to track how old the second oldest IHbee cohort is that is still alive
 		s.nstats.TotalNurses = 0
 		for i := 4; i <= s.nglobals.NurseAgeMax; i++ { // start at 5 instead of 4; assume there is always at least one cohort of nurses (aged 4 in this case)
 			s.nstats.TotalNurses += s.inHive.Workers[i]
-			if i != s.nglobals.NurseAgeMax && i != 4 && s.inHive.Workers[i] != 0 {
-				nonZeroCohort = i
-			}
+			//if i != s.nglobals.NurseAgeMax && i != 4 && s.inHive.Workers[i] != 0 {
+			//	nonZeroCohort = i
+			//}
 			TotalNurseCap += float64(s.inHive.Workers[i]) * s.newCons.MaxPollenNurse * s.newCons.Nursingcapabiliies[i]
 		}
 		s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.TotalAdults)) * 100 // expressed in %
@@ -176,9 +176,12 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		s.nglobals.SuffNurses = false // insufficient nurses; this makes young workers eat their own pollen and increaeses the nurse threshold next day
 		if s.nglobals.NurseWorkLoad < 1.0 {
 			s.nglobals.SuffNurses = true // we have sufficient nurses; this influences if nurses also eat pollen to prime young workers and does not increase nurse threshold next day
+		} else {
+			s.nglobals.Total_pollen -= s.nglobals.WorkerPriming
+			s.nglobals.NurseWorkLoad = s.nglobals.Total_pollen / TotalNurseCap
 		}
 
-		nonZeroCohort += 0                                            // just to be able to leave the code in for now
+		//nonZeroCohort += 0
 		if s.nglobals.SuffNurses && len(s.nglobals.WinterBees) == 0 { // is a reduction in the nursing force possible?
 			TotalNurseCap_red := TotalNurseCap - float64(s.inHive.Workers[s.nglobals.NurseAgeMax])*s.newCons.MaxPollenNurse*s.newCons.Nursingcapabiliies[s.nglobals.NurseAgeMax] // could also use nonZeroCohort here for reducing to NurseAgeMax to that spot
 			if TotalNurseCap_red >= s.nglobals.Total_pollen {

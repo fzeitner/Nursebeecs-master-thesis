@@ -57,9 +57,10 @@ def agg_beecs(file_pattern, out_file):
     out.to_csv(out_file, sep=";", index=False)
 
 
-def plot_quantiles(nbeecs_file, beecs_file, out_dir, format, appday):
+def plot_quantiles(nbeecs_file, nbeecs2_file, beecs_file, out_dir, format, appday):
     data_nbeecs = pd.read_csv(nbeecs_file, sep=r'\s*;\s*', engine='python')
     data_beecs = pd.read_csv(beecs_file, sep=r'\s*;\s*', engine='python')
+    data_nbeecs2 = pd.read_csv(nbeecs2_file, sep=r'\s*;\s*', engine='python')
 
     columns = list(data_nbeecs.columns)[1:]
     columns = pd.unique(pd.Series(c[:-4] for c in columns))
@@ -76,6 +77,7 @@ def plot_quantiles(nbeecs_file, beecs_file, out_dir, format, appday):
     for col in columns:
         plot_column(
             data_nbeecs,
+            data_nbeecs2, 
             data_beecs,
             col,
             quantiles,
@@ -84,13 +86,14 @@ def plot_quantiles(nbeecs_file, beecs_file, out_dir, format, appday):
         )
 
 
-def plot_column(data_nbeecs, data_beecs, column, quantiles, image_file, appday):
+def plot_column(data_nbeecs, data_nbeecs2, data_beecs, column, quantiles, image_file, appday):
     median_col = quantiles[len(quantiles) // 2][0]
 
     fig, ax = plt.subplots(figsize=(10, 4))
     for data, col, model in [
         (data_beecs, "blue", "beecs"),
-        (data_nbeecs, "red", "nbeecs"),
+        (data_nbeecs, "red", "oldbc"),
+        (data_nbeecs2, "green", "newbc"),
     ]:      
         q10 = data[column + "_Q05"]
         q90 = data[column + "_Q95"]
@@ -123,28 +126,31 @@ if __name__ == "__main__":
     }
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", ]
-    folder = testfolders[2]
+    folder = testfolders[0]
 
 
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
     agg_all = False
-    agg_nbeecs = True
+    agg_nbeecs = False
     agg_beec = False
 
     if run_all:
         for folder in testfolders:
             if agg_all:
                 agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
-                agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecs-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecs.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
             elif agg_nbeecs:
-                agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecs-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecs.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
             elif agg_beec:
                 agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
 
 
             plot_quantiles(
-                "nursebeecs_testing/" + folder + "/nbeecs.csv",
+                "nursebeecs_testing/" + folder + "/oldbc.csv",
+                "nursebeecs_testing/" + folder + "/newbc.csv",
                 "nursebeecs_testing/" + folder + "/beecs.csv",
                 "nursebeecs_testing/" + folder ,
                 #"png",
@@ -154,13 +160,16 @@ if __name__ == "__main__":
     else:
         if agg_all:
             agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
-            agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecs-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecs.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
         elif agg_nbeecs:
-            agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecs-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecs.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
         elif agg_beec:
             agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
         plot_quantiles(
-            "nursebeecs_testing/" + folder + "/nbeecs.csv",
+            "nursebeecs_testing/" + folder + "/oldbc.csv",
+            "nursebeecs_testing/" + folder + "/newbc.csv",
             "nursebeecs_testing/" + folder + "/beecs.csv",
             "nursebeecs_testing/" + folder ,
             "png",
