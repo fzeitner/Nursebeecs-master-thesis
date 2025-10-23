@@ -37,7 +37,9 @@ type KnownPatch_etox struct {
 type Activity_etox struct {
 	Current       activity.ForagerActivity // Current activity.
 	PollenForager bool                     // Whether it is currently foraging for pollen.
-	Winterbee     bool
+
+	Winterbee bool // switches to have foragers counted as winterbees --> they can forage and nurse at the same time. This will need to be adressed in the future. for now necessary for nursing
+	Reverted  bool // switches to have foragers counted as reverted foragers that can nurse again but do not forage. for now necessary for nursing
 
 	WaterForager bool // Whether it is currently foraging for water.
 }

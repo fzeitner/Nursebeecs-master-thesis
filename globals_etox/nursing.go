@@ -7,6 +7,7 @@ import "github.com/mlange-42/ark/ecs"
 type Nursing_globals struct {
 	SuffNurses        bool // were there sufficient nurses last consumption proc?
 	Reductionpossible bool // is a reduction in the nursing force possible?
+	AbortNursing      bool // can only be turned true if there is a severe lack of nurses and makes all brood starve next day
 
 	LastPollenInflux   int     // days/ticks since the lase pollen influx --> regulates cannibalism in times of reudced pollen income
 	PollenStoreLastDay float64 // amount of pollen in store yesterday to calculate if any fresh pollen were added without changing foraging submodule
@@ -25,12 +26,22 @@ type Nursing_globals struct {
 	WorkerPriming float64 // amount of pollen needed for young workers to prime their HPG this timestep
 
 	WinterBees []ecs.Entity // saves all the current winterbees and could be used to specify their consumption/jobs further
+	Reverted   []ecs.Entity // saves all the current reverted foragers
+
+	SquadstoReduce int // amount of squads that can be reduced again --> amount of reverted forager squadrons that will be returned to normal forager squadrons next timestep
 }
 
 type Nursing_stats struct {
 	MaxPollenIntake  float64 // maximum of pollen intake per nurse
 	MeanPollenIntake float64 // mean pollen intake per nurse
-	NL_ratio         float64 // current nurse:larva ratio; probably only to be used as a analytical metric
-	TotalNurses      int     // amount of nurses today
-	NurseFraction    float64 // fraction of nurses from total adult population
+
+	NL_ratio float64 // current nurse:larva ratio; probably only to be used as a analytical metric
+
+	NonNurseIHbees int     // amount of not nursing IHbees --> MAB, that do nor forage and do not nurse+
+	IHbeeNurses    int     // amount of IHbee nurses
+	TotalNurses    int     // total amount of nurses today; including reverted foragers and winterbees
+	NurseFraction  float64 // fraction of nurses from total adult population
+
+	RevertedForagers int // amount of reverted foragers at this current tick
+	WinterBees       int // amount of winterbees at this current tick
 }

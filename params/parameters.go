@@ -152,6 +152,8 @@ type Nursing struct {
 	MaxBroodCells              int     // Maximum number of brood cells in the hive.
 	DroneEggLayingSeasonStart  int     // Fist day of year of the drone egg laying season.
 	DroneEggLayingSeasonEnd    int     // Last day of year of the drone egg laying season.
+
+	WinterBees bool // switch to turn on semi-explicit Winterbee simulation; necessary for Nursebeecs
 }
 
 // Stores parameters.

@@ -80,10 +80,6 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 					p.ContactDose = 0. // therefore exposure from foraging of the current day and exposure from food of the previous day is relevant for lethal effects only
 
 				} else { // BeeGUTS gets called; still in developement and to be tested
-					if s.time.Tick == int64(s.etox.AppDay) { // debugging anchor
-						x := 1
-						x += 1
-					}
 					if reset_contact {
 						p.ContactDose = 0.
 					}
@@ -97,7 +93,6 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 					s.etoxstats.CumDoseForagers += p.OralDose // probably wil have to readjust dosage metrics
 				}
 			}
-
 			if lethaldose {
 				s.toRemove = append(s.toRemove, query.Entity())
 			}

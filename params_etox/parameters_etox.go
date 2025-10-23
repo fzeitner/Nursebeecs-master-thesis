@@ -4,6 +4,7 @@ package params_etox
 type ETOXparams struct {
 	Application               bool // Determines if there is an application at all at any point in the model and if the _ecotox-module should be turned on for all purposes
 	GUTS                      bool // Determines whether BeeGUTS shall be used (true) or the old dose-response relationship
+	ReworkedThermoETOX        bool // Determines whether to use the reworked splitting of thermoregulatory energy cost amongst all IHbees and foragers (true) or to use the classic BEEHAVE_ecotox method to give all of this energy to one squadron/cohort (false)
 	ForagerImmediateMortality bool // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 	DegradationHoney          bool // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 	ContactSum                bool // Determines whether contact exposures of different flower visits shall be summed up.

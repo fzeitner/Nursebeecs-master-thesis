@@ -119,19 +119,19 @@ if __name__ == "__main__":
     ### adding a visual indicator in plots, does not change anything regarding the results
     appdays = {"default_beecs" : 0,  
                "default_etox" : 0,                     # appday = 0 for no application
-              "default_dimethoate": 189, 
+              "default_dimethoate": 217, 
               "Rothamsted2009_fenoxycarb": 189, 
               "Rothamsted2009_etox": 0,
               "Rothamsted2009_beecs": 0,
     }
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", ]
-    folder = testfolders[0]
+    folder = testfolders[3]
 
 
 
-    run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
-    agg_all = False
+    run_all = True                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
+    agg_all = True
     agg_nbeecs = False
     agg_beec = False
 
@@ -172,7 +172,7 @@ if __name__ == "__main__":
             "nursebeecs_testing/" + folder + "/newbc.csv",
             "nursebeecs_testing/" + folder + "/beecs.csv",
             "nursebeecs_testing/" + folder ,
-            "png",
-            #"svg",
+            #"png",
+            "svg",
             appdays[folder],
         )

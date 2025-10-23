@@ -37,6 +37,7 @@ func Default_etox() DefaultParams_etox {
 		ETOXparams: ETOXparams{
 			Application:               false, // Determines if there is an application at all (and turns on/off the necessary code)
 			GUTS:                      false, // Determines whether BeeGUTS or dose-response shall be used for effect calculation
+			ReworkedThermoETOX:        true,  // Determines whether to use the reworked splitting of thermoregulatory energy cost amongst all IHbees and foragers (true) or to use the classic BEEHAVE_ecotox method to give all of this energy to one squadron/cohort (false)
 			ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 			DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 			ContactSum:                false, // Determines whether contact exposure should be summed up per visit to a patch (true) or if the mean should be calculated whenever a new patch is visited (false)

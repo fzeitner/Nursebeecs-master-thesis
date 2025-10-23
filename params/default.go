@@ -169,6 +169,8 @@ func Default() DefaultParams {
 			MaxBroodCells:              200_000,
 			DroneEggLayingSeasonStart:  115,
 			DroneEggLayingSeasonEnd:    240,
+
+			WinterBees: false,
 		},
 		InitialPopulation: InitialPopulation{
 			Count:     10_000,

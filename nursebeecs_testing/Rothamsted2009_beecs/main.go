@@ -40,7 +40,7 @@ func main() {
 		pe := params_etox.Default_etox()
 		pe.ConsumptionRework.Nursebeecs = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = true
+		pe.Nursing.NewBroodCare = false
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs(app, i, &p, &pe)
@@ -49,7 +49,7 @@ func main() {
 	dur = time.Since(start)
 	fmt.Println(dur)
 
-	run_nbeecs2 := false // switch to run normal and/or nurse beecs
+	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
 		pe := params_etox.Default_etox()
 		pe.ConsumptionRework.Nursebeecs = true
@@ -82,7 +82,7 @@ func run_nursebeecs(app *app.App, idx int, params params.Params, params_etox par
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.DebugPollenCons{},
-		File:     fmt.Sprintf("out/nbeecs-%04d.csv", idx),
+		File:     fmt.Sprintf("out/oldbc-%04d.csv", idx),
 		Sep:      ";",
 	})
 
@@ -93,7 +93,7 @@ func run_nursebeecs2(app *app.App, idx int, params params.Params, params_etox pa
 	app = model.Default_nbeecs(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
-		Observer: &obs.DebugNursing{},
+		Observer: &obs.DebugPollenCons{},
 		File:     fmt.Sprintf("out/newbc-%04d.csv", idx),
 		Sep:      ";",
 	})

@@ -22,7 +22,7 @@ func main() {
 
 	start := time.Now()
 
-	run_beecs := false // switch to run normal and/or nurse beecs
+	run_beecs := true // switch to run normal and/or nurse beecs
 	if run_beecs {
 		for i := 0; i < 100; i++ {
 			run(app, i, &p, &pe)

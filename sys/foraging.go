@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 
 	"github.com/fzeitner/beecs_masterthesis/comp"
+	"github.com/fzeitner/beecs_masterthesis/comp_etox"
 	"github.com/fzeitner/beecs_masterthesis/enum/activity"
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/params"
@@ -27,6 +28,7 @@ type Foraging struct {
 	danceParams        *params.Dance
 	energyParams       *params.EnergyContent
 	storeParams        *params.Stores
+	nursingparams      *params.Nursing
 
 	foragePeriod  *globals.ForagingPeriod
 	stores        *globals.Stores
@@ -40,8 +42,10 @@ type Foraging struct {
 	toRemove []ecs.Entity
 	resting  []ecs.Entity
 	dances   []ecs.Entity
+	toAdd    []ecs.Entity
 
 	patchResourceMapper  *ecs.Map1[comp.Resource]
+	ageMapper            *ecs.Map1[comp.Age]
 	patchVisitsMapper    *ecs.Map2[comp.Resource, comp.Visits]
 	patchDanceMapper     *ecs.Map2[comp.Resource, comp.Dance]
 	patchTripMapper      *ecs.Map1[comp.Trip]
@@ -50,6 +54,7 @@ type Foraging struct {
 	foragerMapper        *ecs.Map2[comp.Activity, comp.KnownPatch]
 
 	activityFilter      *ecs.Filter1[comp.Activity]
+	ageFilter           *ecs.Filter1[comp.Age]
 	loadFilter          *ecs.Filter2[comp.Activity, comp.NectarLoad]
 	foragerFilter       *ecs.Filter3[comp.Activity, comp.KnownPatch, comp.Milage]
 	foragerFilterLoad   *ecs.Filter4[comp.Activity, comp.KnownPatch, comp.Milage, comp.NectarLoad]
@@ -57,7 +62,8 @@ type Foraging struct {
 	patchFilter         *ecs.Filter2[comp.Resource, comp.PatchProperties]
 	patchUpdateFilter   *ecs.Filter7[comp.PatchProperties, comp.PatchDistance, comp.Resource, comp.HandlingTime, comp.Trip, comp.Mortality, comp.Dance]
 
-	maxHoneyStore float64
+	WinterBeeAdder *ecs.Map1[comp_etox.Activity_etox]
+	maxHoneyStore  float64
 }
 
 func (s *Foraging) Initialize(w *ecs.World) {
@@ -67,6 +73,7 @@ func (s *Foraging) Initialize(w *ecs.World) {
 	s.danceParams = ecs.GetResource[params.Dance](w)
 	s.energyParams = ecs.GetResource[params.EnergyContent](w)
 	s.storeParams = ecs.GetResource[params.Stores](w)
+	s.nursingparams = ecs.GetResource[params.Nursing](w)
 
 	s.popStats = ecs.GetResource[globals.PopulationStats](w)
 	s.foragingStats = ecs.GetResource[globals.ForagingStats](w)
@@ -77,6 +84,7 @@ func (s *Foraging) Initialize(w *ecs.World) {
 	s.factory = ecs.GetResource[globals.ForagerFactory](w)
 
 	s.activityFilter = s.activityFilter.New(w)
+	s.ageFilter = s.ageFilter.New(w)
 	s.loadFilter = s.loadFilter.New(w)
 	s.foragerFilter = s.foragerFilter.New(w)
 	s.foragerFilterLoad = s.foragerFilterLoad.New(w)
@@ -85,6 +93,7 @@ func (s *Foraging) Initialize(w *ecs.World) {
 	s.patchUpdateFilter = s.patchUpdateFilter.New(w)
 
 	s.patchResourceMapper = s.patchResourceMapper.New(w)
+	s.ageMapper = s.ageMapper.New(w)
 	s.patchVisitsMapper = s.patchVisitsMapper.New(w)
 	s.patchDanceMapper = s.patchDanceMapper.New(w)
 	s.patchTripMapper = s.patchTripMapper.New(w)
@@ -95,6 +104,7 @@ func (s *Foraging) Initialize(w *ecs.World) {
 	storeParams := ecs.GetResource[params.Stores](w)
 	energyParams := ecs.GetResource[params.EnergyContent](w)
 
+	s.WinterBeeAdder = s.WinterBeeAdder.New(w)
 	s.maxHoneyStore = storeParams.MaxHoneyStoreKg * 1000.0 * energyParams.Honey
 	s.rng = rand.New(ecs.GetResource[resource.Rand](w))
 	s.time = ecs.GetResource[resource.Tick](w)
@@ -153,9 +163,35 @@ func (s *Foraging) Finalize(w *ecs.World) {}
 
 func (s *Foraging) newForagers(w *ecs.World) {
 	if s.newCohorts.Foragers > 0 {
-		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff)
+		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff) // make sure this -1 for the tick makes sense before publishing this anywhere
 	}
 	s.newCohorts.Foragers = 0
+
+	// may have to start adding winterbee component here in case we are simulating nursebeecs over multiple years
+	// postpone for now though
+	if s.nursingparams.WinterBees {
+		agequery := s.ageFilter.Without(ecs.C[comp_etox.Activity_etox]()).Query()
+		for agequery.Next() {
+			s.toAdd = append(s.toAdd, agequery.Entity())
+		}
+		for _, e := range s.toAdd {
+			age := s.ageMapper.Get(e)
+			if age.DayOfBirth >= 205 && age.DayOfBirth < 265 { // original BEEHAVE assumes starting foragers (=winter bees) are aged 100 - 160 days already; Aff + 21 = current age of the cohort; 21 = dev-time from egg - adult; Aff = adult time before foraging
+				if s.rng.Float64() <= float64(1)/float64(60)*float64(age.DayOfBirth-204) { // assume linear increase in likelihood to turn into winterbees
+					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Winterbee: true}) // assumes bees turning into foragers are winterbees again;
+				} else {
+					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{})
+				}
+			} else if age.DayOfBirth >= 265 { // original BEEHAVE assumes starting foragers are aged 100 - 160 days already !!!; this is just an estimate though, it would make a lot more sense to couple this to pop dynamic and nectar/pollen influxes
+				s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Winterbee: true}) // assumes bees turning into foragers are winterbees again
+				// aligns with literature assuming eggs from august - september start turning into winterbees (21 days for theses eggs to turn into IHbees + some more to turn into foragers --> roughly start of october)
+				// there should eventually be a system introduced to actually differentiate between winterbees and summeerbees properly (mortalities, food demands, chance from egg onwards to turn into 1 of the 2, ...)
+			} else {
+				s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{})
+			}
+		}
+		s.toAdd = s.toAdd[:0]
+	}
 }
 
 func (s *Foraging) calcForagingProb() float64 {
