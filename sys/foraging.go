@@ -177,7 +177,7 @@ func (s *Foraging) newForagers(w *ecs.World) {
 		for _, e := range s.toAdd {
 			age := s.ageMapper.Get(e)
 			if age.DayOfBirth >= 205 && age.DayOfBirth < 265 { // original BEEHAVE assumes starting foragers (=winter bees) are aged 100 - 160 days already; Aff + 21 = current age of the cohort; 21 = dev-time from egg - adult; Aff = adult time before foraging
-				if s.rng.Float64() <= float64(1)/float64(60)*float64(age.DayOfBirth-204) { // assume linear increase in likelihood to turn into winterbees
+				if s.rng.Float64() <= (1./60.)*float64(age.DayOfBirth-204) { // assume linear increase in likelihood to turn into winterbees
 					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Winterbee: true}) // assumes bees turning into foragers are winterbees again;
 				} else {
 					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{})

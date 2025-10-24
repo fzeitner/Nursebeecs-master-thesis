@@ -126,11 +126,11 @@ if __name__ == "__main__":
     }
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", ]
-    folder = testfolders[3]
+    folder = testfolders[5]
 
 
 
-    run_all = True                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
+    run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
     agg_all = True
     agg_nbeecs = False
     agg_beec = False

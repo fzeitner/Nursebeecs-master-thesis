@@ -58,6 +58,8 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 	s.foragerfilter = s.foragerfilter.New(w)
 }
 
+// ToDo: build subfuntions and create compartments for the code; the way this looks right now is quite chaotic
+
 func (s *NurseConsumption) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 

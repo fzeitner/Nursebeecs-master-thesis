@@ -57,6 +57,9 @@ func Default() DefaultParams {
 		Termination: Termination{
 			MaxTicks:     365,
 			OnExtinction: false,
+
+			WinterCritExtinction: false,
+			CritColonySizeWinter: 4000,
 		},
 		RandomSeed: RandomSeed{
 			Seed: 0,
@@ -144,8 +147,6 @@ func Default() DefaultParams {
 			MaxHoneyStoreKg:      50.0, // [kg]
 			DecentHoneyPerWorker: 1.5,  // [g]
 			ProteinStoreNurse:    7,    // [d]
-
-			//ETOXDensityOfHoney:   1.4,  // [kg/l]
 		},
 		HoneyNeeds: HoneyNeeds{
 			WorkerResting:    11.0,  // [mg/d]

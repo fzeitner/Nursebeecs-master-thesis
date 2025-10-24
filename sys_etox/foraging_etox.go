@@ -133,7 +133,6 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.maxHoneyStore = storeParams.MaxHoneyStoreKg * 1000.0 * energyParams.Honey
 	s.rng = rand.New(ecs.GetResource[resource.Rand](w))
 	s.time = ecs.GetResource[resource.Tick](w)
-
 }
 
 func (s *Foraging_etox) Update(w *ecs.World) {
@@ -569,7 +568,7 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 			milage.Total += float32(dist)
 
 			// exposition from nectar foraging
-			PPPload.PPPLoad = load.Energy * etoxprops.PPPconcentrationNectar
+			PPPload.PPPLoad = load.Energy * etoxprops.PPPconcentrationNectar // kJ * mug/kJ = mug / load
 			PPPexpo.OralDose += PPPload.PPPLoad * s.toxic.HSuptake
 			PPPload.PPPLoad -= PPPload.PPPLoad * s.toxic.HSuptake
 
@@ -602,7 +601,7 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 			milage.Total += float32(dist)
 
 			// exposition from pollen foraging
-			PPPload.PPPLoad = s.foragerParams.PollenLoad * etoxprops.PPPconcentrationPollen
+			PPPload.PPPLoad = s.foragerParams.PollenLoad * etoxprops.PPPconcentrationPollen // g * mug/g = mug / load
 
 			if patch.VisitedthisDay {
 				s.foragingStats.ContactExp_repeat++
@@ -852,6 +851,9 @@ func (s *Foraging_etox) unloading(w *ecs.World) {
 			s.stores.Honey += load.Energy * float64(s.foragerParams.SquadronSize)
 
 			s.stores_etox.ETOX_HES_C_D0 = ((s.stores_etox.ETOX_HES_C_D0 * s.stores_etox.ETOX_HES_E_D0) + (PPPload.PPPLoad * (1 - s.toxic.HSuptake) * float64(s.foragerParams.SquadronSize))) / (s.stores_etox.ETOX_HES_E_D0 + (load.Energy * float64(s.foragerParams.SquadronSize))) // may need to readjust
+			// HSuptake actually gets applied a second time in here; it already got applied to PPPload when the foragers took up the load; the lost fraction then got added to the foragers OralDose
+			// here PPPLoad loses another 10% (in total 19% are "lost" to the forager), but these 10% just dissipate. There is no addition to foragers OralDose, 9% of total pesticide taken in via honey is thus lost in the model
+			// BEEHAVE_ecotox ODD´s do not talk about HSuptake anywhere sadly
 			s.stores_etox.ETOX_HES_E_D0 += load.Energy * float64(s.foragerParams.SquadronSize)
 			if s.stores.Honey > s.maxHoneyStore ||
 				s.stores_etox.ETOX_HES_E_Capped+s.stores_etox.ETOX_HES_E_D0+s.stores_etox.ETOX_HES_E_D1+s.stores_etox.ETOX_HES_E_D2+s.stores_etox.ETOX_HES_E_D3+s.stores_etox.ETOX_HES_E_D4 > s.maxHoneyStore {

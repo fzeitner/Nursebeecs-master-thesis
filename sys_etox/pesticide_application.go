@@ -52,7 +52,7 @@ func (s *PPPApplication) Update(w *ecs.World) {
 			props.PPPconcentrationPollen = res.PPPconcentrationPollen
 			props.PPPcontactDose = res.PPPcontactDose
 
-			if etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase ||
+			if (etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase) ||
 				props.PPPconcentrationNectar+props.PPPconcentrationPollen+props.PPPcontactDose > 0 {
 				if s.etox.AppDay == dayOfYear && etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase {
 					if con.NectarConcentration != 0 {
@@ -87,7 +87,7 @@ func (s *PPPApplication) Update(w *ecs.World) {
 			props.PPPconcentrationPollen = res.PPPconcentrationPollen
 			props.PPPcontactDose = res.PPPcontactDose
 
-			if etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase ||
+			if (etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase) ||
 				props.PPPconcentrationNectar+props.PPPconcentrationPollen+props.PPPcontactDose > 0 {
 				if s.etox.AppDay == dayOfYear && etox_year > s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase {
 					if seas.NectarConcentration != 0 {
