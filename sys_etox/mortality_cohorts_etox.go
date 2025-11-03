@@ -83,7 +83,7 @@ func (s *MortalityCohorts_etox) applyMortalityEtox(coh []int, dose []float64, sl
 		if dose[i] > 1e-20 { // simple dose response relationship for all larvae/IHBees/drones
 			num = coh[i]
 			ldx := (1 - (1 / (1 + math.Pow((dose[i]/LD50), slope))))
-			if ldx > 0.99 { // introduced this because netlogo-version behaves the same way. This makes it much less likely to have single digit cohorts left over after lethal PPP events
+			if ldx > 0.99 { // introduced this because netlogo-version behaves the same way. This makes it much less likely to have single digit cohorts left over after very lethal PPP events
 				ldx = 1
 			}
 

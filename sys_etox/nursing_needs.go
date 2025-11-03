@@ -98,7 +98,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 			for i := s.nglobals.NurseAgeMax; i < s.aff.Aff; i++ {
 				if s.inHive.Workers[i] != 0 {
 					recruitedNurses += s.inHive.Workers[i]
-					s.nglobals.NurseAgeMax = util.Clamp(i, 5, 50) // emergency type of increase to NurseAgeMax
+					s.nglobals.NurseAgeMax = util.Clamp(i, 5, 50) // emergency increase to NurseAgeMax
 
 					if float64(recruitedNurses+s.nstats.TotalNurses)/float64(s.pop.TotalAdults) >= 0.05 && float64(recruitedNurses) >= 0.5*float64(TotalNursesLastDay) && s.nstats.TotalNurses != 0 { // reach 5% nurses and at least half of last day; this is experimental
 						break

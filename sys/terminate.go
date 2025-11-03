@@ -33,8 +33,7 @@ func (s *FixedTermination) Update(w *ecs.World) {
 			if s.time.Tick%365 == 0 && (s.popStats.WorkersForagers+s.popStats.WorkersInHive) < s.termParams.CritColonySizeWinter {
 				s.termRes.Terminate = true
 			}
-		}
-		if s.termParams.OnExtinction && s.popStats.TotalPopulation == 0 {
+		} else if s.termParams.OnExtinction && s.popStats.TotalPopulation == 0 {
 			s.termRes.Terminate = true
 		} else if s.termParams.MaxTicks > 0 && s.step+1 >= int64(s.termParams.MaxTicks) {
 			s.termRes.Terminate = true

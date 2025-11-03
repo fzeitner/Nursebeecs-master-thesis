@@ -90,7 +90,7 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		DronePriming := 0.
 		// larvae consumption first; gets halted if there are actually no nurses present (large scale death events)
 		s.nglobals.AbortNursing = false
-		if s.nstats.TotalNurses == 0 { // means all foragers that might have reverted died this timestep
+		if s.nstats.TotalNurses == 0 { // means all nurses that might have reverted this timestep already died before this consumption proc
 			s.nglobals.AbortNursing = true
 		} else {
 			// larval honey consumption
@@ -226,8 +226,8 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 				}
 				s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 			*/
-			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 1.0)                                             // using values > 1 destabilizes model dynamics a lot, I should experiment with alternative solutions or a slighly higher bound for workload
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+			//workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 1.0)                                             // using values > 1 destabilizes model dynamics a lot, I should experiment with alternative solutions or a slighly higher bound for workload
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - s.nglobals.NurseWorkLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
 		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
 	}
