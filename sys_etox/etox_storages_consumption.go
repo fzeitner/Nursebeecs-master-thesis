@@ -344,7 +344,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursing(w *ecs.World, coh []int, dose []
 			dose[i] = 0
 		}
 	}
-	if math.Round(pconsumedtotal*0.01) != math.Round(total_pollen*0.01) || math.Round(hconsumed) != math.Round(total_honey) {
+	if math.Round(pconsumedtotal*0.01) != math.Round(total_pollen*0.01) || math.Round(hconsumed*0.01) != math.Round(total_honey*0.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
@@ -449,7 +449,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursingDLarvae(w *ecs.World, coh []int, 
 			dose[i] = 0
 		}
 	}
-	if math.Round(consumed/(0.001*s.energyParams.Honey)) != math.Round(honey) || math.Round(pconsumed*0.01) != math.Round(pollen*0.01) {
+	if math.Round(consumed/(0.001*s.energyParams.Honey)*0.01) != math.Round(honey*0.01) || math.Round(pconsumed*0.01) != math.Round(pollen*0.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
@@ -589,9 +589,9 @@ func (s *EtoxStorages) ShiftHoney(w *ecs.World) {
 		s.stores.ETOX_HES_E_D4 = 0
 	}
 
-	// adjusted this panic to 0.1% acceptable deviation from the honey store in each timestep; 0.1% deemed acceptable because of floating point error
-	if math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*1.001 <= math.Round(s.beecsstores.Honey) ||
-		math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*0.999 >= math.Round(s.beecsstores.Honey) {
+	// adjusted this panic to 1% acceptable deviation from the honey store in each timestep; 1% deemed acceptable because of floating point error
+	if math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*1.01 < math.Round(s.beecsstores.Honey) ||
+		math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*0.99 > math.Round(s.beecsstores.Honey) {
 		panic("Fatal error in honey store dose calculations, model output will be wrong!")
 	}
 

@@ -53,6 +53,7 @@ def agg_beecs(file_pattern, out_file):
 
             q = np.quantile(values, [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95])
             out.loc[tick, cols] = q
+        out = out.copy()      # to keep df from becoming highly fragmented
 
     out.to_csv(out_file, sep=";", index=False)
 
@@ -108,8 +109,8 @@ def plot_column(data_nbeecs, data_nbeecs2, data_beecs, column, quantiles, image_
 
     if multiyear:
         ax.vlines(appday+365, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
-        for i in [2, 3]:
-            ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
+        #for i in [2, 3]:
+        #    ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
 
     elif appday > 0:
         ax.vlines(appday, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
@@ -125,22 +126,22 @@ if __name__ == "__main__":
     ### change test folder and day of application manually here, applicationday is only relevant for 
     ### adding a visual indicator in plots, does not change anything regarding the results
     appdays = {"default_beecs" : 0,  
-               "default_etox" : 0,                     # appday = 0 for no application
-              "default_dimethoate": 217, 
-              "Rothamsted2009_fenoxycarb": 189, 
-              "Rothamsted2009_etox": 0,
-              "Rothamsted2009_beecs": 0,
-               "Rothamsted2009_fenoxycarb_5years" : 189,
-               "Rothamsted2009_etox_5years": 0,
-                "Rothamsted2009_clothianidin_5years": 166,
+            "default_etox" : 0,                     # appday = 0 for no application
+            "default_dimethoate": 217, 
+            "Rothamsted2009_fenoxycarb": 189, 
+            "Rothamsted2009_etox": 0,
+            "Rothamsted2009_beecs": 0,
+            "Rothamsted2009_fenoxycarb_5years" : 189,
+            "Rothamsted2009_etox_5years": 0,
+            "Rothamsted2009_clothianidin_5years": 166,
 
     }
     multiyear_app = {"default_beecs" : False,  
-               "default_etox" : False,                     # appday = 0 for no application
-              "default_dimethoate": False, 
-              "Rothamsted2009_fenoxycarb": False, 
-              "Rothamsted2009_etox": False,
-              "Rothamsted2009_beecs": False,
+            "default_etox" : False,                     # appday = 0 for no application
+            "default_dimethoate": False, 
+            "Rothamsted2009_fenoxycarb": False, 
+            "Rothamsted2009_etox": False,
+            "Rothamsted2009_beecs": False,
             "Rothamsted2009_fenoxycarb_5years" : True,
             "Rothamsted2009_etox_5years": False,
             "Rothamsted2009_clothianidin_5years": True,
@@ -148,7 +149,7 @@ if __name__ == "__main__":
 
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
-    folder = testfolders[5]
+    folder = testfolders[-1]
 
 
 

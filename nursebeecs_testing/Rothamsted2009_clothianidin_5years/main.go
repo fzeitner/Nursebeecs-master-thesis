@@ -17,7 +17,7 @@ func main() {
 
 	p := params.Default()
 	pe := params_etox.Default_etox()
-	p.Termination.MaxTicks = 1825
+	p.Termination.MaxTicks = 365 * 5
 
 	p.Termination.WinterCritExtinction = true // let the hive die if below critical pop threshold
 	p.Termination.CritColonySizeWinter = 4000
@@ -31,9 +31,9 @@ func main() {
 		ContactExposureOneDay:     true,
 
 		PPPname:                "clothianidin", // Identifier for the PPP used.
-		PPPconcentrationNectar: 990 / 10,
-		PPPconcentrationPollen: 27150 / 10,
-		PPPcontactExposure:     0.3 / 10, // kg/ha; contact exposure at patch; 0.035 kg/ha of clothianidin was advised somewhere against potato beeles; this is just a test
+		PPPconcentrationNectar: 990 / 100,
+		PPPconcentrationPollen: 0, //27150 / 100,
+		PPPcontactExposure:     0, //0.3 / 100, // kg/ha; contact exposure at patch; 0.035 kg/ha of clothianidin was advised somewhere against potato beeles; this is just a test
 
 		AppDay:         166,   // Day of the year in which application starts [d]. --> just assumed 15. of june for fighting potato beetle
 		ExposurePeriod: 8,     // Duration of exposure happening (irrespective of DT50) [d].
@@ -45,14 +45,14 @@ func main() {
 		RUD: 21., // Residue per Unit Dose  [(ha*mg)/(kg*kg)]
 	}
 
-	pe.Toxicityparams = params_etox.Toxicityparams{ // clothianidin oral slope was estimated based on LD10 and LD50 from Sgolastra et al. 2016
+	pe.Toxicityparams = params_etox.Toxicityparams{ // clothianidin oral slope was estimated based on LD10 and LD50 from Sgolastra et al. 2017
 		ForagerOralLD50:  0.00168, // clothianidin
 		ForagerOralSlope: 3.28,    // clothianidin
 		HSuptake:         0.1,     //
 
-		// ContactLD50 is backed by PPDB; Slope is not estimated yet and larval data is missing atm
+		// ContactLD50 is backed by PPDB; Slope is not estimated yet and larval data is missing completely atm
 		ForagerContactLD50:  0.044, // clothianidin
-		ForagerContactSlope: 1.08,  // clothianidin
+		ForagerContactSlope: 3.28,  // clothianidin
 
 		LarvaeOralLD50:  1000, // clothianidin
 		LarvaeOralSlope: 1000, // clothianidin
@@ -96,6 +96,7 @@ func main() {
 		pe.ConsumptionRework.Nursebeecs = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
+		pe.Nursing.ScrambleComp = false
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs2(app, i, &p, &pe)
