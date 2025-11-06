@@ -21,6 +21,7 @@ import (
 type Nbroodcare struct {
 	oldNurseParams *params.Nursing
 	NurseParams    *params_etox.Nursing
+	nstats         *globals_etox.Nursing_stats
 
 	stores   *globals.Stores
 	eggs     *globals.Eggs
@@ -36,6 +37,7 @@ type Nbroodcare struct {
 func (s *Nbroodcare) Initialize(w *ecs.World) {
 	s.oldNurseParams = ecs.GetResource[params.Nursing](w)
 	s.NurseParams = ecs.GetResource[params_etox.Nursing](w)
+	s.nstats = ecs.GetResource[globals_etox.Nursing_stats](w)
 
 	s.stores = ecs.GetResource[globals.Stores](w)
 	s.eggs = ecs.GetResource[globals.Eggs](w)
@@ -76,8 +78,9 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 				nonPupaeBrood := s.pop.DroneEggs + s.pop.DroneLarvae + s.pop.WorkerEggs + s.pop.WorkerLarvae
 				s.killBrood(nonPupaeBrood, true) // simply kill all larvae and eggs; capped pupae do not die, as they are not reliant on being fed, they might still die via reduction of excess brood though
 
-				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-					s.oldNurseParams.MaxBroodNurseRatio
+				//maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+				//	s.oldNurseParams.MaxBroodNurseRatio
+				maxBrood := (float64(s.nstats.TotalNurses) - float64(s.nstats.WinterBees)*(1.-s.oldNurseParams.ForagerNursingContribution)) * s.oldNurseParams.MaxBroodNurseRatio
 
 				excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-nonPupaeBrood)-maxBrood)), 0)
 				s.ReduceBroodCells(excessBrood)
@@ -94,10 +97,10 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 					cann_rel += min(float64(s.nglobals.LastPollenInflux/5), 1.0) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 5 days; Schmickl&Crailsheim 2001)
 				}
 
-				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-					s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
-
-				// maybe add some sort of nurse-based death mechanism here depending on scenario
+				//maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+				//	s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
+				maxBrood := (float64(s.nstats.TotalNurses) - float64(s.nstats.WinterBees)*(1.-s.oldNurseParams.ForagerNursingContribution)) * s.oldNurseParams.MaxBroodNurseRatio
+				// add some sort of nurse-based death mechanism here depending on scenario
 				if s.NurseParams.ScrambleComp { // scramble competition; assumes minimum of direct cannibalism based on foraging income and otherwise weakens larvae if there is too little protein
 					starved := int(cann_rel * cann_mean)
 
@@ -107,6 +110,7 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 
 					s.ReduceBroodCells(excessBrood)
 					// weaken brood depending on protein stores / ProteinFactorNurses here
+					//toStarve := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
 
 				} else { // "winner takes it all"; basically assumes the old BEEHAVE brood care dynamics stay correct with the addition of foraging-income based cannibalism
 					toStarve := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
@@ -220,7 +224,7 @@ func reduceCohortsByAge(cohD []int, cohW []int, excess int) int {
 		cohW[i] = 0
 		// and then iterates over the next age
 	}
-	// if there still is an excess keep on reducing the rest of the drone cohorts
+	/*// if there still is an excess keep on reducing the rest of the drone cohorts
 	if excess > 0 {
 		for i := len(cohD) - 2; i < len(cohD); i++ {
 			if cohD[i] >= excess {
@@ -230,7 +234,7 @@ func reduceCohortsByAge(cohD []int, cohW []int, excess int) int {
 			excess -= cohD[i]
 			cohD[i] = 0
 		}
-	}
+	}*/
 	return excess
 }
 

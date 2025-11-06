@@ -76,7 +76,7 @@ func main() {
 	if run_nbeecs {
 		pe.ConsumptionRework.Nursebeecs = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = true
+		pe.Nursing.NewBroodCare = false
 		pe.Nursing.ScrambleComp = false
 
 		for i := 0; i < 100; i++ {
@@ -91,7 +91,7 @@ func main() {
 		pe.ConsumptionRework.Nursebeecs = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
-		pe.Nursing.ScrambleComp = true
+		pe.Nursing.ScrambleComp = false
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs2(app, i, &p, &pe)

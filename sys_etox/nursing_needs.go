@@ -80,7 +80,6 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 		} else if (s.stores.ProteinFactorNurses < 1. && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
 			s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax-1, 5, 50)
 		}
-		// maybe it is a better idea to calulate every step if nursing demands could still be fulfilled if nurse max age was lowered by the next nonzero-cohort and then lower NurseAgeMax to that age
 
 		// un-revert redundant reverted foragers
 		if s.nglobals.SquadstoReduce > 0 {

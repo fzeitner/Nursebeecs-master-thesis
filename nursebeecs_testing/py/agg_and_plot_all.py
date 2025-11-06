@@ -109,8 +109,8 @@ def plot_column(data_nbeecs, data_nbeecs2, data_beecs, column, quantiles, image_
 
     if multiyear:
         ax.vlines(appday+365, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
-        #for i in [2, 3]:
-        #    ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
+        for i in [2, 3]:
+            ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
 
     elif appday > 0:
         ax.vlines(appday, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
-    folder = testfolders[-1]
+    folder = testfolders[5]
 
 
 

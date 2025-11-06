@@ -1,0 +1,80 @@
+package sys_etox
+
+import (
+	"math"
+
+	"github.com/fzeitner/beecs_masterthesis/globals"
+	"github.com/fzeitner/beecs_masterthesis/globals_etox"
+	"github.com/fzeitner/beecs_masterthesis/params"
+	"github.com/fzeitner/beecs_masterthesis/params_etox"
+	"github.com/fzeitner/beecs_masterthesis/util"
+	"github.com/mlange-42/ark-tools/resource"
+	"github.com/mlange-42/ark/ecs"
+)
+
+// EggLaying produces new worker and drone eggs,
+// based on seasonal egg laying capacity and available nurse bees.
+type EggLayingNbeecs struct {
+	time        *resource.Tick
+	eggs        *globals.Eggs
+	pop         *globals.PopulationStats
+	nurseParams *params.Nursing
+	workerDev   *params.WorkerDevelopment
+
+	newCons *params_etox.ConsumptionRework
+	nstats  *globals_etox.Nursing_stats
+}
+
+func (s *EggLayingNbeecs) Initialize(w *ecs.World) {
+	s.time = ecs.GetResource[resource.Tick](w)
+	s.eggs = ecs.GetResource[globals.Eggs](w)
+	s.pop = ecs.GetResource[globals.PopulationStats](w)
+	s.nurseParams = ecs.GetResource[params.Nursing](w)
+	s.workerDev = ecs.GetResource[params.WorkerDevelopment](w)
+
+	s.newCons = ecs.GetResource[params_etox.ConsumptionRework](w)
+	s.nstats = ecs.GetResource[globals_etox.Nursing_stats](w)
+}
+
+func (s *EggLayingNbeecs) Update(w *ecs.World) {
+	if s.time.Tick > 0 {
+		elr := float64(s.nurseParams.MaxEggsPerDay) * util.Season(s.time.Tick-1) // -1 because model is now forced to start on tick 1 instead of tick 0 before
+
+		if s.nurseParams.EggNursingLimit {
+			elrNurse := 0.
+			if s.newCons.Nursebeecs {
+				emergingAge := float64(s.workerDev.EggTime + s.workerDev.LarvaeTime + s.workerDev.PupaeTime/2) // only take half the PupaeTime into account here because they do not actually need as much care and total amount of nurses got lowered
+				elrNurse = (float64(s.nstats.TotalNurses) - float64(s.nstats.WinterBees)*(1.-s.nurseParams.ForagerNursingContribution)) * s.nurseParams.MaxBroodNurseRatio / emergingAge
+			} else {
+				emergingAge := float64(s.workerDev.EggTime + s.workerDev.LarvaeTime + s.workerDev.PupaeTime)
+				elrNurse = (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
+					s.nurseParams.MaxBroodNurseRatio / emergingAge
+			}
+
+			if elrNurse < elr {
+				elr = elrNurse
+			}
+		}
+		if elr > float64(s.nurseParams.MaxEggsPerDay) {
+			elr = float64(s.nurseParams.MaxEggsPerDay)
+		}
+		eggs := int(math.Round(elr))
+		if s.pop.TotalBrood+eggs > s.nurseParams.MaxBroodCells {
+			eggs = s.nurseParams.MaxBroodCells - s.pop.TotalBrood
+		}
+
+		droneEggs := 0
+		dayOfYear := int((s.time.Tick - 1) % 365)
+		if dayOfYear >= s.nurseParams.DroneEggLayingSeasonStart && dayOfYear <= s.nurseParams.DroneEggLayingSeasonEnd {
+			droneEggs = int(math.Max(s.nurseParams.DroneEggsProportion*float64(eggs), 0))
+		}
+		eggs = util.MaxInt(eggs-droneEggs, 0)
+
+		// TODO: queen age
+
+		s.eggs.Workers[0] = eggs
+		s.eggs.Drones[0] = droneEggs
+	}
+}
+
+func (s *EggLayingNbeecs) Finalize(w *ecs.World) {}
