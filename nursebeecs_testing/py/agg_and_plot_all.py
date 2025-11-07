@@ -107,13 +107,27 @@ def plot_column(data_nbeecs, data_nbeecs2, data_beecs, column, quantiles, image_
     ax.set_title(column)
     ax.set_xlabel("time [d]", fontsize="12")
 
-    if multiyear:
-        ax.vlines(appday+365, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
-        for i in [2, 3]:
-            ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
+    dayspermonth = [31,28,31,30,31,30,31,31,30,31,30,31]
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    labels = months
+    xticks = [dayspermonth[0]]
+    for i in range(1,12):
+        xticks.append(xticks[-1]+dayspermonth[i])
 
+    if multiyear > 0:
+        ax.set_xlim(0,365*multiyear)
+        xticks = [dayspermonth[0]]
+        for i in range(1,12*multiyear):
+            xticks.append(xticks[-1]+dayspermonth[i%12])
+        labels = multiyear * months
+        ax.vlines(appday+365, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
+        for i in range(1,multiyear):
+            ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
     elif appday > 0:
         ax.vlines(appday, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
+
+    ax.set_xticks(xticks, labels, horizontalalignment = 'right', size = 'small')
+
     ax.legend()
     fig.tight_layout()
 
@@ -133,18 +147,18 @@ if __name__ == "__main__":
             "Rothamsted2009_beecs": 0,
             "Rothamsted2009_fenoxycarb_5years" : 189,
             "Rothamsted2009_etox_5years": 0,
-            "Rothamsted2009_clothianidin_5years": 166,
+            "Rothamsted2009_clothianidin_5years": 182,
 
     }
-    multiyear_app = {"default_beecs" : False,  
-            "default_etox" : False,                     # appday = 0 for no application
-            "default_dimethoate": False, 
-            "Rothamsted2009_fenoxycarb": False, 
-            "Rothamsted2009_etox": False,
-            "Rothamsted2009_beecs": False,
-            "Rothamsted2009_fenoxycarb_5years" : True,
-            "Rothamsted2009_etox_5years": False,
-            "Rothamsted2009_clothianidin_5years": True,
+    multiyear_app = {"default_beecs" : 0,  
+            "default_etox" : 0,                     # appday = 0 for no application
+            "default_dimethoate": 0, 
+            "Rothamsted2009_fenoxycarb": 0, 
+            "Rothamsted2009_etox": 0,
+            "Rothamsted2009_beecs": 0,
+            "Rothamsted2009_fenoxycarb_5years" : 5,
+            "Rothamsted2009_etox_5years": 0,
+            "Rothamsted2009_clothianidin_5years": 5,
     }
 
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",

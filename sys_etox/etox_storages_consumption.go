@@ -110,8 +110,6 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		} else {
 			s.stores.ETOX_EnergyThermo = float64(s.pop.TotalBrood) * thermoRegBrood * 0.001 * s.energyParams.Honey // or calculate the total necessary energy
 		}
-		s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc // used in debugging and as a helpful metric
-		s.stores.Nectarconcbeforeeating = s.stores.ETOX_HES_C_D0       // used in debugging and as a helpful metric
 
 		// foragers, pretty straigt forward
 		for _, e := range s.foragershuffle {

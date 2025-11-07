@@ -119,4 +119,8 @@ type Nursing struct {
 	StartWinterBees bool // switch to turn starting foragers into winter bees --> necessary if we start simulating at the beginning of the year
 	NewBroodCare    bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
 	ScrambleComp    bool // switch to turn on scramble competition mechanism within new brood care which kicks in if nurse workload is too high
+
+	HPGeffects                bool      // switch to turn on reduced brood care capabilies from PPP induced reduced HPG activity
+	HPGthreshold              []float64 // threshold value of PPP necessary in honey to activate the HPG effects
+	ProteinFactorNurseExposed []float64 // new ceiling for ProteinFactorNurses in case HPG effects are turned on and the threshold is exceeded
 }

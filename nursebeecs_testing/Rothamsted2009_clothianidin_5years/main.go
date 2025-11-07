@@ -19,6 +19,7 @@ func main() {
 	pe := params_etox.Default_etox()
 	p.Termination.MaxTicks = 365 * 5
 
+	p.Termination.OnExtinction = true
 	p.Termination.WinterCritExtinction = true // let the hive die if below critical pop threshold
 	p.Termination.CritColonySizeWinter = 4000
 
@@ -35,10 +36,10 @@ func main() {
 		PPPconcentrationPollen: 0, //27150 / 100,
 		PPPcontactExposure:     0, //0.3 / 100, // kg/ha; contact exposure at patch; 0.035 kg/ha of clothianidin was advised somewhere against potato beeles; this is just a test
 
-		AppDay:         166,   // Day of the year in which application starts [d]. --> just assumed 15. of june for fighting potato beetle
-		ExposurePeriod: 8,     // Duration of exposure happening (irrespective of DT50) [d].
+		AppDay:         182,   // Day of the year in which application starts [d]. --> just assumed 01. of july for now; might change. There is a large window to fighting potato beetle for example (june to august at least)
+		ExposurePeriod: 30,    // Duration of exposure happening (irrespective of DT50) [d].
 		SpinupPhase:    1,     // Number of years before exposure starts (to stabilize colony; 0 = first year) [y].
-		ExposurePhase:  3,     // Number of years in which exposure takes place [y].
+		ExposurePhase:  4,     // Number of years in which exposure takes place [y].
 		DT50:           1000., // Whole plant DT50 from residue studies [d].
 		DT50honey:      60.,   // Honey DT50 [d]
 
@@ -54,6 +55,7 @@ func main() {
 		ForagerContactLD50:  0.044, // clothianidin
 		ForagerContactSlope: 3.28,  // clothianidin
 
+		// larval toxdata is missing as well atm
 		LarvaeOralLD50:  1000, // clothianidin
 		LarvaeOralSlope: 1000, // clothianidin
 
@@ -82,7 +84,9 @@ func main() {
 	if run_nbeecs {
 		pe.ConsumptionRework.Nursebeecs = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = false
+		pe.Nursing.NewBroodCare = true
+		pe.Nursing.ScrambleComp = false
+		pe.Nursing.HPGeffects = false
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs(app, i, &p, &pe)
@@ -97,6 +101,7 @@ func main() {
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
 		pe.Nursing.ScrambleComp = false
+		pe.Nursing.HPGeffects = true
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs2(app, i, &p, &pe)

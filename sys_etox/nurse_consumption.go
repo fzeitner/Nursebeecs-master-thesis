@@ -26,6 +26,7 @@ type NurseConsumption struct {
 	nurseParams *params_etox.Nursing
 	larvae      *globals.Larvae
 	inHive      *globals.InHive
+	storesETOX  *globals_etox.Storages_etox
 
 	nstats   *globals_etox.Nursing_stats
 	nglobals *globals_etox.Nursing_globals
@@ -47,6 +48,7 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 	s.nurseParams = ecs.GetResource[params_etox.Nursing](w)
 	s.larvae = ecs.GetResource[globals.Larvae](w)
 	s.inHive = ecs.GetResource[globals.InHive](w)
+	s.storesETOX = ecs.GetResource[globals_etox.Storages_etox](w)
 
 	s.nstats = ecs.GetResource[globals_etox.Nursing_stats](w)
 	s.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
@@ -63,10 +65,9 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 func (s *NurseConsumption) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 
-		if s.time.Tick == 217 { // debugging hook; 217 = appday for dimethoate
-			a := 0
-			a++
-		}
+		s.storesETOX.Pollenconcbeforeeating = s.storesETOX.PPPInHivePollenConc // used in debugging and as a helpful metric
+		s.storesETOX.Nectarconcbeforeeating = s.storesETOX.ETOX_HES_C_D0       // used in debugging and as a helpful metric
+
 		// start by recalculating nursing metrics and total capacities
 		TotalNurseCap, maxpollenpernurse := s.calcNursingMetrics(w)
 		TotalNurseCap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.newCons.MaxPollenNurse
@@ -183,11 +184,15 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			}
 		}
 		if s.nstats.TotalNurses != 0 {
-			s.nstats.MeanPollenIntake = s.nglobals.Total_pollen / float64(s.nstats.TotalNurses)
-			s.nstats.MaxPollenIntake = maxpollenpernurse * s.nglobals.NurseWorkLoad
+			s.nstats.MeanPollenIntake = s.nglobals.Total_pollen/float64(s.nstats.TotalNurses) + s.newCons.PollenAdultWorker
+			s.nstats.MaxPollenIntake = maxpollenpernurse*s.nglobals.NurseWorkLoad + s.newCons.PollenAdultWorker
+			s.nstats.MeanHoneyIntake = s.nglobals.Total_honey/float64(s.nstats.TotalNurses) + s.newCons.HoneyAdultWorker
+			s.nstats.MaxHoneyIntake = s.nstats.MaxPollenIntake/s.nglobals.Total_pollen*s.nglobals.Total_honey + s.newCons.HoneyAdultWorker
 		} else {
 			s.nstats.MeanPollenIntake = 0
 			s.nstats.MaxPollenIntake = 0
+			s.nstats.MaxHoneyIntake = 0
+			s.nstats.MeanHoneyIntake = 0
 		}
 
 		// is a reduction in the nursing force possible?
@@ -229,7 +234,19 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			//workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 1.0)                                             // using values > 1 destabilizes model dynamics a lot, I should experiment with alternative solutions or a slighly higher bound for workload
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - s.nglobals.NurseWorkLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
-		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
+		if s.nurseParams.HPGeffects {
+			if s.storesETOX.Nectarconcbeforeeating >= s.nurseParams.HPGthreshold[2] {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, s.nurseParams.ProteinFactorNurseExposed[2])
+			} else if s.storesETOX.Nectarconcbeforeeating >= s.nurseParams.HPGthreshold[1] {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, s.nurseParams.ProteinFactorNurseExposed[1])
+			} else if s.storesETOX.Nectarconcbeforeeating >= s.nurseParams.HPGthreshold[0] {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, s.nurseParams.ProteinFactorNurseExposed[0])
+			} else {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
+			}
+		} else {
+			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
+		}
 	}
 }
 

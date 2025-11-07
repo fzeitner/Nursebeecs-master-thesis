@@ -139,6 +139,11 @@ func Default_etox() DefaultParams_etox {
 			StartWinterBees: true,
 			NewBroodCare:    false,
 			ScrambleComp:    false,
+
+			HPGeffects:   false,
+			HPGthreshold: []float64{0.000727 / 12.78, 0.000727 / 12.78 * 10, 0.000727 / 12.78 * 100}, // authors used 1 mug/L Clothianidin in 400 ml of Apiinvert; Apiinvert has 1 kg of sugar per Liter and a concentration of 72.7% (https://www.beefeed.com/en/apiinvert/) --> 1 l of Apiinvert should be equivalkent to 1/0.727 = 1.376 kg
+			// therefore 1 mug/L (w/v) should be equivalent to 0.727 mug/kg (w/w) in apiinvert; 0.727 mug/kg = 0.727 ng/g = 0.000727 mug/g; BEEHAVE needs values in weight per kJ, therefore we need to consider honey energy content of 12.78 kJ/g
+			ProteinFactorNurseExposed: []float64{0.82, 0.77, 0.}, // very much experimental; straight up taken from Schott et al. 2021
 		},
 	}
 }
