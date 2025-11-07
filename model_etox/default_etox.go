@@ -87,7 +87,7 @@ func NurseBeecsDefault(p params.Params, pe params_etox.Params_etox, app *app.App
 	app.AddSystem(&sys.MortalityCohorts{})             // same old mortality function now again
 	app.AddSystem(&sys_etox.MortalityCohorts_etox{})   // introduced ETOXMortality as an additional process for all cohorts
 	app.AddSystem(&sys_etox.AgeCohorts_GUTS{})         // introduced takeover of dosage/Ci values between cohorts for GUTS only
-	app.AddSystem(&sys_etox.EggLayingNbeecs{})         // no counting before EggLaying, therefore we can just let it run here after ageing in beecs. Necessary to first age to free up space for new eggs. Therefore has to happen after Mortaliy procs too which have to happen before ageing
+	app.AddSystem(&sys.EggLaying{})                    // no counting before EggLaying, therefore we can just let it run here after ageing in beecs. Necessary to first age to free up space for new eggs. Therefore has to happen after Mortaliy procs too which have to happen before ageing
 	app.AddSystem(&sys_etox.TransitionForagers_GUTS{}) // now only counts how many foragers are going to be transitioned and empties the IHbeecohort but does not initialize anything to resemble original BEEHAVE more closely
 
 	app.AddSystem(&sys.CountPopulation{})   // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging

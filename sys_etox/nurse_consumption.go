@@ -70,7 +70,6 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 		// start by recalculating nursing metrics and total capacities
 		TotalNurseCap, maxpollenpernurse := s.calcNursingMetrics(w)
-		TotalNurseCap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.newCons.MaxPollenNurse
 
 		// now continue by calculating the total need of honey and pollen
 
@@ -175,7 +174,7 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 		// define if the model assumes nurse amount to be sufficient
 		s.nglobals.SuffNurses = false // insufficient nurses; this makes young workers eat their own pollen and increaeses the nurse threshold next day
-		if s.nglobals.NurseWorkLoad < 1.0 && s.nglobals.NurseWorkLoad != 0. {
+		if s.nglobals.NurseWorkLoad < 1.0 && (s.nglobals.NurseWorkLoad != 0. || float64(s.nstats.WinterBees)/float64(s.nstats.TotalNurses) >= 0.2) {
 			s.nglobals.SuffNurses = true // we have sufficient nurses; this influences if nurses also eat pollen to prime young workers and does not increase nurse threshold next day
 		} else {
 			s.nglobals.Total_pollen -= s.nglobals.WorkerPriming
@@ -219,9 +218,9 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		}
 
 		// REWPORK FROM HERE: ProteinFactorNurses
-		if s.stores.Pollen > 0 { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + 1.0/s.storeParams.ProteinStoreNurse // this still makes sense
-		} else {
+		if s.stores.Pollen > 0 && s.nglobals.NurseWorkLoad < s.nurseParams.NurseWorkLoadTH { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + (s.nurseParams.NurseWorkLoadTH-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse
+		} else if s.stores.Pollen <= 0 {
 			/*
 				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
 					s.oldNurseParams.MaxBroodNurseRatio // this will probably need to be reworked still
@@ -233,6 +232,8 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			*/
 			//workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 1.0)                                             // using values > 1 destabilizes model dynamics a lot, I should experiment with alternative solutions or a slighly higher bound for workload
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - s.nglobals.NurseWorkLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+		} else { // only accessible if NurseWorkLoad > NurseWorkLoadTH and pollen still are there
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - (s.nglobals.NurseWorkLoad-s.nurseParams.NurseWorkLoadTH)/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
 		if s.nurseParams.HPGeffects {
 			if s.storesETOX.Nectarconcbeforeeating >= s.nurseParams.HPGthreshold[2] {
@@ -279,6 +280,7 @@ func (s *NurseConsumption) calcNursingMetrics(w *ecs.World) (nursingcap float64,
 			s.nglobals.Reverted = append(s.nglobals.Reverted, query.Entity())
 		}
 	}
+	nursingcap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.newCons.MaxPollenNurse
 	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
 	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.TotalAdults)) * 100   // expressed in %
 

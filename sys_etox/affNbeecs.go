@@ -77,19 +77,15 @@ func (s *CalcAffNbeecs) Update(w *ecs.World) {
 			float64(s.pop.WorkersForagers)/float64(s.pop.WorkersInHive) < foragerToWorkerTH {
 			aff--
 		}
-		maxBrood := 0.
-		if s.newCons.Nursebeecs && s.nparamsNew.NewBroodCare {
-			maxBrood = (float64(s.nstats.TotalNurses) - float64(s.nstats.WinterBees)*(1.-s.nurseParams.ForagerNursingContribution)) * s.nurseParams.MaxBroodNurseRatio
-		} else {
-			maxBrood = (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
-				s.nurseParams.MaxBroodNurseRatio
-		}
+		maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
+			s.nurseParams.MaxBroodNurseRatio
+
 		if maxBrood > 0 && float64(s.pop.TotalBrood)/maxBrood > broodTH {
 			aff += 2
 		}
 		if s.newCons.Nursebeecs {
 			if s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.TotalAdults) > minNurseTH { // regulate aff down if there are suficient nurses
-				aff -= 2
+				aff -= 2 // can adjust to -1 as well
 			} else if !s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.TotalAdults) < maxNurseTH { // regulate it up if there are insufficient
 				aff += 1
 			}
@@ -104,10 +100,12 @@ func (s *CalcAffNbeecs) Update(w *ecs.World) {
 			aff--
 		}
 
-		if aff < s.aff.Aff {
+		if aff < s.aff.Aff && aff > s.nglobals.NurseAgeMax {
 			aff = s.aff.Aff - 1
 		} else if aff > s.aff.Aff {
 			aff = s.aff.Aff + 1
+		} else {
+			aff = s.aff.Aff
 		}
 		s.aff.Aff = util.Clamp(aff, s.affParams.Min, s.affParams.Max)
 	}

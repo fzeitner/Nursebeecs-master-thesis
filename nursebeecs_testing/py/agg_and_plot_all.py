@@ -105,28 +105,34 @@ def plot_column(data_nbeecs, data_nbeecs2, data_beecs, column, quantiles, image_
         ax.fill_between(data.ticks, q10, q90, color=col, alpha=0.1)
 
     ax.set_title(column)
-    ax.set_xlabel("time [d]", fontsize="12")
+    ax.set_xlabel("month", fontsize="12")
+    ax.set_xlim(0,365*multiyear)
 
     dayspermonth = [31,28,31,30,31,30,31,31,30,31,30,31]
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     labels = months
-    xticks = [dayspermonth[0]]
-    for i in range(1,12):
+    xticks = [0]
+    for i in range(11):
         xticks.append(xticks[-1]+dayspermonth[i])
 
-    if multiyear > 0:
-        ax.set_xlim(0,365*multiyear)
+    if multiyear > 1:
         xticks = [dayspermonth[0]]
-        for i in range(1,12*multiyear):
+        for i in range(12*multiyear-1):
             xticks.append(xticks[-1]+dayspermonth[i%12])
         labels = multiyear * months
-        ax.vlines(appday+365, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
-        for i in range(1,multiyear):
-            ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
+        if appday != 0:
+            ax.vlines(appday+365, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
+            for i in range(1,multiyear):
+                ax.vlines(appday+i*365, 0, max(q90), linestyle = "--", color = "gray")   # have to change the appday manually in func
     elif appday > 0:
         ax.vlines(appday, 0, max(q90), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
 
-    ax.set_xticks(xticks, labels, horizontalalignment = 'right', size = 'small')
+    if multiyear > 1:
+        alignment = 'right'
+    else:
+        alignment = 'left'
+    size = str(12-1.5*multiyear)
+    ax.set_xticks(xticks, labels, horizontalalignment = alignment, fontsize=size)
 
     ax.legend()
     fig.tight_layout()
@@ -150,14 +156,14 @@ if __name__ == "__main__":
             "Rothamsted2009_clothianidin_5years": 182,
 
     }
-    multiyear_app = {"default_beecs" : 0,  
-            "default_etox" : 0,                     # appday = 0 for no application
-            "default_dimethoate": 0, 
-            "Rothamsted2009_fenoxycarb": 0, 
-            "Rothamsted2009_etox": 0,
-            "Rothamsted2009_beecs": 0,
+    multiyear_app = {"default_beecs" : 1,  
+            "default_etox" : 1,                     
+            "default_dimethoate": 1, 
+            "Rothamsted2009_fenoxycarb": 1, 
+            "Rothamsted2009_etox": 1,
+            "Rothamsted2009_beecs": 1,
             "Rothamsted2009_fenoxycarb_5years" : 5,
-            "Rothamsted2009_etox_5years": 0,
+            "Rothamsted2009_etox_5years": 1,
             "Rothamsted2009_clothianidin_5years": 5,
     }
 
@@ -168,7 +174,7 @@ if __name__ == "__main__":
 
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
-    agg_all = True
+    agg_all = False
     agg_nbeecs = False
     agg_beec = False
 

@@ -112,9 +112,10 @@ type ConsumptionRework struct {
 }
 
 type Nursing struct {
-	MinWL_ratio            float64 // target of minimum necessary worker:larva ratio that the colony tries to go back to if possible; goes back to Eischen et al. 1982, 1983, 1984
-	NurseAgeCeiling        int     // baseline age until model assumes that workers will act as nurses
-	BroodCannibalismChance []float64
+	MinWL_ratio            float64   // target of minimum necessary worker:larva ratio that the colony tries to go back to if possible; goes back to Eischen et al. 1982, 1983, 1984
+	NurseAgeCeiling        int       // baseline age until model assumes that workers will act as nurses
+	BroodCannibalismChance []float64 // chance of brood to be cannibalized based on age (Schmickl & Crailsheim 2001,2002)
+	NurseWorkLoadTH        float64   // threshold of nurse workload above which ProteinFactorNurses gets reduced
 
 	StartWinterBees bool // switch to turn starting foragers into winter bees --> necessary if we start simulating at the beginning of the year
 	NewBroodCare    bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)

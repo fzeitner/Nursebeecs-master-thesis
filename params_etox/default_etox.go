@@ -134,7 +134,8 @@ func Default_etox() DefaultParams_etox {
 		Nursing: Nursing{
 			MinWL_ratio:            2,                                           // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
 			NurseAgeCeiling:        13,                                          // default age at which nurses stop working as nurses, unless model dynamics increase this
-			BroodCannibalismChance: []float64{0.1, 0.3, 0.5, 0.075, 0., 0., 0.}, // just an assumption to start with, based on data from Schmickl&Crailsheim (2001, 2002)
+			BroodCannibalismChance: []float64{0.1, 0.3, 0.5, 0.075, 0., 0., 0.}, // based on data from Schmickl&Crailsheim (2001, 2002)
+			NurseWorkLoadTH:        1.25,                                        // just an assumption to start with
 
 			StartWinterBees: true,
 			NewBroodCare:    false,

@@ -77,7 +77,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 		if (!s.nglobals.SuffNurses && s.nglobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0) {
 			// && float64(NonNurseIHbees/s.pop.TotalAdults) >= 0.1  && float64(s.nstats.TotalNurses/s.pop.TotalAdults) < 0.5 {
 			s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax+1, 5, 50)
-		} else if (s.stores.ProteinFactorNurses < 1. && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
+		} else if (s.stores.ProteinFactorNurses < 1. && s.stores.Pollen <= 0 && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
 			s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax-1, 5, 50)
 		}
 
@@ -92,6 +92,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 
 		// special rules if all nurses die due to etox related mass deaths --> foragers get called back to make the hive continue somehow
 		// may also make sense to have this activate if there are simply far too little nurses and a large fraction of foragers present
+		// technically they should have a reduced nursing efficiency, but this has not been implemented as of yet
 		if (s.nstats.NurseFraction <= 0.05 && s.pop.TotalAdults > 0) || s.nstats.TotalNurses == 0 {
 			recruitedNurses := 0
 			for i := s.nglobals.NurseAgeMax; i < s.aff.Aff; i++ {
