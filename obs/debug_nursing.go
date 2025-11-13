@@ -35,7 +35,7 @@ func (o *DebugNursing) Initialize(w *ecs.World) {
 }
 func (o *DebugNursing) Update(w *ecs.World) {}
 func (o *DebugNursing) Header() []string {
-	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses", "NonNurseIHbees", "NurseMaxPollenIntake", "NurseMeanPollenIntake", "Winterbees"}
+	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses", "NonNurseIHbees", "NurseMeanHoneyIntake", "NurseMeanPollenIntake", "Winterbees"}
 }
 func (o *DebugNursing) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.cons.PollenDaily)
@@ -59,7 +59,7 @@ func (o *DebugNursing) Values(w *ecs.World) []float64 {
 	o.data[15] = o.nstats.NurseFraction
 	o.data[16] = float64(o.nstats.NonNurseIHbees)
 
-	o.data[17] = o.nstats.MaxPollenIntake
+	o.data[17] = o.nstats.MeanHoneyIntake
 	o.data[18] = o.nstats.MeanPollenIntake
 
 	o.data[19] = float64(o.nstats.WinterBees)

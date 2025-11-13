@@ -210,6 +210,8 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 	for agequery.Next() {
 		s.toAdd = append(s.toAdd, agequery.Entity())
 	}
+
+	year := int(s.time.Tick / 365)
 	for _, e := range s.toAdd {
 		if s.etox.GUTS && s.guts.Type == "IT" {
 			s.pppExpoAdder.Add(e, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
@@ -220,13 +222,13 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 		}
 
 		squadAge := s.ageMapper.Get(e)
-		if s.nursingParams.StartWinterBees && squadAge.DayOfBirth >= 205 && squadAge.DayOfBirth < 265 { // original BEEHAVE assumes starting foragers (=winter bees) are aged 100 - 160 days already; Aff + 21 = current age of the cohort; 21 = dev-time from egg - adult; Aff = adult time before foraging
-			if s.rng.Float64() <= float64(1)/float64(60)*float64(squadAge.DayOfBirth-204) { // assume linear increase in likelihood to turn into winterbees
+		if s.nursingParams.StartWinterBees && squadAge.DayOfBirth >= 205+year*365 && squadAge.DayOfBirth < 265+year*365 { // original BEEHAVE assumes starting foragers (=winter bees) are aged 100 - 160 days already; Aff + 21 = current age of the cohort; 21 = dev-time from egg - adult; Aff = adult time before foraging
+			if s.rng.Float64() <= float64(1)/float64(60)*float64(squadAge.DayOfBirth-204+year*365) { // assume linear increase in likelihood to turn into winterbees
 				s.etoxPatchAdder.Add(e, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true}) // assumes bees turning into foragers are winterbees again;
 			} else {
 				s.etoxPatchAdder.Add(e, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
 			}
-		} else if s.nursingParams.StartWinterBees && squadAge.DayOfBirth >= 265 { // original BEEHAVE assumes starting foragers are aged 100 - 160 days already !!!; this is just an estimate though, it would make a lot more sense to couple this to pop dynamic and nectar/pollen influxes
+		} else if s.nursingParams.StartWinterBees && squadAge.DayOfBirth >= 265+year*365 { // original BEEHAVE assumes starting foragers are aged 100 - 160 days already !!!; this is just an estimate though, it would make a lot more sense to couple this to pop dynamic and nectar/pollen influxes
 			s.etoxPatchAdder.Add(e, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true}) // assumes bees turning into foragers are winterbees again
 			// aligns with literature assuming eggs from august - september start turning into winterbees (21 days for theses eggs to turn into IHbees + some more to turn into foragers --> roughly start of october)
 			// there should eventually be a system introduced to actually differentiate between winterbees and summeerbees properly (mortalities, food demands, chance from egg onwards to turn into 1 of the 2, ...)

@@ -86,28 +86,30 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 
 				// calculate relative cannibalism intensity here; this is experimental for now
 				cann_mean := 0.
-				for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalize brood (Schmickl&Crailsheim 2001)
+				for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalizable brood (Schmickl&Crailsheim 2001)
 					cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assume drone and worker larvae get treated indifferently
 				}
 				cann_rel := 0.
-				cann_rel = min(float64(starved)/cann_mean, 1.0) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
-				if s.nglobals.LastPollenInflux > 0 {            // if there has not been a pollen influx this day increase cannibalized brood fraction
-					cann_rel += min(float64(s.nglobals.LastPollenInflux/5), 1.0) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 5 days; Schmickl&Crailsheim 2001)
-					cann_rel = util.Clamp(cann_rel, 0., 1.5)
+				if s.nglobals.LastPollenInflux > 0 { // if there has not been a pollen influx this day increase cannibalized brood fraction
+					cann_rel = min(float64(s.nglobals.LastPollenInflux/5), 1.0) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 5 days; Schmickl&Crailsheim 2001)
+				}
+				if cann_mean > 0 {
+					cann_rel = util.Clamp(cann_rel+float64(starved)/cann_mean, 0, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
 				}
 
 				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
 					s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
 
-				excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-starved)-maxBrood)), 0)
 				// maybe add some sort of nurse-based death mechanism here depending on scenario
 				if s.NurseParams.ScrambleComp { // this does not do anything atm and is a placeholder for eventual scenario creation
-					s.Cannibalize(starved, cann_rel)
+					killed := s.Cannibalize(starved, cann_rel)
 
+					excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
 					s.ReduceBroodCells(excessBrood)
 				} else {
-					s.Cannibalize(starved, cann_rel)
+					killed := s.Cannibalize(starved, cann_rel)
 
+					excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
 					s.ReduceBroodCells(excessBrood)
 				}
 			}
@@ -117,30 +119,37 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 
 func (s *Nbroodcare) Finalize(w *ecs.World) {}
 
-func (s *Nbroodcare) Cannibalize(excess int, cann_rel float64) {
-	if excess <= 0 {
+func (s *Nbroodcare) Cannibalize(excess int, cann_rel float64) (killed int) {
+	killed = 0
+	if excess <= 0 && cann_rel == 0. {
 		return
 	}
 
-	if excess = reduceByCannibalism(s.larvae.Drones, s.larvae.Workers, excess, cann_rel, s.NurseParams.BroodCannibalismChance, s.rng); excess == 0 {
+	if excess, killed = reduceByCannibalism(s.larvae.Drones, s.larvae.Workers, excess, cann_rel, s.NurseParams.BroodCannibalismChance, s.rng); excess == 0 {
 		return
 	}
 
 	// now this only happens if "normal" killing of brood through cannibalizing is not enough to regulate brood levels
+	oldexc := excess
 	if excess = reduceCohorts(s.larvae.Drones, excess); excess == 0 {
+		killed += oldexc
 		return
 	}
-
+	killed += (oldexc - excess)
+	oldexc = excess
 	if excess = reduceCohorts(s.larvae.Workers, excess); excess == 0 {
+		killed += oldexc
 		return
 	}
 
 	panic("still brood to kill - code should not be reachable")
 }
 
-func reduceByCannibalism(cohD []int, cohW []int, excess int, cannibalismMod float64, m []float64, rng rand.Source) int {
+func reduceByCannibalism(cohD []int, cohW []int, exc int, cannibalismMod float64, m []float64, rng rand.Source) (excess int, killed int) {
 	// reduces drone and worker cohorts below age 4 stochastically with an observed relative cannibalism chance per age
 	// that was taken from Schmickl&Crailsheim (2001)
+	excess = exc
+	killed = 0
 	for i := 0; i < 4; i++ {
 		// drone larvae
 		num := cohD[i]
@@ -150,6 +159,7 @@ func reduceByCannibalism(cohD []int, cohW []int, excess int, cannibalismMod floa
 		}
 		toDie := int(rng_poisson.Rand())
 		excess -= util.MinInt(toDie, num)
+		killed += util.MinInt(toDie, num)
 		cohD[i] = util.MaxInt(0, num-toDie)
 
 		// and worker larvae
@@ -160,9 +170,10 @@ func reduceByCannibalism(cohD []int, cohW []int, excess int, cannibalismMod floa
 		}
 		toDie = int(rng_poisson.Rand())
 		excess -= util.MinInt(toDie, num)
+		killed += util.MinInt(toDie, num)
 		cohW[i] = util.MaxInt(0, num-toDie)
 	}
-	return util.MaxInt(0, excess) // if more got killed due to stochasticity we still return an excess of 0
+	return util.MaxInt(0, excess), killed // if more got killed due to stochasticity we still return an excess of 0
 }
 
 func (s *Nbroodcare) ReduceBroodCells(excess int) {

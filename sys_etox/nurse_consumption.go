@@ -63,13 +63,8 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 func (s *NurseConsumption) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 
-		if s.time.Tick == 217 { // debugging hook; 217 = appday for dimethoate
-			a := 0
-			a++
-		}
 		// start by recalculating nursing metrics and total capacities
 		TotalNurseCap, maxpollenpernurse := s.calcNursingMetrics(w)
-		TotalNurseCap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.newCons.MaxPollenNurse
 
 		// now continue by calculating the total need of honey and pollen
 
@@ -174,7 +169,7 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 		// define if the model assumes nurse amount to be sufficient
 		s.nglobals.SuffNurses = false // insufficient nurses; this makes young workers eat their own pollen and increaeses the nurse threshold next day
-		if s.nglobals.NurseWorkLoad < 1.0 && s.nglobals.NurseWorkLoad != 0. {
+		if s.nglobals.NurseWorkLoad < 1.0 && (s.nglobals.NurseWorkLoad != 0. || s.nstats.WinterBees > 0) {
 			s.nglobals.SuffNurses = true // we have sufficient nurses; this influences if nurses also eat pollen to prime young workers and does not increase nurse threshold next day
 		} else {
 			s.nglobals.Total_pollen -= s.nglobals.WorkerPriming
@@ -183,11 +178,15 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			}
 		}
 		if s.nstats.TotalNurses != 0 {
-			s.nstats.MeanPollenIntake = s.nglobals.Total_pollen / float64(s.nstats.TotalNurses)
-			s.nstats.MaxPollenIntake = maxpollenpernurse * s.nglobals.NurseWorkLoad
+			s.nstats.MeanPollenIntake = s.nglobals.Total_pollen/float64(s.nstats.TotalNurses) + s.newCons.PollenAdultWorker
+			s.nstats.MaxPollenIntake = maxpollenpernurse*s.nglobals.NurseWorkLoad + s.newCons.PollenAdultWorker
+			s.nstats.MeanHoneyIntake = s.nglobals.Total_honey/float64(s.nstats.TotalNurses) + s.newCons.HoneyAdultWorker
+			s.nstats.MaxHoneyIntake = s.nstats.MaxPollenIntake/s.nglobals.Total_pollen*s.nglobals.Total_honey + s.newCons.HoneyAdultWorker
 		} else {
 			s.nstats.MeanPollenIntake = 0
 			s.nstats.MaxPollenIntake = 0
+			s.nstats.MaxHoneyIntake = 0
+			s.nstats.MeanHoneyIntake = 0
 		}
 
 		// is a reduction in the nursing force possible?
@@ -262,6 +261,8 @@ func (s *NurseConsumption) calcNursingMetrics(w *ecs.World) (nursingcap float64,
 			s.nglobals.Reverted = append(s.nglobals.Reverted, query.Entity())
 		}
 	}
+	nursingcap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.newCons.MaxPollenNurse
+
 	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
 	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.TotalAdults)) * 100   // expressed in %
 

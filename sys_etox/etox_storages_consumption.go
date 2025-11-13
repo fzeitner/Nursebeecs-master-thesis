@@ -188,13 +188,6 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 			s.etoxStats.CumDoseIHBees, c, h, s.nstats.NonNurseIHbees = s.CalcDosePerCohortHPGWorkers(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, baselineworkerneed, s.newCons.PollenAdultWorker, s.nglobals.SuffNurses)
 			consumed_honey += h
 			s.etoxStats.NumberIHbeeCohorts = c
-			if s.nglobals.Total_pollen > 0.1 && s.nstats.NonNurseIHbees == s.pop.WorkersInHive { // debugging hook
-				a := len(s.nglobals.WinterBees) + len(s.nglobals.Reverted)
-				a += s.nglobals.NurseAgeMax - s.aff.Aff
-				a += s.nstats.TotalNurses
-				_ = s.nglobals.Reductionpossible
-				_ = s.storesold.ProteinFactorNurses
-			}
 
 			// nurse specific consumption here
 			s.etoxStats.CumDoseNurses, c, h, s.nstats.IHbeeNurses = s.CalcDosePerCohortNursing(w, s.inHive.Workers, s.inHive_etox.WorkerCohortDose, baselineworkerneed, s.nglobals.Total_honey, s.nglobals.Total_pollen)
@@ -307,7 +300,7 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		// leftovers from debugging
 		_ = s.pop.DroneLarvae + s.pop.DronesInHive + s.pop.WorkerLarvae + s.pop.WorkersForagers + s.pop.WorkersInHive + forcount
 		// checkpoint for bugfixing honey consumption in etox
-		if math.Round(consumed_honey+0.111) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey+0.111) {
+		if math.Round(consumed_honey*0.01) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey*0.01) {
 			panic("Fatal error in honey store dose calculations, model output will be wrong!")
 		}
 
@@ -351,7 +344,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursing(w *ecs.World, coh []int, dose []
 			dose[i] = 0
 		}
 	}
-	if math.Round(pconsumedtotal+0.111) != math.Round(total_pollen+0.111) || math.Round(hconsumed) != math.Round(total_honey) {
+	if math.Round(pconsumedtotal*0.01) != math.Round(total_pollen*0.01) || math.Round(hconsumed*0.01) != math.Round(total_honey*0.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
@@ -422,7 +415,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursingWLarvae(w *ecs.World, coh []int, 
 			dose[i] = 0
 		}
 	}
-	if math.Round(consumed/(0.001*s.energyParams.Honey)) != math.Round(honey) || math.Round(pconsumed+0.111) != math.Round(pollen+0.111) {
+	if math.Round(consumed/(0.001*s.energyParams.Honey)*0.01) != math.Round(honey*0.01) || math.Round(pconsumed*0.01) != math.Round(pollen*0.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
@@ -456,7 +449,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursingDLarvae(w *ecs.World, coh []int, 
 			dose[i] = 0
 		}
 	}
-	if math.Round(consumed/(0.001*s.energyParams.Honey)) != math.Round(honey) || math.Round(pconsumed+0.111) != math.Round(pollen+0.111) {
+	if math.Round(consumed/(0.001*s.energyParams.Honey)*0.01) != math.Round(honey*0.01) || math.Round(pconsumed*0.01) != math.Round(pollen*0.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
