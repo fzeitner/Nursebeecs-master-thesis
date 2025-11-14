@@ -100,14 +100,14 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 			// calculate relative cannibalism intensity here; this is experimental for now
 			cann_mean := 0.
 			for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalize brood (Schmickl&Crailsheim 2001)
-				cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assume drone and worker larvae get treated indifferently
+				cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assumes drone and worker larvae get treated indifferently
 			}
 			cann_rel := 0.
-			cann_rel = min(float64(starved)/cann_mean, 1.0) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
-			if s.nglobals.LastPollenInflux > 0 {            // if there has not been a pollen influx this day increase cannibalized brood fraction
-				cann_rel += min(float64(s.nglobals.LastPollenInflux/5), 1.0) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 5 days; Schmickl&Crailsheim 2001)
-				cann_rel = util.Clamp(cann_rel, 0., 1.5)
-			}
+			cann_rel = min(float64(starved)/cann_mean, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
+			//if s.nglobals.LastPollenInflux > 0 {            // if there has not been a pollen influx this day increase cannibalized brood fraction
+			//	cann_rel += min(float64(s.nglobals.LastPollenInflux/5), 1.0) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 5 days; Schmickl&Crailsheim 2001)
+			//	cann_rel = util.Clamp(cann_rel, 0., 1.5)
+			//}
 
 			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
 				s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses

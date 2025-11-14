@@ -58,12 +58,12 @@ def agg_beecs(file_pattern, out_file):
     out.to_csv(out_file, sep=";", index=False)
 
 
-def plot_quantiles(nbeecs_file, nbeecs2_file, beecs_file, out_dir, format, appday, multiyear):
-    data_nbeecs = pd.read_csv(nbeecs_file, sep=r'\s*;\s*', engine='python')
+def plot_quantiles(beecs_file, oldbc_file, newbc_file, out_dir, format, appday, multiyear):
     data_beecs = pd.read_csv(beecs_file, sep=r'\s*;\s*', engine='python')
-    data_nbeecs2 = pd.read_csv(nbeecs2_file, sep=r'\s*;\s*', engine='python')
+    data_oldbc = pd.read_csv(oldbc_file, sep=r'\s*;\s*', engine='python')
+    data_newbc = pd.read_csv(newbc_file, sep=r'\s*;\s*', engine='python')
 
-    columns = list(data_nbeecs.columns)[1:]
+    columns = list(data_beecs.columns)[1:]
     columns = pd.unique(pd.Series(c[:-4] for c in columns))
     quantiles = [
         ("Q05", 5),
@@ -77,9 +77,9 @@ def plot_quantiles(nbeecs_file, nbeecs2_file, beecs_file, out_dir, format, appda
 
     for col in columns:
         plot_column(
-            data_nbeecs,
-            data_nbeecs2, 
             data_beecs,
+            data_oldbc, 
+            data_newbc,
             col,
             quantiles,
             path.join(out_dir, col + "." + format),
@@ -88,14 +88,14 @@ def plot_quantiles(nbeecs_file, nbeecs2_file, beecs_file, out_dir, format, appda
         )
 
 
-def plot_column(data_nbeecs, data_nbeecs2, data_beecs, column, quantiles, image_file, appday, multiyear):
+def plot_column(data_beecs, data_oldbc, data_newbc, column, quantiles, image_file, appday, multiyear):
     median_col = quantiles[len(quantiles) // 2][0]
 
     fig, ax = plt.subplots(figsize=(10, 4))
     for data, col, model in [
         (data_beecs, "blue", "beecs"),
-        (data_nbeecs, "red", "oldbc"),
-        (data_nbeecs2, "green", "newbc"),
+        (data_oldbc, "red", "oldbc"),
+        (data_newbc, "green", "newbc"),
     ]:      
         q10 = data[column + "_Q05"]
         q90 = data[column + "_Q95"]
@@ -192,9 +192,9 @@ if __name__ == "__main__":
 
 
             plot_quantiles(
+                "nursebeecs_testing/" + folder + "/beecs.csv",
                 "nursebeecs_testing/" + folder + "/oldbc.csv",
                 "nursebeecs_testing/" + folder + "/newbc.csv",
-                "nursebeecs_testing/" + folder + "/beecs.csv",
                 "nursebeecs_testing/" + folder ,
                 #"png",
                 "svg",
@@ -212,9 +212,9 @@ if __name__ == "__main__":
         elif agg_beec:
             agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
         plot_quantiles(
+            "nursebeecs_testing/" + folder + "/beecs.csv",
             "nursebeecs_testing/" + folder + "/oldbc.csv",
             "nursebeecs_testing/" + folder + "/newbc.csv",
-            "nursebeecs_testing/" + folder + "/beecs.csv",
             "nursebeecs_testing/" + folder ,
             #"png",
             "svg",

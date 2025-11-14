@@ -200,16 +200,14 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		if s.stores.Pollen > 0 { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + 1.0/s.storeParams.ProteinStoreNurse // this still makes sense
 		} else {
-			/*
-				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-					s.oldNurseParams.MaxBroodNurseRatio // this will probably need to be reworked still
-				workLoad := 0.0 // not necessary anymore because workload is now defined directly via forced protein intake of nurses which adresses the same idea
-				if maxBrood > 0 {
-					workLoad = float64(s.pop.TotalBrood) / maxBrood
-				}
-				s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
-			*/
-			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 1.0)                                             // using values > 1 destabilizes model dynamics too much, maybe look for an alternative solution later
+
+			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+				s.oldNurseParams.MaxBroodNurseRatio // this will probably need to be reworked still
+			workLoad := 0.0 // not necessary anymore because workload is now defined directly via forced protein intake of nurses which adresses the same idea
+			if maxBrood > 0 {
+				workLoad = float64(s.pop.TotalBrood) / maxBrood
+			}
+			//workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 1.0)                                             // using values > 1 destabilizes model dynamics too much, maybe look for an alternative solution later
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
 		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
