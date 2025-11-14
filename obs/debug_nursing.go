@@ -35,7 +35,7 @@ func (o *DebugNursing) Initialize(w *ecs.World) {
 }
 func (o *DebugNursing) Update(w *ecs.World) {}
 func (o *DebugNursing) Header() []string {
-	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses"}
+	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses", "TotalPop"}
 }
 func (o *DebugNursing) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.cons.PollenDaily)
@@ -57,6 +57,8 @@ func (o *DebugNursing) Values(w *ecs.World) []float64 {
 	o.data[13] = float64(o.nstats.TotalNurses)
 	o.data[14] = o.nstats.NL_ratio
 	o.data[15] = o.nstats.NurseFraction
+
+	o.data[16] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
 
 	return o.data
 }

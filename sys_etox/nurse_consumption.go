@@ -209,7 +209,7 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 				}
 				s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 			*/
-			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 1.0)                                             // using values > 1 destabilizes model dynamics too much, maybe look for an alternative solution later
+			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 10.0)                                            // using values > 1 destabilizes model dynamics too much, maybe look for an alternative solution later
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
 		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)

@@ -32,7 +32,7 @@ func (o *DebugNursebees) Initialize(w *ecs.World) {
 }
 func (o *DebugNursebees) Update(w *ecs.World) {}
 func (o *DebugNursebees) Header() []string {
-	return []string{"HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "nIHbeeCohorts", "pollenconcbeforeeating", "nectarconcbeforeeating", "Cum_PPP_Nursebees"}
+	return []string{"HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "nIHbeeCohorts", "pollenconcbeforeeating", "nectarconcbeforeeating", "Cum_PPP_Nursebees", "TotalPop"}
 }
 func (o *DebugNursebees) Values(w *ecs.World) []float64 {
 	o.data[0] = o.stores.Honey
@@ -52,6 +52,8 @@ func (o *DebugNursebees) Values(w *ecs.World) []float64 {
 	o.data[11] = float64(o.stores_etox.Pollenconcbeforeeating)
 	o.data[12] = float64(o.stores_etox.Nectarconcbeforeeating)
 	o.data[13] = float64(o.popetox.PPPNursebees)
+
+	o.data[14] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
 
 	return o.data
 }
