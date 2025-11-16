@@ -1,8 +1,6 @@
 package sys
 
 import (
-	"math"
-
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/mlange-42/ark-tools/resource"
@@ -42,6 +40,10 @@ func (s *HoneyConsumption) Initialize(w *ecs.World) {
 func (s *HoneyConsumption) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 		thermoRegBrood := (s.needs.WorkerNurse - s.needs.WorkerResting) / s.nurseParams.MaxBroodNurseRatio
+		if s.pop.WorkersInHive+s.pop.WorkersForagers == 0 { // to prevent bugs; if there are no adults there cannot be honey used to warm brood; hive is dead anyways
+			thermoRegBrood = 0
+		}
+
 		needLarva := s.needs.WorkerLarvaTotal / float64(s.workerDev.LarvaeTime)
 
 		needAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.needs.WorkerResting + float64(s.pop.DronesInHive)*s.needs.Drone
@@ -51,7 +53,7 @@ func (s *HoneyConsumption) Update(w *ecs.World) {
 		consumptionEnergy := 0.001 * consumption * s.energyParams.Honey
 
 		s.stores.Honey -= consumptionEnergy
-		s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey
+		//s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storesParams.DecentHoneyPerWorker * s.energyParams.Honey        // moved to foraging to mimic BEEHAVE
 		s.cons.HoneyDaily = consumption
 	}
 }

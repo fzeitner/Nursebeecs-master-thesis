@@ -37,6 +37,8 @@ func Default_etox() DefaultParams_etox {
 			DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 			ContactSum:                false, // Determines whether contact exposure should be summed up per visit to a patch (true) or if the mean should be calculated whenever a new patch is visited (false)
 			ContactExposureOneDay:     false, // Determines whether contact exposure should only be possible on the day of application
+			RealisticStoch:            false, // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
+			NewThermo:                 true,
 
 			PPPname:                "No applications", // Identifier for the PPP used.
 			PPPconcentrationNectar: 990,

@@ -25,6 +25,8 @@ func main() {
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
 		ContactExposureOneDay:     true,
+		RealisticStoch:            false,
+		NewThermo:                 false,
 
 		PPPname:                "dimethoate", // Identifier for the PPP used.
 		PPPconcentrationNectar: 990,

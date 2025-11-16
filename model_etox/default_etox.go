@@ -40,11 +40,15 @@ func Default(p params.Params, pe params_etox.Params_etox, app *app.App) *app.App
 	app.AddSystem(&sys.MortalityCohorts{})           // same old mortality function now again
 	app.AddSystem(&sys_etox.MortalityCohorts_etox{}) // introduced ETOXMortality as an additional process for all cohorts
 	app.AddSystem(&sys.AgeCohorts{})
-	app.AddSystem(&sys.EggLaying{})       // no counting before this one because this happens before counting in the timestep in orig. model and has to happen after ageing in beecs
+	app.AddSystem(&sys.EggLaying{})          // no counting before EggLaying, therefore we can just let it run here after ageing in beecs. Necessary to first age to free up space for new eggs. Therefore has to happen after Mortaliy procs too which have to happen before ageing
+	app.AddSystem(&sys.TransitionForagers{}) // now only counts how many foragers are going to be transitioned and empties the IHbeecohort but does not initialize anything to resemble original BEEHAVE more closely
+
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
 	app.AddSystem(&sys.BroodCare{})       // Moved after the first countingproc to resemble the original model further, as counting twice is inevitable because of ETOXmortality processes.
 
-	app.AddSystem(&sys.TransitionForagers{})          // this is once again the normal beecs version now; Foraging_etox now updates the forager components for new foragers to be _etox compatible
+	app.AddSystem(&sys.NewCohorts{})
+	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model (miteproc), necessary to capture new Cohorts for foraging
+
 	app.AddSystem(&sys_etox.Foraging_etox{})          // introduced the uptake of PPP into foragers and the hive through contaminated honey/pollen, very tedious to decouple from normal foraging process
 	app.AddSystem(&sys.MortalityForagers{})           // now once again exactly the same as in baseline BEEHAVE, decoupled from etox mortality
 	app.AddSystem(&sys_etox.MortalityForagers_etox{}) // introduced ETOXMortality as an additional process for foragers and put after Foraging, because same in BEEHAVE

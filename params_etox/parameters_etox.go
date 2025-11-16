@@ -7,6 +7,8 @@ type ETOXparams struct {
 	DegradationHoney          bool // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 	ContactSum                bool // Determines whether contact exposures of different flower visits shall be summed up.
 	ContactExposureOneDay     bool // Determines whether contact exposure shall only be relevant on the one day of application
+	RealisticStoch            bool // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
+	NewThermo                 bool // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
 
 	PPPname                string  // Identifier for the PPP used.
 	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kg]

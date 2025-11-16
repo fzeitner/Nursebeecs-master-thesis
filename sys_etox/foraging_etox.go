@@ -43,11 +43,16 @@ type Foraging_etox struct {
 	popStats_etox *globals_etox.PopulationStats_etox
 	foragingStats *globals_etox.ForagingStats_etox
 	waterneeds    *globals_etox.WaterNeeds
+	newCohorts    *globals.NewCohorts
+	aff           *globals.AgeFirstForaging
+	factory       *globals.ForagerFactory
 
 	patches  []patchCandidate_etox
 	toRemove []ecs.Entity
 	resting  []ecs.Entity
 	dances   []ecs.Entity
+	searches []ecs.Entity
+	recruits []ecs.Entity
 	toAdd    []ecs.Entity
 
 	patchResourceMapper   *ecs.Map1[comp.Resource]
@@ -93,6 +98,9 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.stores = ecs.GetResource[globals.Stores](w)
 	s.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
 	s.waterneeds = ecs.GetResource[globals_etox.WaterNeeds](w)
+	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
+	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
+	s.factory = ecs.GetResource[globals.ForagerFactory](w)
 
 	s.activityFilter = s.activityFilter.New(w)
 	s.ageFilter = s.ageFilter.New(w)
@@ -127,14 +135,17 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 func (s *Foraging_etox) Update(w *ecs.World) {
 	s.foragingStats.Reset()
 
+	s.newForagers(w)                                                                                                                                             // here the foragers get initialized now; mimics BEEHAVE exactly.
+	s.stores.DecentHoney = math.Max(float64(s.popStats.WorkersInHive+s.popStats.WorkersForagers), 1) * s.storeParams.DecentHoneyPerWorker * s.energyParams.Honey // added this here, because Netlogo recalculates this in foragingRound and a countingproc happened since last calc.
+
 	agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
 	for agequery.Next() {
 		s.toAdd = append(s.toAdd, agequery.Entity())
 	}
-	//exchanger := s.etoxExchanger.Removes(ecs.C[comp.KnownPatch](), ecs.C[comp.Activity]())
+
 	for _, entity := range s.toAdd {
 		s.PPPexpoMapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.PPPLoad{})
-		s.etoxExchanger.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting}) // have to bugfix later why exchanger isnt working
+		s.etoxExchanger.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
 	}
 	s.toAdd = s.toAdd[:0]
 
@@ -185,6 +196,13 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 }
 
 func (s *Foraging_etox) Finalize(w *ecs.World) {}
+
+func (s *Foraging_etox) newForagers(w *ecs.World) {
+	if s.newCohorts.Foragers > 0 {
+		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff)
+	}
+	s.newCohorts.Foragers = 0
+}
 
 func (s *Foraging_etox) calcForagingProb() float64 {
 	if s.stores.Pollen/s.stores.IdealPollen > 0.5 && s.stores.Honey/s.stores.DecentHoney > 1 {
@@ -343,54 +361,64 @@ func (s *Foraging_etox) searching(w *ecs.World) {
 	}
 	detectionProb := 1.0 - nonDetectionProb
 
-	// TODO: shuffle foragers
-	foragerQuery := s.foragerFilterSimple.Query()
-	for foragerQuery.Next() {
-		act, patch := foragerQuery.Get()
-
+	// decoupled reruits from searchers and implemented shuffling via two separate sclices to imitate BEEHAVE more closely.
+	activityQuery := s.activityFilter.Query()
+	for activityQuery.Next() {
+		act := activityQuery.Get()
 		if act.Current == activity.Searching {
-			if s.rng.Float64() >= detectionProb {
-				continue
-			}
-			p := s.rng.Float64() * cumProb
-			cum := 0.0
-			var selected patchCandidate_etox
-			for _, pch := range s.patches {
-				cum += pch.Probability
-				if cum >= p {
-					selected = pch
-					break
-				}
-			}
-			if act.PollenForager {
-				if selected.HasPollen {
-					patch.Pollen = selected.Patch
-					act.Current = activity.BringPollen
-					res, vis := s.patchVisitsMapper.Get(selected.Patch)
-					res.Pollen -= s.foragerParams.PollenLoad * sz
-					vis.Pollen += s.foragerParams.SquadronSize
-				} else {
-					patch.Pollen = ecs.Entity{}
-				}
-			} else {
-				if selected.HasNectar {
-					patch.Nectar = selected.Patch
-					act.Current = activity.BringNectar
-					res, vis := s.patchVisitsMapper.Get(selected.Patch)
-					res.Nectar -= s.foragerParams.NectarLoad * sz
-					vis.Nectar += s.foragerParams.SquadronSize
-				} else {
-					patch.Nectar = ecs.Entity{}
-				}
-			}
+			s.searches = append(s.searches, activityQuery.Entity())
+		} else if act.Current == activity.Recruited {
+			s.recruits = append(s.recruits, activityQuery.Entity())
 		}
+	}
 
-		if act.Current != activity.Recruited {
+	s.rng.Shuffle(len(s.searches), func(i, j int) { s.searches[i], s.searches[j] = s.searches[j], s.searches[i] })
+	for _, e := range s.searches {
+		act, patch := s.foragerMapper.Get(e)
+
+		if s.rng.Float64() >= detectionProb {
 			continue
 		}
+		p := s.rng.Float64() * cumProb
+		cum := 0.0
+		var selected patchCandidate_etox
+		for _, pch := range s.patches {
+			cum += pch.Probability
+			if cum >= p {
+				selected = pch
+				break
+			}
+		}
+		if act.PollenForager {
+			if selected.HasPollen {
+				patch.Pollen = selected.Patch
+				act.Current = activity.BringPollen
+				res, vis := s.patchVisitsMapper.Get(selected.Patch)
+				res.Pollen -= s.foragerParams.PollenLoad * sz
+				vis.Pollen += s.foragerParams.SquadronSize
+			} else {
+				patch.Pollen = ecs.Entity{}
+			}
+		} else {
+			if selected.HasNectar {
+				patch.Nectar = selected.Patch
+				act.Current = activity.BringNectar
+				res, vis := s.patchVisitsMapper.Get(selected.Patch)
+				res.Nectar -= s.foragerParams.NectarLoad * sz
+				vis.Nectar += s.foragerParams.SquadronSize
+			} else {
+				patch.Nectar = ecs.Entity{}
+			}
+		}
+	}
+
+	s.rng.Shuffle(len(s.recruits), func(i, j int) { s.recruits[i], s.recruits[j] = s.recruits[j], s.recruits[i] })
+	for _, e := range s.recruits {
+		act, patch := s.foragerMapper.Get(e)
 
 		if !act.PollenForager && !patch.Nectar.IsZero() {
 			success := false
+
 			if s.rng.Float64() < s.danceParams.FindProbability {
 				res, vis := s.patchVisitsMapper.Get(patch.Nectar)
 				if res.Nectar >= s.foragerParams.NectarLoad*sz {
@@ -425,6 +453,8 @@ func (s *Foraging_etox) searching(w *ecs.World) {
 	}
 
 	s.patches = s.patches[:0]
+	s.searches = s.searches[:0]
+	s.recruits = s.recruits[:0]
 }
 
 func (s *Foraging_etox) collecting(w *ecs.World) {
@@ -590,8 +620,10 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 			}
 		}
 
-		if act.Current == activity.Searching {
-			if s.rng.Float64() < 1-math.Pow(1-s.forageParams.MortalityPerSec, searchDuration) || lethaldose {
+		if lethaldose {
+			s.toRemove = append(s.toRemove, foragerQuery.Entity())
+		} else if act.Current == activity.Searching {
+			if s.rng.Float64() < 1-math.Pow(1-s.forageParams.MortalityPerSec, searchDuration) {
 				s.toRemove = append(s.toRemove, foragerQuery.Entity())
 			}
 		} else if act.Current == activity.BringNectar {
