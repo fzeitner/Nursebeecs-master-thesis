@@ -4,7 +4,6 @@ import (
 	"math"
 	"math/rand/v2"
 
-	"github.com/fzeitner/beecs_masterthesis/GUTS"
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/globals_etox"
 	"github.com/fzeitner/beecs_masterthesis/params"
@@ -28,7 +27,6 @@ type MortalityCohorts_etox struct {
 
 	etox  *params_etox.ETOXparams
 	toxic *params_etox.Toxicityparams
-	guts  *params_etox.GUTSParams
 
 	time *resource.Tick
 	rng  *resource.Rand
@@ -46,7 +44,6 @@ func (s *MortalityCohorts_etox) Initialize(w *ecs.World) {
 
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
-	s.guts = ecs.GetResource[params_etox.GUTSParams](w)
 
 	s.time = ecs.GetResource[resource.Tick](w)
 	s.rng = ecs.GetResource[resource.Rand](w)
@@ -59,11 +56,8 @@ func (s *MortalityCohorts_etox) Update(w *ecs.World) {
 		s.applyMortalityEtox(s.larvae.Workers, s.larvae_etox.WorkerCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
 		s.applyMortalityEtox(s.larvae.Drones, s.larvae_etox.DroneCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
 
-		if s.etox.GUTS {
-			s.applyMortalityGUTS(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.inHive_etox.WorkerCohortC_i, w)
-		} else {
-			s.applyMortalityEtox(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
-		}
+		s.applyMortalityEtox(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
+
 		s.applyMortalityEtox(s.inHive.Drones, s.inHive_etox.DroneCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
 
 		s.popstats.Reset() // resets cumulative and mean doses for the timestep
@@ -86,47 +80,23 @@ func (s *MortalityCohorts_etox) applyMortalityEtox(coh []int, dose []float64, sl
 			if ldx > 0.99 { // introduced this because netlogo-version behaves the same way. This makes it much less likely to have single digit cohorts left over after lethal PPP events
 				ldx = 1
 			}
-
-			if num > 100 { // introduced this to make survival for lower numbers of individuals in cohorts more realisitcally stochastic
-				toDie = int((float64(num) * ldx))
-			} else {
-				i := 0
-				for i < num {
-					if r.Float64() < ldx {
-						toDie++
+			if s.etox.RealisticStoch {
+				if num > 100 { // introduced this to make survival for lower numbers of cohorts more realisitcally stochastic
+					toDie = int((float64(num) * ldx))
+				} else {
+					i := 0
+					for i < num {
+						if r.Float64() < ldx {
+							toDie++
+						}
+						i++
 					}
-					i++
 				}
+			} else {
+				toDie = int((float64(num) * ldx))
 			}
 		}
 		coh[i] = util.MaxInt(0, num-toDie)
 		dose[i] = 0. // doses get reset to 0 after the mortality check in every timestep, only dose from previous day is ever relevant
-	}
-}
-
-func (s *MortalityCohorts_etox) applyMortalityGUTS(coh []int, dose []float64, C_i []float64, w *ecs.World) {
-	if s.guts.Type == "SD" {
-		r := rand.New(s.rng)
-		for i := range coh {
-			if coh[i] != 0 && dose[i]+C_i[i] > 0 {
-				coh[i], dose[i], C_i[i] = GUTS.SD_IHbee(coh[i], dose[i], C_i[i], r, w) // this might work now
-			}
-			if coh[i] == 0 {
-				C_i[i] = 0.
-				dose[i] = 0.
-			}
-		}
-	} else {
-		for i := range coh {
-			lethaldose := false
-			if coh[i] != 0 && dose[i]+C_i[i] > 0 {
-				lethaldose, dose[i], _, C_i[i] = GUTS.IT(s.inHive_etox.WorkerCohortITthreshold[i], dose[i], 0, C_i[i], w)
-			}
-			if lethaldose {
-				coh[i] = 0
-				C_i[i] = 0.
-				dose[i] = 0.
-			}
-		}
 	}
 }

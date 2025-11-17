@@ -25,10 +25,7 @@ type InHive struct {
 }
 
 type NewCohorts struct {
-	IHbees            int     // number for the new IHbees this day as to not be counted by counting proc to more closely resemble netlogo code
-	Drones            int     // number for the new Drones this day as to not be counted by counting proc to more closely resemble netlogo code
-	Foragers          int     // number for the new Foragers as to not be counted by counting proc to more closely resemble netlogo code
-	NewForITthreshold float64 // threshold for GUTS-RED-IT model
-	NewForC_i         float64 // internal concentration of newly created forager squadrons
-	NewForOralDose    float64 // oral dose of the newly created forager squadrons
+	IHbees   int // number for the new IHbees this day as to not be counted by counting proc to more closely resemble netlogo code
+	Drones   int // number for the new Drones this day as to not be counted by counting proc to more closely resemble netlogo code
+	Foragers int // number for the new Foragers as to not be counted by counting proc to more closely resemble netlogo code
 }

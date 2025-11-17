@@ -3,11 +3,12 @@ package params_etox
 // ETOX parameters regarding application of the pesticide.
 type ETOXparams struct {
 	Application               bool // Determines if there is an application at all at any point in the model and if the _ecotox-module should be turned on for all purposes
-	GUTS                      bool // Determines whether BeeGUTS shall be used (true) or the old dose-response relationship
 	ForagerImmediateMortality bool // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 	DegradationHoney          bool // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 	ContactSum                bool // Determines whether contact exposures of different flower visits shall be summed up.
 	ContactExposureOneDay     bool // Determines whether contact exposure shall only be relevant on the one day of application. NEED TO TEST IF THIS MAKES SENSE WITH GUTS VERSION
+	ReworkedThermoETOX        bool
+	RealisticStoch            bool
 
 	PPPname                string  // Identifier for the PPP used.
 	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kg]
@@ -61,53 +62,35 @@ type WaterForagingPeriod struct {
 	RandomYears bool        // Whether to randomize years.
 }
 
-// GUTS-RED parameters to implement BeeGUTS SD and IT into the mortality functions
-type GUTSParams struct {
-	Type string  // activate SD/IT here
-	K_SR float64 // honey stomach release rate [d**-1]
-	K_CA float64 // contact availability rate [d**-1]
-	T    int     // amount of timesteps per day for numeric GUTS approximation
-
-	// IT params
-	Kd_IT float64 // Dominant rate constant for the reduced-IT-model
-	MW_IT float64 // Median of the distribution of thresholds for calculating IT threshold distribution
-	F_S   float64 // Fraction spread in distribution of thresholds; used to calculate beta for the threshold distribution calc
-
-	// SD params
-	Kd_SD float64 // Dominant rate constant for the reduced-SD-model
-	MW_SD float64 // Median of the distribution of thresholds for calculating h in the red-SD-model
-	BW_SD float64 // Killing rate for calculating h in the red-SD-model
-}
-
 // this contains all the adjusted new estimates for consumption that became necessary in the nurse rework
 type ConsumptionRework struct {
 	Nursebeecs bool // switch to turn on this rework of consumption behavior via nursebees
 
-	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses)
-	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses)
+	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
+	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
 
-	MaxPollenNurse float64 // maximum of pollen that nurses can theoretically take in
-	MaxHoneyNurse  float64 // maximum of honey that nurses can theoretically take in
+	MaxPollenNurse float64 // maximum of pollen that nurses can theoretically take in [mg/d]
+	MaxHoneyNurse  float64 // maximum of honey that nurses can theoretically take in [mg/d]
 
-	HoneyAdultDrone  float64 // daily intake needs for drones
-	PollenAdultDrone float64 // daily intake needs for drones
+	HoneyAdultDrone  float64 // daily intake needs for drones [mg/d]
+	PollenAdultDrone float64 // daily intake needs for drones [mg/d]
 
-	HoneyWorkerLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage
-	PollenWorkerLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage
-	HWLtotal          float64   // HoneyWorkerLarva_total --> total amount of honey necessary to rear one worker larva
-	PWLtotal          float64   // PollenWorkerLarva_total --> total amount of pollen necessary to rear one worker larva
-	PFPworker         float64   // PollenForPriming of HG (hypopharyngeal glands) of workers, added on consumption over the first 4 days of adult life
-	HoneyDirect       float64   // fraction of direct honey intake per larva from age 3 onwards
-	PollenDirect      float64   // fraction of direct pollen intake per larvae from age 3 onwards
+	HoneyWorkerLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage [mg/d]
+	PollenWorkerLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage [mg/d]
+	HWLtotal          float64   // HoneyWorkerLarva_total --> total amount of honey necessary to rear one worker larva [mg/d]
+	PWLtotal          float64   // PollenWorkerLarva_total --> total amount of pollen necessary to rear one worker larva [mg]
+	PFPworker         float64   // PollenForPriming of HG (hypopharyngeal glands) of workers, added on consumption over the first 4 days of adult life [mg/d]
+	HoneyDirect       float64   // fraction of direct honey intake per larva from age 3 onwards [-]
+	PollenDirect      float64   // fraction of direct pollen intake per larvae from age 3 onwards [-]
 
-	HoneyDroneLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage
-	PollenDroneLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage
-	HDLtotal         float64   // HoneyDroneLarva_total --> total amount of honey necessary to rear one drone larva
-	PDLtotal         float64   // PollenDroneLarva_total --> total amount of pollen necessary to rear one drone larva
-	PFPdrone         float64   // PollenForPriming sexual maturity in drones, added on baseline consumption over the first 9 days of adult life
+	HoneyDroneLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage [%/d]
+	PollenDroneLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage [%/d]
+	HDLtotal         float64   // HoneyDroneLarva_total --> total amount of honey necessary to rear one drone larva [mg]
+	PDLtotal         float64   // PollenDroneLarva_total --> total amount of pollen necessary to rear one drone larva [mg]
+	PFPdrone         float64   // PollenForPriming sexual maturity in drones, added on baseline consumption over the first 9 days of adult life [mg]
 
 	DynamicProteinNursing bool      // switch to turn on dynamic nursing capability
-	Nursingcapabiliies    []float64 // this is an array full of factors defining efficiency/capabiliy of the nurse cohort depending on age
+	Nursingcapabiliies    []float64 // this is an array full of factors defining efficiency/capabiliy of the nurse cohort depending on age [-]
 }
 
 type Nursing struct {

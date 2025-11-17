@@ -47,12 +47,9 @@ func (s *InitCohorts) Initialize(w *ecs.World) {
 	ecs.AddResource(w, &s.inHive)
 
 	s.NewCohorts = globals.NewCohorts{
-		IHbees:            0,
-		Drones:            0,
-		Foragers:          0,
-		NewForITthreshold: 0.,
-		NewForC_i:         0.,
-		NewForOralDose:    0.,
+		IHbees:   0,
+		Drones:   0,
+		Foragers: 0,
 	}
 	ecs.AddResource(w, &s.NewCohorts)
 }

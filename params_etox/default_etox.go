@@ -26,7 +26,6 @@ type DefaultParams_etox struct {
 	WaterParams         WaterParams
 	WaterForagingPeriod WaterForagingPeriod
 	Toxicityparams      Toxicityparams
-	GUTSParams          GUTSParams
 	ConsumptionRework   ConsumptionRework
 	Nursing             Nursing
 }
@@ -36,11 +35,12 @@ func Default_etox() DefaultParams_etox {
 	return DefaultParams_etox{
 		ETOXparams: ETOXparams{
 			Application:               false, // Determines if there is an application at all (and turns on/off the necessary code)
-			GUTS:                      false, // Determines whether BeeGUTS or dose-response shall be used for effect calculation
 			ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 			DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 			ContactSum:                false, // Determines whether contact exposure should be summed up per visit to a patch (true) or if the mean should be calculated whenever a new patch is visited (false)
 			ContactExposureOneDay:     false, // Determines whether contact exposure should only be possible on the day of application
+			ReworkedThermoETOX:        false,
+			RealisticStoch:            false,
 
 			PPPname:                "No applications", // Identifier for the PPP used.
 			PPPconcentrationNectar: 990,
@@ -81,22 +81,6 @@ func Default_etox() DefaultParams_etox {
 			Files:       []string{"ETOX_waterforcooling_daily/waterlistExample.txt"},
 			Builtin:     true,
 			RandomYears: false,
-		},
-		GUTSParams: GUTSParams{ // default values are taken from supplementary information of Baas et al. 2022; params are specified for dimethoate
-			Type: "SD",  // GUTS mode
-			K_SR: 0.625, //default values taken from Baas et al. 2022
-			K_CA: 0.4,   //default values taken from Baas et al. 2022
-			T:    24,    // amount of timesteps per day for numeric GUTS approximation
-
-			// IT params
-			Kd_IT: 0.012,  // Dominant rate constant for the reduced-IT-model
-			MW_IT: 0.0024, // Median of the distribution of thresholds for calculating IT threshold distribution; adjusted from ng/bee (Baas et al. 2022) to mug/bee as this model uses mug as primary unit
-			F_S:   3,      // Fraction spread in distribution of thresholds; used to calculate beta for the threshold distribution calc
-
-			// SD params
-			Kd_SD: 0.36,  // Dominant rate constant for the reduced-SD-model
-			MW_SD: 0.014, // Median of the distribution of thresholds for calculating h in the red-SD-model; adjusted from ng/bee (Baas et al. 2022) to mug/bee as this model uses mug as primary unit
-			BW_SD: 21.,   // Killing rate for calculating h in the red-SD-model; adjusted from 1/(ng/bee d) (Baas et al. 2022) to 1/(mug/bee d) as this model uses mug as primary unit
 		},
 		ConsumptionRework: ConsumptionRework{
 			Nursebeecs: false, // turned off to keep basic model as default
@@ -175,7 +159,6 @@ func (p *DefaultParams_etox) Apply(world *ecs.World) {
 	ecs.AddResource(world, &pCopy.ETOXparams)
 	ecs.AddResource(world, &pCopy.Toxicityparams)
 	ecs.AddResource(world, &pCopy.WaterParams)
-	ecs.AddResource(world, &pCopy.GUTSParams)
 	ecs.AddResource(world, &pCopy.ConsumptionRework)
 	ecs.AddResource(world, &pCopy.Nursing)
 }

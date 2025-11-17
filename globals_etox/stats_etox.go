@@ -20,6 +20,9 @@ type PopulationStats_etox struct {
 	CumDoseDroneLarvae float64 // cumulative dose before calculating a mean, used for debugging
 
 	PPPNursebees float64 // variable for debugging and finding out how much PPP is "lost" to nursebees, who are not explicitely modeled
+
+	CumDoseNurses  float64
+	MeanDoseNurses float64
 }
 
 // Reset all stats to zero.
@@ -35,6 +38,10 @@ func (s *PopulationStats_etox) Reset() {
 	s.CumDoseDroneLarvae = 0 // cumulative dose before calculating a mean, used for debugging
 
 	s.PPPNursebees = 0
+
+	s.CumDoseNurses = 0
+	s.MeanDoseNurses = 0
+
 }
 
 // ForagingRound contains statistics for a single foraging round.

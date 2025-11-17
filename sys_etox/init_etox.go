@@ -7,7 +7,6 @@ import (
 	"math/rand/v2"
 	"os"
 
-	"github.com/fzeitner/beecs_masterthesis/GUTS"
 	"github.com/fzeitner/beecs_masterthesis/comp"
 	"github.com/fzeitner/beecs_masterthesis/comp_etox"
 	"github.com/fzeitner/beecs_masterthesis/data"
@@ -28,7 +27,6 @@ type Init_etox struct {
 	inHive_etox globals_etox.InHive_etox
 	nglobals    *globals_etox.Nursing_globals
 	etox        *params_etox.ETOXparams
-	guts        *params_etox.GUTSParams
 	nursecons   *params_etox.ConsumptionRework
 	nurseparams *params_etox.Nursing
 
@@ -48,7 +46,6 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	workerDev := ecs.GetResource[params.WorkerDevelopment](w)
 	droneDev := ecs.GetResource[params.DroneDevelopment](w)
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
-	s.guts = ecs.GetResource[params_etox.GUTSParams](w)
 
 	s.larvae_etox = globals_etox.Larvae_etox{
 		WorkerCohortDose: make([]float64, workerDev.LarvaeTime),
@@ -57,10 +54,8 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	ecs.AddResource(w, &s.larvae_etox)
 
 	s.inHive_etox = globals_etox.InHive_etox{
-		WorkerCohortDose:        make([]float64, aff.Max+1),
-		DroneCohortDose:         make([]float64, droneDev.MaxLifespan),
-		WorkerCohortITthreshold: make([]float64, aff.Max+1),
-		WorkerCohortC_i:         make([]float64, aff.Max+1),
+		WorkerCohortDose: make([]float64, aff.Max+1),
+		DroneCohortDose:  make([]float64, droneDev.MaxLifespan),
 	}
 	ecs.AddResource(w, &s.inHive_etox)
 
@@ -153,13 +148,6 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	forstats_etox := globals_etox.ForagingStats_etox{}
 	ecs.AddResource(w, &forstats_etox)
 
-	if s.etox.Application && s.etox.GUTS && s.guts.Type == "IT" {
-		GUTSdist := globals_etox.GUTSDistribution{
-			Dist: GUTS.Calc_distribution(w),
-		}
-		ecs.AddResource(w, &GUTSdist)
-	}
-
 	// add the PPPExpo component to all foragers
 	s.source = rand.New(ecs.GetResource[resource.Rand](w))
 	s.foragerPPPmapper = s.foragerPPPmapper.New(w)
@@ -175,15 +163,7 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	// also adds GUTS related components here if GUTS is enabled
 	rng := rand.New(s.source)
 	for _, entity := range toAdd {
-		if !s.etox.GUTS {
-			s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-		} else {
-			if s.guts.Type == "IT" {
-				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0., RmdSurvivalIT: GUTS.Calc_F(rng.Float64(), w)}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			} else {
-				s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., C_i: 0.}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			}
-		}
+		s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 		// add winterbee characteristic here depending on parameter value
 		if s.nurseparams.StartWinterBees {
 			s.etoxAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true})

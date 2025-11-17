@@ -39,8 +39,9 @@ func Default_nbeecs(p params.Params, pe params_etox.Params_etox, app *app.App) *
 	app.AddSystem(&sys.EggLaying{})
 	app.AddSystem(&sys.TransitionForagers{})
 
-	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
-	app.AddSystem(&sys_etox.Nbroodcare{})
+	app.AddSystem(&sys.CountPopulation{})   // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
+	app.AddSystem(&sys_etox.NursingNeeds{}) // calculates need of nurses based on population dynamics and nursing metrics from the last step; determines available nurses for broodcare and consumption
+	app.AddSystem(&sys_etox.Nbroodcare{})   // new nurse based brood care process (if turned on)
 
 	app.AddSystem(&sys.NewCohorts{})      // here the new cohorts get initialized now
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model (miteproc), necessary to capture new Cohorts for foraging

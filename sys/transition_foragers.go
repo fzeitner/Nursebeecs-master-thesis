@@ -35,6 +35,10 @@ func (s *TransitionForagers) Update(w *ecs.World) {
 		squadrons := 0
 		remainder := 0
 		for i := aff; i < len(s.inHive.Workers); i++ {
+			if s.inHive.Workers[i] == 0 {
+				continue
+			}
+
 			newForagers = s.inHive.Workers[i]
 			s.inHive.Workers[i] = 0
 			squadrons += newForagers / s.params.SquadronSize // check out what changes when this gets declared/calculated in the for loop (as in Netlogo)

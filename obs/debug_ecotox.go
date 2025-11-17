@@ -31,7 +31,7 @@ func (o *DebugEcotox) Initialize(w *ecs.World) {
 }
 func (o *DebugEcotox) Update(w *ecs.World) {}
 func (o *DebugEcotox) Header() []string {
-	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Mean_Dose_Larvae", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Forager", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "nIHbeeCohorts", "pollenconcbeforeeating", "nectarconcbeforeeating", "contactonce", "contactrepeat"}
+	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Mean_Dose_Larvae", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Forager", "ETOX_Mean_Dose_Nurses", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "ETOX_Cum_Dose_Nurses", "pollenconcbeforeeating", "nectarconcbeforeeating", "TotalPop"}
 }
 func (o *DebugEcotox) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.foraging.SecondsToday)
@@ -47,16 +47,16 @@ func (o *DebugEcotox) Values(w *ecs.World) []float64 {
 	o.data[8] = float64(o.popetox.MeanDoseLarvae)
 	o.data[9] = float64(o.popetox.MeanDoseIHBees)
 	o.data[10] = float64(o.popetox.MeanDoseForager)
+	o.data[11] = float64(o.popetox.MeanDoseNurses)
 
-	o.data[11] = float64(o.popetox.CumDoseLarvae)
-	o.data[12] = float64(o.popetox.CumDoseIHBees)
-	o.data[13] = float64(o.popetox.CumDoseForagers)
+	o.data[12] = float64(o.popetox.CumDoseLarvae)
+	o.data[13] = float64(o.popetox.CumDoseIHBees)
+	o.data[14] = float64(o.popetox.CumDoseForagers)
+	o.data[15] = float64(o.popetox.CumDoseNurses)
 
-	o.data[14] = float64(o.popetox.NumberIHbeeCohorts)
-	o.data[15] = float64(o.stores_etox.Pollenconcbeforeeating)
-	o.data[16] = float64(o.stores_etox.Nectarconcbeforeeating)
-	o.data[17] = float64(o.forstats.ContactExp_once)
-	o.data[18] = float64(o.forstats.ContactExp_repeat)
+	o.data[16] = float64(o.stores_etox.Pollenconcbeforeeating)
+	o.data[17] = float64(o.stores_etox.Nectarconcbeforeeating)
+	o.data[18] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
 
 	return o.data
 }

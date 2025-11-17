@@ -32,16 +32,14 @@ type Foraging_etox struct {
 	storeParams        *params.Stores
 	storesParams       *params.Stores
 
-	waterParams *params_etox.WaterParams
-	etox        *params_etox.ETOXparams
-	toxic       *params_etox.Toxicityparams
-	guts        *params_etox.GUTSParams
+	etox          *params_etox.ETOXparams
+	toxic         *params_etox.Toxicityparams
+	nursingParams *params_etox.Nursing
 
 	foragePeriod  *globals.ForagingPeriod
 	stores        *globals.Stores
 	stores_etox   *globals_etox.Storages_etox
 	foragingStats *globals_etox.ForagingStats_etox
-	waterneeds    *globals_etox.WaterNeeds
 	pop           *globals.PopulationStats
 	newCohorts    *globals.NewCohorts
 	aff           *globals.AgeFirstForaging
@@ -54,6 +52,7 @@ type Foraging_etox struct {
 	foragershuffle []ecs.Entity
 	dances         []ecs.Entity
 
+	ageMapper             *ecs.Map1[comp.Age]
 	patchResourceMapper   *ecs.Map1[comp.Resource]
 	patchVisitsMapper     *ecs.Map2[comp.Resource, comp.Visits]
 	patchDanceMapper      *ecs.Map2[comp.Resource, comp.Dance]
@@ -86,17 +85,15 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.energyParams = ecs.GetResource[params.EnergyContent](w)
 	s.storeParams = ecs.GetResource[params.Stores](w)
 	s.storesParams = ecs.GetResource[params.Stores](w)
+	s.nursingParams = ecs.GetResource[params_etox.Nursing](w)
 
-	s.waterParams = ecs.GetResource[params_etox.WaterParams](w)
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
-	s.guts = ecs.GetResource[params_etox.GUTSParams](w)
 
 	s.foragingStats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
 	s.foragePeriod = ecs.GetResource[globals.ForagingPeriod](w)
 	s.stores = ecs.GetResource[globals.Stores](w)
 	s.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
-	s.waterneeds = ecs.GetResource[globals_etox.WaterNeeds](w)
 	s.pop = ecs.GetResource[globals.PopulationStats](w)
 	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
 	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
@@ -111,6 +108,7 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.patchFilter = s.patchFilter.New(w)
 	s.patchUpdateFilter = s.patchUpdateFilter.New(w)
 
+	s.ageMapper = s.ageMapper.New(w)
 	s.patchResourceMapper = s.patchResourceMapper.New(w)
 	s.patchVisitsMapper = s.patchVisitsMapper.New(w)
 	s.patchDanceMapper = s.patchDanceMapper.New(w)
@@ -182,6 +180,10 @@ func (s *Foraging_etox) Update(w *ecs.World) {
 			act, _, load := query2.Get()
 			act.Current = activity.Resting
 
+			if act.Reverted {
+				continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+			}
+
 			s.foragingStats.MeanEnergyExpenditure += load.EnergyUsed
 			if load.EnergyUsed > s.foragingStats.MaxEnergyExpenditure {
 				s.foragingStats.MaxEnergyExpenditure = load.EnergyUsed
@@ -200,29 +202,30 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 	s.newCohorts.Foragers = 0
 	if s.etox.Application {
 		// adding etox components to the newly initialized forager entities
-		agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query()
+
+		agequery := s.ageFilter.Without(ecs.C[comp_etox.PPPExpo]()).Query() // this way only newly created squadrons get called by this query
 		for agequery.Next() {
 			s.toAdd = append(s.toAdd, agequery.Entity())
 		}
-		for _, entity := range s.toAdd {
-			if s.etox.GUTS && s.guts.Type == "IT" {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i, RmdSurvivalIT: s.newCohorts.NewForITthreshold}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			} else if s.etox.GUTS && s.guts.Type == "SD" {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: s.newCohorts.NewForOralDose, ContactDose: 0., C_i: s.newCohorts.NewForC_i}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			} else {
-				s.pppExpoAdder.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-			}
-			s.etoxPatchAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
+		for _, e := range s.toAdd {
+			s.pppExpoAdder.Add(e, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 
+			squadAge := s.ageMapper.Get(e)
+			if s.nursingParams.StartWinterBees && squadAge.DayOfBirth >= 205 && squadAge.DayOfBirth < 265 { // original BEEHAVE assumes starting foragers (=winter bees) are aged 100 - 160 days already; Aff + 21 = current age of the cohort; 21 = dev-time from egg - adult; Aff = adult time before foraging
+				if s.rng.Float64() <= float64(1)/float64(60)*float64(squadAge.DayOfBirth-204) { // assume linear increase in likelihood to turn into winterbees
+					s.etoxPatchAdder.Add(e, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true}) // assumes bees turning into foragers are winterbees again;
+				} else {
+					s.etoxPatchAdder.Add(e, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
+				}
+			} else if s.nursingParams.StartWinterBees && squadAge.DayOfBirth >= 265 { // original BEEHAVE assumes starting foragers are aged 100 - 160 days already !!!; this is just an estimate though, it would make a lot more sense to couple this to pop dynamic and nectar/pollen influxes
+				s.etoxPatchAdder.Add(e, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true}) // assumes bees turning into foragers are winterbees again
+				// aligns with literature assuming eggs from august - september start turning into winterbees (21 days for theses eggs to turn into IHbees + some more to turn into foragers --> roughly start of october)
+				// there should eventually be a system introduced to actually differentiate between winterbees and summeerbees properly (mortalities, food demands, chance from egg onwards to turn into 1 of the 2, ...)
+			} else {
+				s.etoxPatchAdder.Add(e, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting})
+			}
 		}
 		s.toAdd = s.toAdd[:0]
-		if s.etox.GUTS {
-			if s.guts.Type == "IT" {
-				s.newCohorts.NewForITthreshold = 0.
-			}
-			s.newCohorts.NewForC_i = 0.
-			s.newCohorts.NewForOralDose = 0.
-		}
 	}
 }
 
@@ -297,6 +300,10 @@ func (s *Foraging_etox) decisions(w *ecs.World, probForage, probCollectPollen fl
 	query := s.foragerFilter.Query()
 	for query.Next() {
 		act, patch, milage := query.Get()
+
+		if act.Reverted {
+			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+		}
 
 		if act.Current != activity.Recruited {
 			act.PollenForager = s.rng.Float64() < probCollectPollen
@@ -383,7 +390,6 @@ func (s *Foraging_etox) searching(w *ecs.World) {
 	}
 	detectionProb := 1.0 - nonDetectionProb
 
-	// TODO: test this foragershuffle
 	activityQuery := s.activityFilter.Query()
 	for activityQuery.Next() {
 		act := activityQuery.Get()
@@ -396,6 +402,9 @@ func (s *Foraging_etox) searching(w *ecs.World) {
 	for _, e := range s.foragershuffle {
 		act, patch := s.foragerMapper.Get(e)
 
+		if act.Reverted {
+			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+		}
 		s.foragingStats.TotalSearches += 1
 
 		if act.Current == activity.Searching {
@@ -494,6 +503,10 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 
 	for _, e := range s.foragershuffle {
 		act, patch, milage, load, PPPload, PPPexpo := s.foragerLoadPPPMapper.Get(e)
+
+		if act.Reverted {
+			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+		}
 
 		if act.Current == activity.Experienced {
 			if act.PollenForager {
@@ -614,6 +627,10 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 	for _, e := range s.foragershuffle {
 		act, patch, milage, _, eload, ppp := s.foragerLoadPPPMapper.Get(e)
 
+		if act.Reverted {
+			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+		}
+
 		if act.Current == activity.Searching {
 			dist := s.forageParams.SearchLength / 1000.0
 			milage.Today += float32(dist)
@@ -658,6 +675,10 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 	foragerQuery := s.foragerFilterLoadPPP.Query()
 	for foragerQuery.Next() {
 		act, patch, _, _, _, PPPexpo := foragerQuery.Get()
+
+		if act.Reverted {
+			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+		}
 
 		// Acute toxicity during flight
 		lethaldose := false
@@ -711,6 +732,10 @@ func (s *Foraging_etox) dancing(w *ecs.World) {
 
 	for _, e := range s.dances {
 		act, patch := s.foragerMapper.Get(e)
+
+		if act.Reverted {
+			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+		}
 
 		if act.Current != activity.BringNectar && act.Current != activity.BringPollen {
 			continue

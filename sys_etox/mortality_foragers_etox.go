@@ -2,9 +2,7 @@ package sys_etox
 
 import (
 	"math"
-	"math/rand/v2"
 
-	"github.com/fzeitner/beecs_masterthesis/GUTS"
 	"github.com/fzeitner/beecs_masterthesis/comp"
 	"github.com/fzeitner/beecs_masterthesis/comp_etox"
 	"github.com/fzeitner/beecs_masterthesis/globals_etox"
@@ -27,7 +25,6 @@ type MortalityForagers_etox struct {
 	etoxstats *globals_etox.PopulationStats_etox
 	etox      *params_etox.ETOXparams
 	toxic     *params_etox.Toxicityparams
-	guts      *params_etox.GUTSParams
 
 	time *resource.Tick
 }
@@ -40,7 +37,6 @@ func (s *MortalityForagers_etox) Initialize(w *ecs.World) {
 	s.etoxstats = ecs.GetResource[globals_etox.PopulationStats_etox](w)
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
-	s.guts = ecs.GetResource[params_etox.GUTSParams](w)
 
 	s.time = ecs.GetResource[resource.Tick](w)
 
@@ -48,15 +44,9 @@ func (s *MortalityForagers_etox) Initialize(w *ecs.World) {
 
 func (s *MortalityForagers_etox) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
-		r := rand.New(s.rng)
 		query := s.foragerFilter.Query()
 		s.etoxstats.MeanDoseForager = 0.
 		s.etoxstats.CumDoseForagers = 0.
-		reset_contact := false
-
-		if s.etox.AppDay+10 == int(s.time.Tick) {
-			reset_contact = true // reset contact dose on 10th day after application. Will need to adjust for multiple application scenarios
-		}
 
 		for query.Next() {
 			p := query.Get()
@@ -64,38 +54,19 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 			// mortality from PPP exposition, either dose-response relationship depending on their susceptibility to the contaminant or BeeGUTS can be called here
 			lethaldose := false
 			if s.etox.Application {
-				if !s.etox.GUTS { // dose-response gets called as in original BEEHAVE_ecotox
-					s.etoxstats.CumDoseForagers += p.OralDose
-					if p.OralDose > 1e-20 && p.OralDose < s.toxic.ForagerOralLD50*1e5 {
-						if p.RdmSurvivalOral < 1-(1/(1+math.Pow(p.OralDose/s.toxic.ForagerOralLD50, s.toxic.ForagerOralSlope))) {
-							lethaldose = true
-						}
+				s.etoxstats.CumDoseForagers += p.OralDose
+				if p.OralDose > 1e-20 && p.OralDose < s.toxic.ForagerOralLD50*1e5 {
+					if p.RdmSurvivalOral < 1-(1/(1+math.Pow(p.OralDose/s.toxic.ForagerOralLD50, s.toxic.ForagerOralSlope))) {
+						lethaldose = true
 					}
-					if p.ContactDose > 0 {
-						if p.RdmSurvivalContact < 1-(1/(1+math.Pow(p.ContactDose/s.toxic.ForagerContactLD50, s.toxic.ForagerContactSlope))) {
-							lethaldose = true
-						}
-					}
-					p.OralDose = 0.    // exposure doses get reset to 0 every tick BEFORE the added dose from honey and pollen consumption gets taken into account,
-					p.ContactDose = 0. // therefore exposure from foraging of the current day and exposure from food of the previous day is relevant for lethal effects only
-
-				} else { // BeeGUTS gets called; still in developement and to be tested
-					if s.time.Tick == int64(s.etox.AppDay) { // debugging anchor
-						x := 1
-						x += 1
-					}
-					if reset_contact {
-						p.ContactDose = 0.
-					}
-					if p.OralDose+p.ContactDose+p.C_i > 0 {
-						if s.guts.Type == "IT" {
-							lethaldose, p.OralDose, p.ContactDose, p.C_i = GUTS.IT(p.RmdSurvivalIT, p.OralDose, p.ContactDose, p.C_i, w)
-						} else {
-							lethaldose, p.OralDose, p.ContactDose, p.C_i = GUTS.SD_for(p.OralDose, p.ContactDose, p.C_i, r, w)
-						}
-					}
-					s.etoxstats.CumDoseForagers += p.OralDose // probably wil have to readjust dosage metrics
 				}
+				if p.ContactDose > 0 {
+					if p.RdmSurvivalContact < 1-(1/(1+math.Pow(p.ContactDose/s.toxic.ForagerContactLD50, s.toxic.ForagerContactSlope))) {
+						lethaldose = true
+					}
+				}
+				p.OralDose = 0.    // exposure doses get reset to 0 every tick BEFORE the added dose from honey and pollen consumption gets taken into account,
+				p.ContactDose = 0. // therefore exposure from foraging of the current day and exposure from food of the previous day is relevant for lethal effects only
 			}
 
 			if lethaldose {
@@ -113,7 +84,7 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 		querysimple.Close()
 
 		if c > 0 {
-			s.etoxstats.MeanDoseForager = s.etoxstats.CumDoseForagers / float64(c)
+			s.etoxstats.MeanDoseForager = s.etoxstats.CumDoseForagers / float64(c*100)
 		} else {
 			s.etoxstats.MeanDoseForager = 0.
 		}
