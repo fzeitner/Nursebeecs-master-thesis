@@ -57,6 +57,9 @@ func Default() DefaultParams {
 		Termination: Termination{
 			MaxTicks:     365,
 			OnExtinction: false,
+
+			WinterCritExtinction: false,
+			CritColonySizeWinter: 4000,
 		},
 		RandomSeed: RandomSeed{
 			Seed: 0,
@@ -169,6 +172,8 @@ func Default() DefaultParams {
 			MaxBroodCells:              200_000,
 			DroneEggLayingSeasonStart:  115,
 			DroneEggLayingSeasonEnd:    240,
+
+			WinterBees: false,
 		},
 		InitialPopulation: InitialPopulation{
 			Count:     10_000,

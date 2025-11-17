@@ -27,7 +27,7 @@ func (o *DebugPollenCons) Initialize(w *ecs.World) {
 
 func (o *DebugPollenCons) Update(w *ecs.World) {}
 func (o *DebugPollenCons) Header() []string {
-	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ProteinFactorNurses", "DailyHoneyConsumption", "DailyPollenConsumption_g", "TotalDroneEggs", "TotalDroneLarvae", "TotalDronePupae", "TotalDrones", "TotalPop"}
+	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ProteinFactorNurses", "DailyHoneyConsumption_mg", "DailyPollenConsumption_g", "TotalDroneEggs", "TotalDroneLarvae", "TotalDronePupae", "TotalDrones", "TotalPop"}
 }
 func (o *DebugPollenCons) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.foraging.SecondsToday)
@@ -48,7 +48,6 @@ func (o *DebugPollenCons) Values(w *ecs.World) []float64 {
 	o.data[12] = float64(o.pop.DroneLarvae)
 	o.data[13] = float64(o.pop.DronePupae)
 	o.data[14] = float64(o.pop.DronesInHive)
-
 	o.data[15] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
 
 	return o.data

@@ -8,7 +8,7 @@ type ETOXparams struct {
 	ContactSum                bool // Determines whether contact exposures of different flower visits shall be summed up.
 	ContactExposureOneDay     bool // Determines whether contact exposure shall only be relevant on the one day of application
 	RealisticStoch            bool // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
-	NewThermo                 bool // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
+	ReworkedThermoETOX        bool // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
 
 	PPPname                string  // Identifier for the PPP used.
 	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kg]
@@ -60,4 +60,45 @@ type WaterForagingPeriod struct {
 	Files       []string    // Files with daily foraging period data to use.
 	Builtin     bool        // Whether the used files are built-in. Use local files otherwise.
 	RandomYears bool        // Whether to randomize years.
+}
+
+// this contains all the adjusted new estimates for consumption that became necessary in the nurse rework
+type ConsumptionRework struct {
+	Nursebeecs bool // switch to turn on this rework of consumption behavior via nursebees
+
+	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
+	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
+
+	MaxPollenNurse float64 // maximum of pollen that nurses can theoretically take in [mg/d]
+	MaxHoneyNurse  float64 // maximum of honey that nurses can theoretically take in [mg/d]
+
+	HoneyAdultDrone  float64 // daily intake needs for drones [mg/d]
+	PollenAdultDrone float64 // daily intake needs for drones [mg/d]
+
+	HoneyWorkerLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage [mg/d]
+	PollenWorkerLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage [mg/d]
+	HWLtotal          float64   // HoneyWorkerLarva_total --> total amount of honey necessary to rear one worker larva [mg/d]
+	PWLtotal          float64   // PollenWorkerLarva_total --> total amount of pollen necessary to rear one worker larva [mg]
+	PFPworker         float64   // PollenForPriming of HG (hypopharyngeal glands) of workers, added on consumption over the first 4 days of adult life [mg/d]
+	HoneyDirect       float64   // fraction of direct honey intake per larva from age 3 onwards [-]
+	PollenDirect      float64   // fraction of direct pollen intake per larvae from age 3 onwards [-]
+
+	HoneyDroneLarva  []float64 // reworked honey needs per larva per day; now differentiates between each larval stage [%/d]
+	PollenDroneLarva []float64 // reworked pollen needs per larva per day; now differentiates between each larval stage [%/d]
+	HDLtotal         float64   // HoneyDroneLarva_total --> total amount of honey necessary to rear one drone larva [mg]
+	PDLtotal         float64   // PollenDroneLarva_total --> total amount of pollen necessary to rear one drone larva [mg]
+	PFPdrone         float64   // PollenForPriming sexual maturity in drones, added on baseline consumption over the first 9 days of adult life [mg]
+
+	DynamicProteinNursing bool      // switch to turn on dynamic nursing capability
+	Nursingcapabiliies    []float64 // this is an array full of factors defining efficiency/capabiliy of the nurse cohort depending on age [-]
+}
+
+type Nursing struct {
+	MinWL_ratio            float64 // target of minimum necessary worker:larva ratio that the colony tries to go back to if possible; goes back to Eischen et al. 1982, 1983, 1984
+	NurseAgeCeiling        int     // baseline age until model assumes that workers will act as nurses
+	BroodCannibalismChance []float64
+
+	StartWinterBees bool // switch to turn starting foragers into winter bees --> necessary if we start simulating at the beginning of the year
+	NewBroodCare    bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
+	ScrambleComp    bool // switch to turn on scramble competition mechanism within new brood care which kicks in if nurse workload is too high
 }

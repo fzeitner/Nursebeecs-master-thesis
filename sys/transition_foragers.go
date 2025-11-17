@@ -40,6 +40,9 @@ func (s *TransitionForagers) Update(w *ecs.World) {
 		remainder := 0
 
 		for i := aff; i < len(s.inHive.Workers); i++ {
+			if s.inHive.Workers[i] == 0 {
+				continue
+			}
 			newForagers := s.inHive.Workers[i]
 			s.inHive.Workers[i] = 0
 			squadrons += newForagers / s.params.SquadronSize // in case aff gets lowered there are 2 IHbee-cohorts getting transformed to foragers.

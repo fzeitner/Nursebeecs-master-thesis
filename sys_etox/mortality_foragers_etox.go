@@ -44,7 +44,6 @@ func (s *MortalityForagers_etox) Initialize(w *ecs.World) {
 
 func (s *MortalityForagers_etox) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
-
 		query := s.foragerFilter.Query()
 		s.etoxstats.MeanDoseForager = 0.
 		s.etoxstats.CumDoseForagers = 0.
@@ -52,7 +51,7 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 		for query.Next() {
 			p := query.Get()
 
-			// mortality from PPP exposition, simple dose response relationship depending on their susceptibility to the contaminant
+			// mortality from PPP exposition, either dose-response relationship depending on their susceptibility to the contaminant or BeeGUTS can be called here
 			lethaldose := false
 			if s.etox.Application {
 				s.etoxstats.CumDoseForagers += p.OralDose
@@ -66,9 +65,9 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 						lethaldose = true
 					}
 				}
+				p.OralDose = 0.    // exposure doses get reset to 0 every tick BEFORE the added dose from honey and pollen consumption gets taken into account,
+				p.ContactDose = 0. // therefore exposure from foraging of the current day and exposure from food of the previous day is relevant for lethal effects only
 			}
-			p.OralDose = 0.    // exposure doses get reset to 0 every tick BEFORE the added dose from honey and pollen consumption
-			p.ContactDose = 0. // gets taken into account, therefore exposure from foraging of the current day and food from the previous day is relevant
 
 			if lethaldose {
 				s.toRemove = append(s.toRemove, query.Entity())
@@ -85,7 +84,7 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 		querysimple.Close()
 
 		if c > 0 {
-			s.etoxstats.MeanDoseForager = s.etoxstats.CumDoseForagers / float64(c)
+			s.etoxstats.MeanDoseForager = s.etoxstats.CumDoseForagers / float64(c*100)
 		} else {
 			s.etoxstats.MeanDoseForager = 0.
 		}

@@ -18,33 +18,36 @@ import (
 type MortalityCohorts_etox struct {
 	workerMort *params.WorkerMortality
 	droneMort  *params.DroneMortality
-	rng        *resource.Rand
 
 	larvae      *globals.Larvae
 	larvae_etox *globals_etox.Larvae_etox
 	inHive      *globals.InHive
 	inHive_etox *globals_etox.InHive_etox
+	popstats    *globals_etox.PopulationStats_etox
 
-	toxic *params_etox.Toxicityparams
 	etox  *params_etox.ETOXparams
+	toxic *params_etox.Toxicityparams
 
 	time *resource.Tick
+	rng  *resource.Rand
 }
 
 func (s *MortalityCohorts_etox) Initialize(w *ecs.World) {
 	s.workerMort = ecs.GetResource[params.WorkerMortality](w)
 	s.droneMort = ecs.GetResource[params.DroneMortality](w)
-	s.rng = ecs.GetResource[resource.Rand](w)
 
 	s.larvae = ecs.GetResource[globals.Larvae](w)
 	s.larvae_etox = ecs.GetResource[globals_etox.Larvae_etox](w)
 	s.inHive = ecs.GetResource[globals.InHive](w)
 	s.inHive_etox = ecs.GetResource[globals_etox.InHive_etox](w)
+	s.popstats = ecs.GetResource[globals_etox.PopulationStats_etox](w)
 
+	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 
 	s.time = ecs.GetResource[resource.Tick](w)
+	s.rng = ecs.GetResource[resource.Rand](w)
 
 }
 
@@ -55,7 +58,10 @@ func (s *MortalityCohorts_etox) Update(w *ecs.World) {
 		s.applyMortalityEtox(s.larvae.Drones, s.larvae_etox.DroneCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
 
 		s.applyMortalityEtox(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
+
 		s.applyMortalityEtox(s.inHive.Drones, s.inHive_etox.DroneCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
+
+		s.popstats.Reset() // resets cumulative and mean doses for the timestep
 	}
 
 }
@@ -64,7 +70,6 @@ func (s *MortalityCohorts_etox) Finalize(w *ecs.World) {}
 
 // adapted the mortaliy function for cohorts that can be exposed to PPP, after the normal background mortality there is now
 // etox-based mortality depending on the dose of the cohort and a simple dose-response relationship; dose reset every tick
-
 func (s *MortalityCohorts_etox) applyMortalityEtox(coh []int, dose []float64, slope float64, LD50 float64) {
 	r := rand.New(s.rng)
 	for i := range coh {

@@ -1,9 +1,9 @@
 *.exe
 *.wasm
 *.csv
+*.svg
+*.png
 !netlogo.csv
 !beecs.csv
 !beecs_Nursebees.csv
-*.png
-*.svg
 /out/

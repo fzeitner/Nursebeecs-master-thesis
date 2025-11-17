@@ -21,6 +21,9 @@ type RandomSeed struct {
 type Termination struct {
 	MaxTicks     int  // Maximum number of ticks to run [d].
 	OnExtinction bool // Whether to terminate when there are no bees anymore.
+
+	WinterCritExtinction bool // Whether to terminate when the amount of adults on start of winter is below the critical threshold.
+	CritColonySizeWinter int  // Critical colony size in winter below which the model will terminate.
 }
 
 // AgeFirstForaging (AFF) parameters.
@@ -152,6 +155,8 @@ type Nursing struct {
 	MaxBroodCells              int     // Maximum number of brood cells in the hive.
 	DroneEggLayingSeasonStart  int     // Fist day of year of the drone egg laying season.
 	DroneEggLayingSeasonEnd    int     // Last day of year of the drone egg laying season.
+
+	WinterBees bool // switch to turn on semi-explicit Winterbee simulation; necessary for Nursebeecs
 }
 
 // Stores parameters.

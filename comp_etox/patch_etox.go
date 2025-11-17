@@ -4,7 +4,7 @@ package comp_etox
 type PatchProperties_etox struct {
 	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kJ]
 	PPPconcentrationPollen float64 // PPP concentration in pollen [mug/g]
-	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug] ??
+	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug/bee]
 }
 
 // Resource component for flower patches.
@@ -13,5 +13,5 @@ type PatchProperties_etox struct {
 type Resource_etox struct {
 	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kJ]
 	PPPconcentrationPollen float64 // PPP concentration in pollen [mug/g]
-	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug] ??
+	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug/bee]
 }

@@ -32,7 +32,7 @@ func (s *EggLaying) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 		elr := float64(s.nurseParams.MaxEggsPerDay) * util.Season(s.time.Tick-1) // -1 because model is now forced to start on tick 1 instead of tick 0 before
 
-		if s.nurseParams.EggNursingLimit {
+		if s.nurseParams.EggNursingLimit { // this does not need to be reworked because the idea behind this is a max capacity for brood cells based on overall colony size
 			emergingAge := float64(s.workerDev.EggTime + s.workerDev.LarvaeTime + s.workerDev.PupaeTime)
 			elrNurse := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
 				s.nurseParams.MaxBroodNurseRatio / emergingAge
