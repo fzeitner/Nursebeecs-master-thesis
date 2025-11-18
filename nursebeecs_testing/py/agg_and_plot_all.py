@@ -253,7 +253,7 @@ if __name__ == "__main__":
 
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
-    folder = testfolders[3]
+    folder = testfolders[5]
 
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
@@ -309,8 +309,8 @@ if __name__ == "__main__":
             "nursebeecs_testing/" + folder + "/oldbc.csv",
             "nursebeecs_testing/" + folder + "/newbc.csv",
             "nursebeecs_testing/" + folder ,
-            #"png",
-            "svg",
+            "png",
+            #"svg",
             appdays[folder],
             multiyear_app[folder]
         )
@@ -318,10 +318,10 @@ if __name__ == "__main__":
             "nursebeecs_testing/" + folder + "/beecs.csv",
             "nursebeecs_testing/" + folder + "/newbc.csv",
             "nursebeecs_testing/" + folder ,
-            #"png",
-            "svg",
+            "png",
+            #"svg",
             appdays[folder],
             multiyear_app[folder],
-            False
+            True
         )
 

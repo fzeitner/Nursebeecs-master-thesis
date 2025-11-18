@@ -319,7 +319,7 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		// leftovers from debugging
 		_ = s.pop.DroneLarvae + s.pop.DronesInHive + s.pop.WorkerLarvae + s.pop.WorkersForagers + s.pop.WorkersInHive + forcount
 		// checkpoint for bugfixing honey consumption in etox
-		if math.Round(consumed_honey*0.01) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey*0.01) || math.Round(consumed_pollen/1000.0*0.01) != math.Round(s.cons.PollenDaily*0.01) {
+		if math.Round(consumed_honey*1.01) != math.Round(s.cons.HoneyDaily*0.001*s.energyParams.Honey*1.01) || math.Round(consumed_pollen/1000.0*1.01) != math.Round(s.cons.PollenDaily*1.01) {
 			panic("Fatal error in honey store dose calculations, model output will be wrong!")
 		}
 
@@ -366,7 +366,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursing(w *ecs.World, coh []int, dose []
 		}
 	}
 	total_pollen += s.newCons.PollenAdultWorker * float64(num)
-	if math.Round(pconsumedtotal*0.001) != math.Round(total_pollen*0.001) || math.Round(hconsumed*0.01) != math.Round(total_honey*0.01) {
+	if math.Round(pconsumedtotal*1.01) != math.Round(total_pollen*1.01) || math.Round(hconsumed*1.01) != math.Round(total_honey*1.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
@@ -448,7 +448,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursingWLarvae(w *ecs.World, coh []int, 
 		}
 
 	}
-	if math.Round(consumed/(0.001*s.energyParams.Honey)*0.01) != math.Round(honey*0.01) || math.Round(pconsumed*0.01) != math.Round(pollen*0.01) {
+	if math.Round(consumed/(0.001*s.energyParams.Honey)*1.01) != math.Round(honey*1.01) || math.Round(pconsumed*1.01) != math.Round(pollen*1.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
@@ -488,7 +488,7 @@ func (s *EtoxStorages) CalcDosePerCohortNursingDLarvae(w *ecs.World, coh []int, 
 			dose[i] = 0.
 		}
 	}
-	if math.Round(consumed/(0.001*s.energyParams.Honey)*0.01) != math.Round(honey*0.01) || math.Round(pconsumed*0.01) != math.Round(pollen*0.01) {
+	if math.Round(consumed/(0.001*s.energyParams.Honey)*1.01) != math.Round(honey*1.01) || math.Round(pconsumed*1.01) != math.Round(pollen*1.01) {
 		panic("Fatal error in dose calculations, model output will be wrong!")
 	}
 	return
