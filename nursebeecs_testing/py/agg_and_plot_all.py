@@ -141,39 +141,49 @@ def plot_column(data_beecs, data_nbeecs, data_nbeecs2, column, quantiles, image_
     plt.close()
 
 
-def plot_popstructure(file1, file2, out_dir, format, appday, multiyear):
+def plot_popstructure(file1, file2, out_dir, format, appday, multiyear, nurseplot):
     data1 = pd.read_csv(file1, sep=r'\s*;\s*', engine='python')
     data2 = pd.read_csv(file2, sep=r'\s*;\s*', engine='python')
 
     fig, ax = plt.subplots(figsize=(10, 4))
     lines = ['-', '--']
         
+    CB_color_cycle = ['#377eb8', '#ff7f00', '#4daf4a',
+                  '#f781bf', '#a65628', '#984ea3',
+                  "#505050", '#e41a1c', '#dede00']
+
+
     pop, = ax.plot(data1.ticks, data1['TotalPop_Q50'], c= 'black', linestyle = lines[0], label='TotalPopulation')
-    forag, = ax.plot(data1.ticks, data1['TotalForagers_Q50'], c= 'blue', linestyle = lines[0], label='Foragers')
-    ihb, = ax.plot(data1.ticks, data1['TotalIHbees_Q50'], c= 'red', linestyle = lines[0], label='IHbees')
+    forag, = ax.plot(data1.ticks, data1['TotalForagers_Q50'], c= CB_color_cycle[0], linestyle = lines[0], label='Foragers')
+    ihb, = ax.plot(data1.ticks, data1['TotalIHbees_Q50'], c= CB_color_cycle[7], linestyle = lines[0], label='TotalIHbees')
     #ax.plot(data1.ticks, data1['TotalPupae_Q50'], c= 'yellow', linestyle = lines[0], label='Pupae')
-    larv, = ax.plot(data1.ticks, data1['TotalLarvae_Q50'], c= 'green', linestyle = lines[0], label='Larvae')
+    larv, = ax.plot(data1.ticks, data1['TotalLarvae_Q50'], c= CB_color_cycle[2], linestyle = lines[0], label='Larvae')
     #ax.plot(data1.ticks, data1['TotalEggs_Q50'], c= 'gray', linestyle = lines[0], label='Eggs')
+    if nurseplot:
+        nurse, = ax.plot(data1.ticks, data1['TotalNurses_Q50'], c= CB_color_cycle[1], linestyle = lines[0], label='Nurses')
 
     ax.plot(data2.ticks, data2['TotalPop_Q50'], c= 'black', linestyle = lines[1])
-    ax.plot(data2.ticks, data2['TotalForagers_Q50'], c= 'blue', linestyle = lines[1])
-    ax.plot(data2.ticks, data2['TotalIHbees_Q50'], c= 'red', linestyle = lines[1])
+    ax.plot(data2.ticks, data2['TotalForagers_Q50'], c= CB_color_cycle[0], linestyle = lines[1])
+    ax.plot(data2.ticks, data2['TotalIHbees_Q50'], c= CB_color_cycle[7], linestyle = lines[1])
     #ax.plot(data2.ticks, data2['TotalPupae_Q50'], c= 'yellow', linestyle = lines[1])
-    ax.plot(data2.ticks, data2['TotalLarvae_Q50'], c= 'green', linestyle = lines[1])
+    ax.plot(data2.ticks, data2['TotalLarvae_Q50'], c= CB_color_cycle[2], linestyle = lines[1])
     #ax.plot(data2.ticks, data2['TotalEggs_Q50'], c= 'gray', linestyle = lines[1])
+    if nurseplot:
+        ax.plot(data2.ticks, data2['TotalNurses_Q50'], c= CB_color_cycle[1], linestyle = lines[1], label='Nurses')
 
     ax.set_title('PopStructure')
-    #ax.set_xlabel("month", fontsize="12")
+    ax.set_ylabel("Individuals [-]", fontsize="12")
     ax.set_xlim(0,365*multiyear)
 
     beec = ax.vlines(-100, 0, 1, color = 'black', linestyle = '-', label = 'beecs')
     nbeec = ax.vlines(-100, 0, 1, color = 'black', linestyle = '--', label = 'Nbeecs')
 
     # Add the first legend
-    first_legend = ax.legend([pop, forag, ihb, larv], ['TotalPopulation', 'Foragers', 'IHbees', 'Larvae'], loc='upper right')
+    if nurseplot:
+        first_legend = ax.legend([pop, forag, ihb, nurse, larv ], ['TotalPopulation', 'Foragers', 'TotalIHbees', 'Nurses', 'Larvae'], loc='upper right')
+    else:
+        first_legend = ax.legend([pop, forag, ihb, larv ], ['TotalPopulation', 'Foragers', 'TotalIHbees', 'Larvae'], loc='upper right')
     # Add the second legend
-    ax.legend(handles=[beec, nbeec], loc='upper left')
-    plt.gca().add_artist(first_legend)
 
     dayspermonth = [31,28,31,30,31,30,31,31,30,31,30,31]
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -188,11 +198,18 @@ def plot_popstructure(file1, file2, out_dir, format, appday, multiyear):
             xticks.append(xticks[-1]+dayspermonth[i%12])
         labels = multiyear * months
         if appday != 0:
-            ax.vlines(appday+365, 0, max(max(data1['TotalPop_Q50']), max(data2['TotalPop_Q50'])), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
+            ax.vlines(appday+365, 0, max(max(data1['TotalPop_Q50']), max(data2['TotalPop_Q50'])), linestyle = "-.", color = CB_color_cycle[6], linewidth = 2., label = "application day")   # have to change the appday manually in func
             for i in range(1,multiyear):
-                ax.vlines(appday+i*365, 0, max(max(data1['TotalPop_Q50']), max(data2['TotalPop_Q50'])), linestyle = "--", color = "gray")   # have to change the appday manually in func
+                ax.vlines(appday+i*365, 0, max(max(data1['TotalPop_Q50']), max(data2['TotalPop_Q50'])), linestyle = "-.", color = CB_color_cycle[6], linewidth = 2.,)   # have to change the appday manually in func
     elif appday > 0:
-        ax.vlines(appday, 0, max(max(data1['TotalPop_Q50']), max(data2['TotalPop_Q50'])), linestyle = "--", color = "gray", label = "application day")   # have to change the appday manually in func
+        app = ax.vlines(appday, 0, max(max(data1['TotalPop_Q50']), max(data2['TotalPop_Q50'])), linestyle = "-.", color = CB_color_cycle[6], linewidth = 2., label = "application day")   # have to change the appday manually in func
+
+    if appday != 0:
+        ax.legend(handles=[beec, nbeec, app], loc='upper left')
+    else:
+        ax.legend(handles=[beec, nbeec], loc='upper left')
+
+    plt.gca().add_artist(first_legend)
 
     if multiyear > 1:
         alignment = 'right'
@@ -236,8 +253,7 @@ if __name__ == "__main__":
 
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
-    folder = testfolders[1]
-
+    folder = testfolders[3]
 
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
@@ -275,7 +291,8 @@ if __name__ == "__main__":
                 #"png",
                 "svg",
                 appdays[folder],
-                multiyear_app[folder]
+                multiyear_app[folder],
+                False
             )
     else:
         if agg_all:
@@ -304,6 +321,7 @@ if __name__ == "__main__":
             #"png",
             "svg",
             appdays[folder],
-            multiyear_app[folder]
+            multiyear_app[folder],
+            False
         )
 

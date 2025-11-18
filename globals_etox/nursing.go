@@ -34,6 +34,8 @@ type Nursing_globals struct {
 type Nursing_stats struct {
 	MaxPollenIntake  float64 // maximum of pollen intake per nurse
 	MeanPollenIntake float64 // mean pollen intake per nurse
+	MaxHoneyIntake   float64 // maximum of pollen intake per nurse
+	MeanHoneyIntake  float64 // mean pollen intake per nurse
 
 	NL_ratio float64 // current nurse:larva ratio; probably only to be used as a analytical metric
 

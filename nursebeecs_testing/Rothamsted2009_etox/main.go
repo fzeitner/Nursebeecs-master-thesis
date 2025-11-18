@@ -16,6 +16,11 @@ func main() {
 	app := app.New()
 
 	p := params.Default()
+	p.ForagingPeriod = params.ForagingPeriod{
+		Files:       []string{"foraging-period/rothamsted2009.txt"},
+		Builtin:     true,
+		RandomYears: false,
+	}
 	p.Termination.MaxTicks = 365
 
 	pe := params_etox.Default_etox()

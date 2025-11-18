@@ -10,7 +10,7 @@ import (
 // using the same names as the original BEEHAVE implementation.
 //
 // Primarily meant for validation of beecs against BEEHAVE.
-type DebugNursingEtox struct {
+type DebugNursingEtox_All struct {
 	pop         *globals.PopulationStats
 	popetox     *globals_etox.PopulationStats_etox
 	stores      *globals.Stores
@@ -24,7 +24,7 @@ type DebugNursingEtox struct {
 	data []float64
 }
 
-func (o *DebugNursingEtox) Initialize(w *ecs.World) {
+func (o *DebugNursingEtox_All) Initialize(w *ecs.World) {
 	o.pop = ecs.GetResource[globals.PopulationStats](w)
 	o.popetox = ecs.GetResource[globals_etox.PopulationStats_etox](w)
 	o.stores = ecs.GetResource[globals.Stores](w)
@@ -37,11 +37,11 @@ func (o *DebugNursingEtox) Initialize(w *ecs.World) {
 
 	o.data = make([]float64, len(o.Header()))
 }
-func (o *DebugNursingEtox) Update(w *ecs.World) {}
-func (o *DebugNursingEtox) Header() []string {
-	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses", "ETOX_Mean_Dose_Larvae", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Forager", "ETOX_Mean_Dose_Nurses", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "ETOX_Cum_Dose_Nurses", "pollenconcbeforeeating", "nectarconcbeforeeating", "NonNurseIHbees", "NurseMeanPollenIntake", "TotalPop"}
+func (o *DebugNursingEtox_All) Update(w *ecs.World) {}
+func (o *DebugNursingEtox_All) Header() []string {
+	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses", "ETOX_Mean_Dose_Larvae_mug", "ETOX_Mean_Dose_IHbee_mug", "ETOX_Mean_Dose_Forager_mug", "ETOX_Mean_Dose_Nurses_mug", "ETOX_Cum_Dose_Larvae_mug", "ETOX_Cum_Dose_IHbee_mug", "ETOX_Cum_Dose_Forager_mug", "ETOX_Cum_Dose_Nurses_mug", "pollenconcbeforeeating_mug_g", "nectarconcbeforeeating_mug_kJ", "NonNurseIHbees", "NurseMeanHoneyIntake", "NurseMeanPollenIntake", "Winterbees", "RevertedForagers", "TotalPop"}
 }
-func (o *DebugNursingEtox) Values(w *ecs.World) []float64 {
+func (o *DebugNursingEtox_All) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.cons.PollenDaily)
 	o.data[1] = float64(o.cons.HoneyDaily)
 	o.data[2] = o.stores.Honey
@@ -76,8 +76,12 @@ func (o *DebugNursingEtox) Values(w *ecs.World) []float64 {
 	o.data[25] = float64(o.stores_etox.Nectarconcbeforeeating)
 
 	o.data[26] = float64(o.nstats.NonNurseIHbees)
-	o.data[27] = o.nstats.MeanPollenIntake
-	o.data[28] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
+	o.data[27] = o.nstats.MeanHoneyIntake
+	o.data[28] = o.nstats.MeanPollenIntake
+
+	o.data[29] = float64(o.nstats.WinterBees)
+	o.data[30] = float64(o.nstats.RevertedForagers)
+	o.data[31] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
 
 	return o.data
 }

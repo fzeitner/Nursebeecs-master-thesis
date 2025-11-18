@@ -176,11 +176,15 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			}
 		}
 		if s.nstats.TotalNurses != 0 {
-			s.nstats.MeanPollenIntake = s.nglobals.Total_pollen / float64(s.nstats.TotalNurses)
-			s.nstats.MaxPollenIntake = maxpollenpernurse * s.nglobals.NurseWorkLoad
+			s.nstats.MeanPollenIntake = s.nglobals.Total_pollen/float64(s.nstats.TotalNurses) + s.newCons.PollenAdultWorker
+			s.nstats.MaxPollenIntake = maxpollenpernurse*s.nglobals.NurseWorkLoad + s.newCons.PollenAdultWorker
+			s.nstats.MeanHoneyIntake = s.nglobals.Total_honey/float64(s.nstats.TotalNurses) + s.newCons.HoneyAdultWorker
+			s.nstats.MaxHoneyIntake = s.nstats.MaxPollenIntake/s.nglobals.Total_pollen*s.nglobals.Total_honey + s.newCons.HoneyAdultWorker
 		} else {
 			s.nstats.MeanPollenIntake = 0
 			s.nstats.MaxPollenIntake = 0
+			s.nstats.MaxHoneyIntake = 0
+			s.nstats.MeanHoneyIntake = 0
 		}
 
 		// is a reduction in the nursing force possible?
