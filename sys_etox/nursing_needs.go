@@ -77,7 +77,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 		if (!s.nglobals.SuffNurses && s.nglobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0 && len(s.nglobals.WinterBees) < 5) {
 			// && float64(NonNurseIHbees/s.pop.TotalAdults) >= 0.1  && float64(s.nstats.TotalNurses/s.pop.TotalAdults) < 0.5 {
 			s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax+1, 5, 50)
-		} else if (s.stores.ProteinFactorNurses < 1. && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
+		} else if (s.stores.ProteinFactorNurses < 1. && s.stores.Pollen <= 0 && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
 			s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax-1, 5, 50)
 		}
 		// maybe it is a better idea to calulate every step if nursing demands could still be fulfilled if nurse max age was lowered by the next nonzero-cohort and then lower NurseAgeMax to that age
@@ -98,7 +98,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 			for i := s.nglobals.NurseAgeMax; i < s.aff.Aff; i++ {
 				if s.inHive.Workers[i] != 0 {
 					recruitedNurses += s.inHive.Workers[i]
-					s.nglobals.NurseAgeMax = util.Clamp(i, 5, 50) // emergency type of increase to NurseAgeMax
+					s.nglobals.NurseAgeMax = util.Clamp(i, 5, 50) // emergency increase to NurseAgeMax
 
 					if float64(recruitedNurses+s.nstats.TotalNurses)/float64(s.pop.TotalAdults) >= 0.05 && float64(recruitedNurses) >= 0.5*float64(TotalNursesLastDay) && s.nstats.TotalNurses != 0 { // reach 5% nurses and at least half of last day; this is experimental
 						break

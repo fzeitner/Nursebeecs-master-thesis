@@ -147,8 +147,6 @@ func Default() DefaultParams {
 			MaxHoneyStoreKg:      50.0, // [kg]
 			DecentHoneyPerWorker: 1.5,  // [g]
 			ProteinStoreNurse:    7,    // [d]
-
-			//ETOXDensityOfHoney:   1.4,  // [kg/l]
 		},
 		HoneyNeeds: HoneyNeeds{
 			WorkerResting:    11.0,  // [mg/d]

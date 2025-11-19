@@ -68,7 +68,6 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 				p.OralDose = 0.    // exposure doses get reset to 0 every tick BEFORE the added dose from honey and pollen consumption gets taken into account,
 				p.ContactDose = 0. // therefore exposure from foraging of the current day and exposure from food of the previous day is relevant for lethal effects only
 			}
-
 			if lethaldose {
 				s.toRemove = append(s.toRemove, query.Entity())
 			}

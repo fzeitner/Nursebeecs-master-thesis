@@ -31,6 +31,8 @@ func main() {
 
 	run_nbeecs := true // switch to run normal and/or nurse beecs
 	if run_nbeecs {
+
+		p.Nursing.WinterBees = true
 		pe := params_etox.Default_etox()
 		pe.ETOXparams.ReworkedThermoETOX = false
 		pe.ConsumptionRework.Nursebeecs = true
@@ -46,6 +48,8 @@ func main() {
 
 	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
+
+		p.Nursing.WinterBees = true
 		pe := params_etox.Default_etox()
 		pe.ETOXparams.ReworkedThermoETOX = false
 		pe.ConsumptionRework.Nursebeecs = true

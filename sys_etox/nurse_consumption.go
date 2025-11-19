@@ -58,13 +58,16 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 	s.foragerfilter = s.foragerfilter.New(w)
 }
 
+// ToDo: build subfuntions and create compartments for the code; the way this looks right now is quite chaotic
+
 func (s *NurseConsumption) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 
+		// start by recalculating nursing metrics and total capacities
 		TotalNurseCap, maxpollenpernurse := s.calcNursingMetrics(w)
+		// and continue by calculating the total need of honey and pollen
 
-		// new honey consumption
-		// thermoRegBrood stays as an old process for now, might need to change this though
+		// thermoRegBrood stays as an old process for now, this should probably be reworked eventually though (but not within the boundaries of this thesis)
 		thermoRegBrood := (s.hneeds.WorkerNurse - s.hneeds.WorkerResting) / s.oldNurseParams.MaxBroodNurseRatio
 		if s.pop.WorkersInHive+s.pop.WorkersForagers == 0 { // to prevent bugs; if there are no adults there cannot be honey used to warm brood; hive is dead anyways
 			thermoRegBrood = 0
@@ -120,14 +123,13 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			}
 			s.nglobals.Total_pollen += (pneedLarvae - s.nglobals.DLPollen) // assume 95% of pollen need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
 
-			// increased needs of young adults
+			// increased needs of young adult drones
 			for i := 0; i < 9; i++ {
 				DronePriming += s.newCons.PFPdrone / 9 * float64(s.inHive.Drones[i])
 			}
 			s.nglobals.Total_pollen += DronePriming // assume that young drones get fed by nurse bees as well, but not the biggest priority when nurtients are scarce --> maybe change
 		}
-
-		// adult honey
+		// adult honey consumption
 		hneedAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.newCons.HoneyAdultWorker + float64(s.pop.DronesInHive)*s.newCons.HoneyAdultDrone
 
 		hconsumption := hneedAdult + s.nglobals.Total_honey + s.nglobals.WLHoney + s.nglobals.DLHoney + float64(s.pop.TotalBrood)*thermoRegBrood
@@ -136,7 +138,7 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		s.stores.Honey -= consumptionEnergy
 		s.cons.HoneyDaily = hconsumption
 
-		// and adult pollen
+		// and adult pollen consumption
 		pneedAdult := float64(s.pop.WorkersInHive+s.pop.WorkersForagers)*s.newCons.PollenAdultWorker + float64(s.pop.DronesInHive)*s.newCons.PollenAdultDrone
 
 		s.nglobals.WorkerPriming = 0.
@@ -213,15 +215,6 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		if s.stores.Pollen > 0 && s.nglobals.NurseWorkLoad < s.nurseParams.NurseWorkLoadTH { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + (s.nurseParams.NurseWorkLoadTH-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse // increase of reservoir dependent on workload as well
 		} else if s.stores.Pollen <= 0 {
-			/*
-				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-					s.oldNurseParams.MaxBroodNurseRatio // this will probably need to be reworked still
-				workLoad := 0.0 // not necessary anymore because workload is now defined directly via forced protein intake of nurses which adresses the same idea
-				if maxBrood > 0 {
-					workLoad = float64(s.pop.TotalBrood) / maxBrood
-				}
-				s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
-			*/
 			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 5.0)                                             // using values > 1 destabilizes model dynamics a lot, maybe look for an alternative solution
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		} else {

@@ -48,11 +48,24 @@ func main() {
 		RUD: 21., // Residue per Unit Dose  [(ha*mg)/(kg*kg)]
 	}
 
-	start := time.Now()
+	pe.Toxicityparams = params_etox.Toxicityparams{
+		ForagerOralLD50:  1000., // fenoxycarb
+		ForagerOralSlope: 100.,  // fenoxycarb
+		HSuptake:         0.1,   //
 
+		ForagerContactLD50:  193.92, // fenoxycarb
+		ForagerContactSlope: 1.08,   // fenoxycarb
+
+		LarvaeOralLD50:  0.0014, // fenoxycarb
+		LarvaeOralSlope: 1.6,    // fenoxycarb
+
+		NursebeesNectar: 0.25, // Factor describing the filter effect of nurse bees for nectar [ ], 1 = no filtering effect, 0 = everything gets filtered
+		NursebeesPollen: 0.25, // Factor describing the filter effect of nurse bees for pollen [ ], 1 = no filtering effect, 0 = everything gets filtered
+	}
+
+	start := time.Now()
 	run_beecs := true // switch to run normal and/or nurse beecs
 	if run_beecs {
-		pe.ConsumptionRework.Nursebeecs = false
 		for i := 0; i < 100; i++ {
 			run(app, i, &p, &pe)
 		}

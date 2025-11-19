@@ -94,8 +94,8 @@ def plot_column(data_beecs, data_nbeecs, data_nbeecs2, column, quantiles, image_
     fig, ax = plt.subplots(figsize=(10, 4))
     for data, col, model in [
         (data_beecs, "blue", "beecs"),
-        (data_nbeecs, "red", "oldbc"),
-        (data_nbeecs2, "green", "newbc"),
+        #(data_nbeecs, "red", "oldbc"),
+        (data_nbeecs2, "green", "Nbeecs"),
     ]:      
         q10 = data[column + "_Q05"]
         q90 = data[column + "_Q95"]
@@ -253,11 +253,13 @@ if __name__ == "__main__":
 
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
-    folder = testfolders[5]
+    file_formats = ["svg", "png"]
 
+    folder = testfolders[5]
+    file_format = file_formats[0]       # 0 = svg, 1 = png
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
-    agg_all = True
+    agg_all = False
     agg_nbeecs = False
     agg_beec = False
 
@@ -279,8 +281,7 @@ if __name__ == "__main__":
                 "nursebeecs_testing/" + folder + "/oldbc.csv",
                 "nursebeecs_testing/" + folder + "/newbc.csv",
                 "nursebeecs_testing/" + folder ,
-                #"png",
-                "svg",
+                file_format,
                 appdays[folder],
                 multiyear_app[folder]
             )
@@ -288,8 +289,7 @@ if __name__ == "__main__":
                 "nursebeecs_testing/" + folder + "/beecs.csv",
                 "nursebeecs_testing/" + folder + "/newbc.csv",
                 "nursebeecs_testing/" + folder ,
-                #"png",
-                "svg",
+                file_format,
                 appdays[folder],
                 multiyear_app[folder],
                 False
@@ -309,8 +309,7 @@ if __name__ == "__main__":
             "nursebeecs_testing/" + folder + "/oldbc.csv",
             "nursebeecs_testing/" + folder + "/newbc.csv",
             "nursebeecs_testing/" + folder ,
-            "png",
-            #"svg",
+            file_format,
             appdays[folder],
             multiyear_app[folder]
         )
@@ -318,10 +317,9 @@ if __name__ == "__main__":
             "nursebeecs_testing/" + folder + "/beecs.csv",
             "nursebeecs_testing/" + folder + "/newbc.csv",
             "nursebeecs_testing/" + folder ,
-            "png",
-            #"svg",
+            file_format,
             appdays[folder],
             multiyear_app[folder],
-            True
+            False
         )
 
