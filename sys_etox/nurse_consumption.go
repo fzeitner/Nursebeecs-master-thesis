@@ -213,12 +213,16 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 		// REWPORK FROM HERE: ProteinFactorNurses
 		if s.stores.Pollen > 0 && s.nglobals.NurseWorkLoad < s.nurseParams.NurseWorkLoadTH { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + (s.nurseParams.NurseWorkLoadTH-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse // increase of reservoir dependent on workload as well
+			threshold := 1.0
+			if s.nglobals.NurseWorkLoad >= threshold {
+				threshold = s.nglobals.NurseWorkLoad
+			}
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + (threshold-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse // increase of reservoir dependent on workload as well
 		} else if s.stores.Pollen <= 0 {
 			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 5.0)                                             // using values > 1 destabilizes model dynamics a lot, maybe look for an alternative solution
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		} else {
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - (s.nglobals.NurseWorkLoad-1.)/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - (s.nglobals.NurseWorkLoad-1.0)/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
 		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
 	}

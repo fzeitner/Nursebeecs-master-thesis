@@ -173,7 +173,7 @@ func (s *Foraging) newForagers(w *ecs.World) {
 	// may have to start adding winterbee component here in case we are simulating nursebeecs over multiple years
 	// postpone for now though
 	if s.nursingparams.WinterBees {
-		year := int(s.time.Tick / 365)
+		year := int((s.time.Tick - 1) / 365)
 		agequery := s.ageFilter.Without(ecs.C[comp_etox.Activity_etox]()).Query()
 		for agequery.Next() {
 			s.toAdd = append(s.toAdd, agequery.Entity())
@@ -182,16 +182,16 @@ func (s *Foraging) newForagers(w *ecs.World) {
 			age := s.ageMapper.Get(e)
 			if age.DayOfBirth >= 205+year*365 && age.DayOfBirth < 265+year*365 { // original BEEHAVE assumes starting foragers (=winter bees) are aged 100 - 160 days already; Aff + 21 = current age of the cohort; 21 = dev-time from egg - adult; Aff = adult time before foraging
 				if s.rng.Float64() <= (1./60.)*float64(age.DayOfBirth-204+year*365) { // assume linear increase in likelihood to turn into winterbees
-					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Winterbee: true}) // assumes bees turning into foragers are winterbees again;
+					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true}) // assumes bees turning into foragers are winterbees again;
 				} else {
-					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{})
+					s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Current: activity.Resting})
 				}
 			} else if age.DayOfBirth >= 265+year*365 { // original BEEHAVE assumes starting foragers are aged 100 - 160 days already !!!; this is just an estimate though, it would make a lot more sense to couple this to pop dynamic and nectar/pollen influxes
-				s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Winterbee: true}) // assumes bees turning into foragers are winterbees again
+				s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true}) // assumes bees turning into foragers are winterbees again
 				// aligns with literature assuming eggs from august - september start turning into winterbees (21 days for theses eggs to turn into IHbees + some more to turn into foragers --> roughly start of october)
 				// there should eventually be a system introduced to actually differentiate between winterbees and summeerbees properly (mortalities, food demands, chance from egg onwards to turn into 1 of the 2, ...)
 			} else {
-				s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{})
+				s.WinterBeeAdder.Add(e, &comp_etox.Activity_etox{Current: activity.Resting})
 			}
 		}
 		s.toAdd = s.toAdd[:0]

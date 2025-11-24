@@ -16,7 +16,7 @@ func main() {
 	app := app.New()
 
 	p := params.Default()
-
+	p.Nursing.WinterBees = false // just to debug/test this once, turn off again later
 	p.ForagingPeriod = params.ForagingPeriod{
 		Files:       []string{"foraging-period/rothamsted2009.txt"},
 		Builtin:     true,

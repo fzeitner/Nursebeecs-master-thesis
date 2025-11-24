@@ -120,9 +120,10 @@ func Default_etox() DefaultParams_etox {
 			BroodCannibalismChance: []float64{0.1, 0.35, 0.5, 0.05, 0., 0., 0.}, // just a assumption to start from, based on data from Schmickl&Crailsheim (2001, 2002)
 			NurseWorkLoadTH:        1.5,                                         // just an assumption to start with
 
-			StartWinterBees: true,
-			NewBroodCare:    false,
-			ScrambleComp:    false,
+			WinterBees:   true,
+			NewBroodCare: false,
+			ScrambleComp: false,
+			Nbeecsv1:     true,
 		},
 	}
 }

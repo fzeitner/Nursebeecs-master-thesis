@@ -165,7 +165,7 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	for _, entity := range toAdd {
 		s.foragerPPPmapper.Add(entity, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 		// add winterbee characteristic here depending on parameter value
-		if s.nurseparams.StartWinterBees {
+		if s.nurseparams.WinterBees {
 			s.etoxAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true})
 		} else {
 			s.etoxAdder.Add(entity, &comp_etox.KnownPatch_etox{}, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: false})
