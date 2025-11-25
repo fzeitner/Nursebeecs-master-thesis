@@ -24,8 +24,10 @@ type NurseConsumption struct {
 
 	newCons     *params_etox.ConsumptionRework
 	nurseParams *params_etox.Nursing
+	toxic       *params_etox.Toxicityparams
 	larvae      *globals.Larvae
 	inHive      *globals.InHive
+	storesETOX  *globals_etox.Storages_etox
 
 	nstats   *globals_etox.Nursing_stats
 	nglobals *globals_etox.Nursing_globals
@@ -45,8 +47,10 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 
 	s.newCons = ecs.GetResource[params_etox.ConsumptionRework](w)
 	s.nurseParams = ecs.GetResource[params_etox.Nursing](w)
+	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
 	s.larvae = ecs.GetResource[globals.Larvae](w)
 	s.inHive = ecs.GetResource[globals.InHive](w)
+	s.storesETOX = ecs.GetResource[globals_etox.Storages_etox](w)
 
 	s.nstats = ecs.GetResource[globals_etox.Nursing_stats](w)
 	s.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
@@ -63,16 +67,32 @@ func (s *NurseConsumption) Initialize(w *ecs.World) {
 func (s *NurseConsumption) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 
+		// reduce maximum pollen intake here if last there was a HPGthreshold exceeded last step
+		if s.nurseParams.HPGeffects && s.nurseParams.HGFoodIntake {
+			if s.storesETOX.Nectarconcbeforeeating >= s.toxic.HPGthreshold[2] {
+				s.nglobals.CurrentMaxPollenNurse = s.newCons.MaxPollenNurse * s.toxic.MaxPollenRed[2]
+			} else if s.storesETOX.Nectarconcbeforeeating >= s.toxic.HPGthreshold[1] {
+				s.nglobals.CurrentMaxPollenNurse = s.newCons.MaxPollenNurse * s.toxic.MaxPollenRed[1]
+			} else if s.storesETOX.Nectarconcbeforeeating >= s.toxic.HPGthreshold[0] {
+				s.nglobals.CurrentMaxPollenNurse = s.newCons.MaxPollenNurse * s.toxic.MaxPollenRed[0]
+			} else {
+				s.nglobals.CurrentMaxPollenNurse = s.newCons.MaxPollenNurse
+			}
+		} else {
+			s.nglobals.CurrentMaxPollenNurse = s.newCons.MaxPollenNurse
+		}
+
 		// start by recalculating nursing metrics and total capacities
 		TotalNurseCap, maxpollenpernurse := s.calcNursingMetrics(w)
-		// and continue by calculating the total need of honey and pollen
 
+		// and continue by calculating the total need of honey and pollen.
 		// thermoRegBrood stays as an old process for now, this should probably be reworked eventually though (but not within the boundaries of this thesis)
 		thermoRegBrood := (s.hneeds.WorkerNurse - s.hneeds.WorkerResting) / s.oldNurseParams.MaxBroodNurseRatio
 		if s.pop.WorkersInHive+s.pop.WorkersForagers == 0 { // to prevent bugs; if there are no adults there cannot be honey used to warm brood; hive is dead anyways
 			thermoRegBrood = 0
 		}
 
+		// initialize local and reset global variables
 		hneedLarvae := 0.
 		s.nglobals.Total_honey = 0.
 		s.nglobals.WLHoney = 0
@@ -82,6 +102,7 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		s.nglobals.WLPollen = 0
 		s.nglobals.DLPollen = 0
 		DronePriming := 0.
+
 		// larvae consumption first; gets halted if there are actually no nurses present (large scale death events)
 		s.nglobals.AbortNursing = false
 		if s.nstats.TotalNurses == 0 { // means all nurses already died this timestep
@@ -169,7 +190,7 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 		// define if the model assumes nurse amount to be sufficient
 		s.nglobals.SuffNurses = false // insufficient nurses; this makes young workers eat their own pollen and increaeses the nurse threshold next day
-		if s.nglobals.NurseWorkLoad < 1.0 && s.nglobals.NurseWorkLoad != 0. {
+		if s.nglobals.NurseWorkLoad < 1.0 && (s.nglobals.NurseWorkLoad != 0. || float64(s.nstats.WinterBees)/float64(s.nstats.TotalNurses) >= 0.2) {
 			s.nglobals.SuffNurses = true // we have sufficient nurses; this influences if nurses also eat pollen to prime young workers and does not increase nurse threshold next day
 		} else {
 			s.nglobals.Total_pollen -= s.nglobals.WorkerPriming
@@ -217,14 +238,29 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			if s.nglobals.NurseWorkLoad >= threshold {
 				threshold = s.nglobals.NurseWorkLoad
 			}
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + (threshold-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse // increase of reservoir dependent on workload as well
+			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses+(threshold-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // increase of reservoir dependent on workload as well
 		} else if s.stores.Pollen <= 0 {
-			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 5.0)                                             // using values > 1 destabilizes model dynamics a lot, maybe look for an alternative solution
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 5.0)                                                                 // using values > 1 destabilizes model dynamics a lot, maybe look for an alternative solution
+			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-workLoad/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		} else {
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - (s.nglobals.NurseWorkLoad-1.0)/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-(s.nglobals.NurseWorkLoad-1.0)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
-		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
+
+		// effects on ProteinFactorNurses by reduced HG-activity based on Schott et al. 2021
+		if s.nurseParams.HPGeffects && !s.nurseParams.HGFoodIntake {
+			if s.storesETOX.Nectarconcbeforeeating >= s.toxic.HPGthreshold[2] {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, s.toxic.ProteinFactorNurseExposed[2])
+			} else if s.storesETOX.Nectarconcbeforeeating >= s.toxic.HPGthreshold[1] {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, s.toxic.ProteinFactorNurseExposed[1])
+			} else if s.storesETOX.Nectarconcbeforeeating >= s.toxic.HPGthreshold[0] {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, s.toxic.ProteinFactorNurseExposed[0])
+			} else {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
+			}
+		} else {
+			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
+		}
+
 	}
 }
 
@@ -237,10 +273,10 @@ func (s *NurseConsumption) calcNursingMetrics(w *ecs.World) (nursingcap float64,
 	maxpollenpernurse = 0.
 	for i := 4; i <= s.nglobals.NurseAgeMax; i++ {
 		s.nstats.IHbeeNurses += s.inHive.Workers[i]
-		nursingcap += float64(s.inHive.Workers[i]) * s.newCons.MaxPollenNurse * s.newCons.Nursingcapabiliies[i]
+		nursingcap += float64(s.inHive.Workers[i]) * s.nglobals.CurrentMaxPollenNurse * s.newCons.Nursingcapabiliies[i]
 
-		if s.inHive.Workers[i] != 0 && s.newCons.MaxPollenNurse*s.newCons.Nursingcapabiliies[i] > maxpollenpernurse { // just to get some nursing stats for analysis and debugging
-			maxpollenpernurse = s.newCons.MaxPollenNurse * s.newCons.Nursingcapabiliies[i]
+		if s.inHive.Workers[i] != 0 && s.nglobals.CurrentMaxPollenNurse*s.newCons.Nursingcapabiliies[i] > maxpollenpernurse { // just to get some nursing stats for analysis and debugging
+			maxpollenpernurse = s.nglobals.CurrentMaxPollenNurse * s.newCons.Nursingcapabiliies[i]
 		}
 	}
 	// quick fix for the beginning and end of the year without IHbees via making starting foragers winterbees; also includes reverted foragers that might occur in times of great nursing needs or after mass death events
@@ -257,8 +293,7 @@ func (s *NurseConsumption) calcNursingMetrics(w *ecs.World) (nursingcap float64,
 			s.nglobals.Reverted = append(s.nglobals.Reverted, query.Entity())
 		}
 	}
-	nursingcap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.newCons.MaxPollenNurse
-
+	nursingcap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.nglobals.CurrentMaxPollenNurse
 	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
 	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.TotalAdults)) * 100   // expressed in %
 

@@ -15,8 +15,9 @@ type Nursing_globals struct {
 	NurseAgeMax   int     // current upper bound age of nurses
 	NurseWorkLoad float64 // ratio of protein nurses need to provide to the amount they on average can provide as a metric for their workload
 
-	Total_honey  float64 // amount of total honey to be taken in by nurses on top of their own intake this timestep [mg/d]
-	Total_pollen float64 // amount of total pollen to be taken in by nurses on top of their own intake this timestep [mg/d]
+	Total_honey           float64 // amount of total honey to be taken in by nurses on top of their own intake this timestep [mg/d]
+	Total_pollen          float64 // amount of total pollen to be taken in by nurses on top of their own intake this timestep [mg/d]
+	CurrentMaxPollenNurse float64 // maximum intake of pollen at the current point in time; this might be reduced during PPP exposure because of HG effects
 
 	WLHoney  float64 // amount of direct honey worker larvae take in this timestep [mg/d]
 	WLPollen float64 // amount of direct pollen worker larvae take in this timestep [mg/d]

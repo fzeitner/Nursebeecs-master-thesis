@@ -30,7 +30,7 @@ func Default_nbeecs(p params.Params, pe params_etox.Params_etox, app *app.App) *
 	app.AddSystem(&sys_etox.Init_etox{}) // inits all the changes necessary for the etox and nursing module
 
 	// Sub-models
-	app.AddSystem(&sys.CalcAff{})
+	app.AddSystem(&sys_etox.CalcAffNbeecs{})
 	app.AddSystem(&sys.CalcForagingPeriod{})
 	app.AddSystem(&sys.ReplenishPatches{})
 

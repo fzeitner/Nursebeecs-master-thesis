@@ -73,6 +73,8 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 	if s.time.Tick > 0 {
 		// implement rules for nurse recruitment
 
+		doy := (s.time.Tick - 1) % 365
+		//oldNurseAge := s.nglobals.NurseAgeMax
 		// regular nurse recruitment by moving age up or down by 1 depending on some metrics; down below there is the special case if there are far too little nurses
 		if (!s.nglobals.SuffNurses && s.nglobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0 && len(s.nglobals.WinterBees) < 5) {
 			// && float64(NonNurseIHbees/s.pop.TotalAdults) >= 0.1  && float64(s.nstats.TotalNurses/s.pop.TotalAdults) < 0.5 {
@@ -80,7 +82,38 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 		} else if (s.stores.ProteinFactorNurses < 1. && s.stores.Pollen <= 0 && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
 			s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax-1, 5, 50)
 		}
-		// maybe it is a better idea to calulate every step if nursing demands could still be fulfilled if nurse max age was lowered by the next nonzero-cohort and then lower NurseAgeMax to that age
+
+		if doy == 0 { // reset NurseAgeMax to default value at the start of a new year
+			s.nglobals.NurseAgeMax = s.NurseParams.NurseAgeCeiling
+		}
+
+		/*
+			// function to adjust NurseAgeMax to next nonzero cohort, this is still to be tested though
+			if (!s.nglobals.SuffNurses && s.nglobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0 && len(s.nglobals.WinterBees) < 5) {
+				PufferCohortAvailable := false
+				nextCohort := 50
+				for i := s.nglobals.NurseAgeMax + 1; i < s.aff.Aff; i++ {
+					if s.inHive.Workers[i] != 0 {
+						nextCohort = min(i, nextCohort)
+						if nextCohort < i {
+							PufferCohortAvailable = true
+						}
+					}
+				}
+				if PufferCohortAvailable && nextCohort != 50 {
+					s.nglobals.NurseAgeMax = util.Clamp(nextCohort, 5, 50)
+				}
+			} else if (s.stores.ProteinFactorNurses < 1. && s.stores.Pollen <= 0 && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
+				nextCohort := 0
+				for i := s.nglobals.NurseAgeMax - 1; i > 4; i-- {
+					if s.inHive.Workers[i] != 0 {
+						nextCohort = max(i, nextCohort)
+				}
+				if nextCohort != 0 {
+					s.nglobals.NurseAgeMax = util.Clamp(nextCohort, 5, 50)
+				}
+			}
+		*/
 
 		// un-revert redundant reverted foragers
 		if s.nglobals.SquadstoReduce > 0 {
@@ -93,6 +126,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 
 		// special rules if all nurses die due to etox related mass deaths --> foragers get called back to make the hive continue somehow
 		// may also make sense to have this activate if there are simply far too little nurses and a large fraction of foragers present
+		// technically they should have a reduced nursing efficiency, but this has not been implemented as of yet
 		if (s.nstats.NurseFraction <= 0.05 && s.pop.TotalAdults > 0) || s.nstats.TotalNurses == 0 {
 			recruitedNurses := 0
 			for i := s.nglobals.NurseAgeMax; i < s.aff.Aff; i++ {

@@ -31,7 +31,7 @@ func (o *DebugEcotox) Initialize(w *ecs.World) {
 }
 func (o *DebugEcotox) Update(w *ecs.World) {}
 func (o *DebugEcotox) Header() []string {
-	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Mean_Dose_Larvae", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Forager", "ETOX_Mean_Dose_Nurses", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "ETOX_Cum_Dose_Nurses", "pollenconcbeforeeating", "nectarconcbeforeeating", "TotalPop"}
+	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Mean_Dose_Larvae_mug", "ETOX_Mean_Dose_IHbee_mug", "ETOX_Mean_Dose_Forager_mug", "ETOX_Mean_Dose_Nurses_mug", "ETOX_Cum_Dose_Larvae_mug", "ETOX_Cum_Dose_IHbee_mug", "ETOX_Cum_Dose_Forager_mug", "ETOX_Cum_Dose_Nurses_mug", "pollenconcbeforeeating_mug_g", "nectarconcbeforeeating_mug_kJ", "TotalPop"}
 }
 func (o *DebugEcotox) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.foraging.SecondsToday)

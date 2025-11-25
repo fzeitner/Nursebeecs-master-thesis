@@ -154,9 +154,9 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 				// these for loops are only relevant to calculate the nursing activities of foragers (winter/reverted); their own needs are calculated already furthe above
 				for _, e := range s.nglobals.WinterBees {
 					ppp := s.foragerExpoMapper.Get(e)
-					ppp.OralDose += s.stores.PPPInHivePollenConc * s.newCons.MaxPollenNurse * s.nglobals.NurseWorkLoad * 0.001 // should not matter because there is seldom a PPP application scenario in winter/early spring anyways
+					ppp.OralDose += s.stores.PPPInHivePollenConc * s.nglobals.CurrentMaxPollenNurse * s.nglobals.NurseWorkLoad * 0.001 // should not matter because there is seldom a PPP application scenario in winter/early spring anyways
 
-					pollentoeat := s.newCons.MaxPollenNurse * s.nglobals.NurseWorkLoad * float64(s.foragerParams.SquadronSize)
+					pollentoeat := s.nglobals.CurrentMaxPollenNurse * s.nglobals.NurseWorkLoad * float64(s.foragerParams.SquadronSize)
 					s.etoxStats.CumDoseNurses += pollentoeat * s.stores.PPPInHivePollenConc
 
 					honeytoeat := (s.nglobals.Total_honey * (pollentoeat / s.nglobals.Total_pollen)) // consumed honey is calculated via the fraction of total pollen that this squadron ate because NurseWorkLoad is only coupled to consumed pollen
@@ -174,9 +174,9 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 				}
 				for _, e := range s.nglobals.Reverted { // and the reverted foragers here
 					ppp := s.foragerExpoMapper.Get(e)
-					ppp.OralDose += s.stores.PPPInHivePollenConc * s.newCons.MaxPollenNurse * s.nglobals.NurseWorkLoad * 0.001
+					ppp.OralDose += s.stores.PPPInHivePollenConc * s.nglobals.CurrentMaxPollenNurse * s.nglobals.NurseWorkLoad * 0.001
 
-					pollentoeat := s.newCons.MaxPollenNurse * s.nglobals.NurseWorkLoad * float64(s.foragerParams.SquadronSize)
+					pollentoeat := s.nglobals.CurrentMaxPollenNurse * s.nglobals.NurseWorkLoad * float64(s.foragerParams.SquadronSize)
 					honeytoeat := (s.nglobals.Total_honey * (pollentoeat / s.nglobals.Total_pollen)) // consumed honey is calculated via the fraction of total pollen that this squadron ate because NurseWorkLoad is only coupled to consumed pollen
 
 					s.nglobals.Total_honey -= honeytoeat
@@ -336,8 +336,8 @@ func (s *EtoxStorages) CalcDosePerCohortNursing(w *ecs.World, coh []int, dose []
 			num += coh[i]
 			init_honeyneed = 0.
 
-			pconsumed := s.newCons.MaxPollenNurse * s.newCons.Nursingcapabiliies[i] * s.nglobals.NurseWorkLoad * float64(coh[i])
-			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * 0.001 * (s.newCons.MaxPollenNurse*s.newCons.Nursingcapabiliies[i]*s.nglobals.NurseWorkLoad + s.newCons.PollenAdultWorker) // intake from pollen
+			pconsumed := s.nglobals.CurrentMaxPollenNurse * s.newCons.Nursingcapabiliies[i] * s.nglobals.NurseWorkLoad * float64(coh[i])
+			ETOX_PPPOralDose += s.stores.PPPInHivePollenConc * 0.001 * (s.nglobals.CurrentMaxPollenNurse*s.newCons.Nursingcapabiliies[i]*s.nglobals.NurseWorkLoad + s.newCons.PollenAdultWorker) // intake from pollen
 			pconsumedtotal += (pconsumed + s.newCons.PollenAdultWorker*float64(coh[i]))
 
 			fraction_consumed := 0.
@@ -624,8 +624,8 @@ func (s *EtoxStorages) ShiftHoney(w *ecs.World) {
 	}
 
 	// adjusted this panic to 0.1% acceptable deviation from the honey store in each timestep; 0.1% deemed acceptable because of floating point error
-	if math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*1.001 <= math.Round(s.beecsstores.Honey) ||
-		math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*0.999 >= math.Round(s.beecsstores.Honey) {
+	if math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*1.001 < math.Round(s.beecsstores.Honey) ||
+		math.Round((s.stores.ETOX_HES_E_Capped+s.stores.ETOX_HES_E_D4+s.stores.ETOX_HES_E_D3+s.stores.ETOX_HES_E_D2+s.stores.ETOX_HES_E_D1+s.stores.ETOX_HES_E_D0))*0.999 > math.Round(s.beecsstores.Honey) {
 		panic("Fatal error in honey store dose calculations, model output will be wrong!")
 	}
 

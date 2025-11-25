@@ -40,6 +40,10 @@ type Toxicityparams struct {
 
 	NursebeesNectar float64 // Factor describing the filter effect of nurse bees for nectar [ ].
 	NursebeesPollen float64 // Factor describing the filter effect of nurse bees for pollen [ ].
+
+	HPGthreshold              []float64 // threshold value of PPP necessary in honey to activate the HPG effects
+	ProteinFactorNurseExposed []float64 // new ceiling for ProteinFactorNurses in case HPG effects are turned on and the threshold is exceeded}
+	MaxPollenRed              []float64 // factors to reduce MaxPollenIntake by depending on HPGthresholds; needs to be calibrated
 }
 
 // WaterForaging parameters. Not used in the current state of the model.
@@ -103,4 +107,7 @@ type Nursing struct {
 	NewBroodCare bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
 	ScrambleComp bool // switch to turn on scramble competition mechanism within new brood care which kicks in if nurse workload is too high
 	Nbeecsv1     bool // switch to turn on Nbeecs v.1 --> cannibalization depending on time passed since last pollen influx
+
+	HPGeffects   bool // switch to turn on reduced brood care capabilies from PPP induced reduced HPG activity
+	HGFoodIntake bool // switch to turn on reduced maximum food intake capability as a PPP induced sublethal effect
 }

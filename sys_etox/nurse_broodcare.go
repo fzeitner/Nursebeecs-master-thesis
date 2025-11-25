@@ -116,11 +116,12 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 				starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
 
 				// calculate relative cannibalism intensity here; this is experimental for now
-				cann_mean := 0.
+				cann_mean := 0. // mean count of typically cannibalizable brood in times of no pollen income; based on Schmickl&Crailsheim 2001
+				cann_rel := 0.  // relative cannibalism intensity that is necessary to reduce brood far enough based on mean cannibalism estimates and protein stores of nurses
+
 				for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalize brood (Schmickl&Crailsheim 2001)
 					cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assumes drone and worker larvae get treated indifferently
 				}
-				cann_rel := 0.
 				if cann_mean != 0 {
 					cann_rel = min(float64(starved)/cann_mean, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
 				}
@@ -128,15 +129,21 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
 					s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
 
-				excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-starved)-maxBrood)), 0)
-				// maybe add some sort of nurse-based death mechanism here depending on scenario
-				if s.NurseParams.ScrambleComp { // this does not do anything atm and is a placeholder for eventual scenario creation
-					s.Cannibalize(starved, cann_rel)
+				// add some sort of nurse-based death mechanism here depending on scenario; this has not been finished and atm both competition types do not differ from each other
+				if s.NurseParams.ScrambleComp { // scramble competition; assumes minimum of direct cannibalism based on foraging income and otherwise weakens larvae if there is too little protein
 
+					//starved := int(cann_rel * cann_mean)  // define cannibalized brood here only dependent on foraging based cannibalism
+					killed := s.Cannibalize(starved, cann_rel)
+
+					excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
 					s.ReduceBroodCells(excessBrood)
-				} else {
-					s.Cannibalize(starved, cann_rel)
 
+					// weaken brood depending on protein stores / ProteinFactorNurses here
+					// as of now I am sadly not sure if BEEHAVE can be seen as a good framework for a change of this caliber
+				} else { // "winner takes it all"; basically assumes the old BEEHAVE brood care dynamics stay correct with the addition of foraging-income based cannibalism
+					killed := s.Cannibalize(starved, cann_rel)
+
+					excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
 					s.ReduceBroodCells(excessBrood)
 				}
 
@@ -222,7 +229,6 @@ func (s *Nbroodcare) ReduceBroodCells(excess int) {
 	if excess = reduceCohortsByAge(s.pupae.Drones, s.pupae.Workers, excess); excess == 0 {
 		return
 	}
-
 	panic("still brood to kill - code should not be reachable") // reactivate the other reductions if this gets triggered under normal circumstances, just to test for now
 }
 
@@ -243,6 +249,18 @@ func reduceCohortsByAge(cohD []int, cohW []int, excess int) int {
 		excess -= cohW[i]
 		cohW[i] = 0
 		// and then iterates over the next age
+	}
+	// if there still is an excess keep on reducing the rest of the drone cohorts
+	// necessary here because drones take a bit longer to develope and thus have more cohorts
+	if excess > 0 {
+		for i := len(cohW); i < len(cohD); i++ {
+			if cohD[i] >= excess {
+				cohD[i] -= excess
+				return 0
+			}
+			excess -= cohD[i]
+			cohD[i] = 0
+		}
 	}
 	return excess
 }

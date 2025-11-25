@@ -70,6 +70,11 @@ func Default_etox() DefaultParams_etox {
 
 			NursebeesNectar: 0.25, // Factor describing the filter effect of nurse bees for nectar [ ]
 			NursebeesPollen: 1.,   // Factor describing the filter effect of nurse bees for pollen [ ]
+
+			HPGthreshold: []float64{0.000727 / 12.78, 0.000727 / 12.78 * 10, 0.000727 / 12.78 * 100}, // authors used 1 mug/L Clothianidin in 400 ml of Apiinvert; Apiinvert has 1 kg of sugar per Liter and a concentration of 72.7% (https://www.beefeed.com/en/apiinvert/) --> 1 l of Apiinvert should be equivalkent to 1/0.727 = 1.376 kg
+			// therefore 1 mug/L (w/v) should be equivalent to 0.727 mug/kg (w/w) in apiinvert; 0.727 mug/kg = 0.727 ng/g = 0.000727 mug/g; BEEHAVE needs values in weight per kJ, therefore we need to consider honey energy content of 12.78 kJ/g
+			ProteinFactorNurseExposed: []float64{0.82, 0.77, 0.}, // very much experimental; straight up taken from Schott et al. 2021
+			MaxPollenRed:              []float64{0.9, 0.8, 0.25}, // very much experimental and just a guess for now, needs to be calibrated probperly for each PPP
 		},
 		WaterParams: WaterParams{
 			WaterForaging:             false,       // Determines whether water foraging takes place or not.
@@ -89,7 +94,7 @@ func Default_etox() DefaultParams_etox {
 			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline for now; maybe adjust down the line
 
 			MaxPollenNurse: 6.5, // + 1.5 per adult = 8 mg/day; this should be a field realistic total for a normal peak; Crailsheim reported up to 8 as a max, 12 as the highes statistical 95% bound under controlled conditions. 12 is cited as a maximum in BeeREX model and comes from Rortais et al. 2005 citing Crailsheim et al. 1992;
-			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurately interpreted by BeeREX authors. This value is probably unknown and 60 is probably far too high. It should not really matter though, as pollen intake will regulate amount of nurses and honey intake will be emergent property
+			MaxHoneyNurse:  60., // mg/day; estimate based on BeeREX citing Rortais et al. 2005; this is however most likely not accurately interpreted by BeeREX authors. This value is probably unknown and 60 is probably too high. This should not really matter though, as pollen intake will regulate amount of nurses and honey intake will be an emergent property
 
 			HoneyAdultDrone:  10., // mg/day; taken from BEEHAVE, though the origin of this value is very unclear; this might be another placeholder
 			PollenAdultDrone: 2.,  // mg/day; taken from BEEHAVE, already just a rough estimate; there appears to be no clear value anywhere, though it is known that they have an increased need for the first 9 days to reach maturity
@@ -117,13 +122,16 @@ func Default_etox() DefaultParams_etox {
 		Nursing: Nursing{
 			MinWL_ratio:            2,                                           // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
 			NurseAgeCeiling:        13,                                          // default age at which nurses stop working as nurses, unless model dynamics increase this
-			BroodCannibalismChance: []float64{0.1, 0.35, 0.5, 0.05, 0., 0., 0.}, // just a assumption to start from, based on data from Schmickl&Crailsheim (2001, 2002)
+			BroodCannibalismChance: []float64{0.1, 0.35, 0.5, 0.05, 0., 0., 0.}, // based on data from Schmickl&Crailsheim (2001, 2002)
 			NurseWorkLoadTH:        1.5,                                         // just an assumption to start with
 
 			WinterBees:   true,
 			NewBroodCare: false,
 			ScrambleComp: false,
 			Nbeecsv1:     true,
+
+			HPGeffects:   false,
+			HGFoodIntake: false,
 		},
 	}
 }
