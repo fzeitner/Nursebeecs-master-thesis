@@ -34,13 +34,15 @@ type DefaultParams_etox struct {
 func Default_etox() DefaultParams_etox {
 	return DefaultParams_etox{
 		ETOXparams: ETOXparams{
-			Application:               false, // Determines if there is an application at all (and turns on/off the necessary code)
+			Application:               false, // Determines whether there is an application at all (and turns on/off the necessary code)
 			ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 			DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 			ContactSum:                false, // Determines whether contact exposure should be summed up per visit to a patch (true) or if the mean should be calculated whenever a new patch is visited (false)
 			ContactExposureOneDay:     false, // Determines whether contact exposure should only be possible on the day of application
 			RealisticStoch:            false, // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
 			ReworkedThermoETOX:        false, // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
+			Nursebeefix:               true,  // Determines whether the nurse bee intake from BEEHAVE_ecotox's nursebeefactors shall be added to IHbees instead of dissipating
+			HSUfix:                    true,  // Determines if the PPP lost to the second call of HSuptake when unloading nectar shall be redirected to IHbees (true) insted of dissipating
 
 			PPPname:                "No applications", // Identifier for the PPP used.
 			PPPconcentrationNectar: 990,
@@ -88,8 +90,6 @@ func Default_etox() DefaultParams_etox {
 			RandomYears: false,
 		},
 		ConsumptionRework: ConsumptionRework{
-			Nursebeecs: false, // turned off to keep basic model as default
-
 			HoneyAdultWorker:  11., // mg/day <- may need changing; Brodschneider&Crailsheim 2010 quote Barker & Lehner 1974 for 4mg of sugar per day for survival = ca. 5.1mg honey; old BEEHAVE val is 11 (Rortais Winterbees)
 			PollenAdultWorker: 1.5, // mg/day <- old value for 14 day old bees from Rortais et al. 2005; should fit as a baseline for now; maybe adjust down the line
 
@@ -125,10 +125,12 @@ func Default_etox() DefaultParams_etox {
 			BroodCannibalismChance: []float64{0.1, 0.35, 0.5, 0.05, 0., 0., 0.}, // based on data from Schmickl&Crailsheim (2001, 2002)
 			NurseWorkLoadTH:        1.5,                                         // just an assumption to start with
 
-			WinterBees:   true,
-			NewBroodCare: false,
-			ScrambleComp: false,
-			Nbeecsv1:     true,
+			NewConsumption: false, // turned off to keep basic model as default
+			WinterBees:     true,
+			NewBroodCare:   false,
+			//ScrambleComp:           false,
+			Nursebeecsv1:           false,
+			ForesightedCannibalism: false,
 
 			HPGeffects:   false,
 			HGFoodIntake: false,

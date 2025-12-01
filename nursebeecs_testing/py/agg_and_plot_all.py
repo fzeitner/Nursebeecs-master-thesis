@@ -94,8 +94,8 @@ def plot_column(data_beecs, data_nbeecs, data_nbeecs2, column, quantiles, image_
     fig, ax = plt.subplots(figsize=(10, 4))
     for data, col, model in [
         (data_beecs, "blue", "beecs"),
-        (data_nbeecs, "red", "newBC"),
-        (data_nbeecs2, "green", "HGeffects"),
+        (data_nbeecs, "red", "oldBC"),
+        (data_nbeecs2, "green", "newBC"),
     ]:      
         q10 = data[column + "_Q05"]
         q90 = data[column + "_Q95"]
@@ -175,8 +175,8 @@ def plot_popstructure(file1, file2, out_dir, format, appday, multiyear, nurseplo
     ax.set_ylabel("Individuals [-]", fontsize="12")
     ax.set_xlim(0,365*multiyear)
 
-    beec = ax.vlines(-100, 0, 1, color = 'black', linestyle = '-', label = 'newBC')
-    nbeec = ax.vlines(-100, 0, 1, color = 'black', linestyle = '--', label = 'HGeffects')
+    beec = ax.vlines(-100, 0, 1, color = 'black', linestyle = '-', label = 'beecs')
+    nbeec = ax.vlines(-100, 0, 1, color = 'black', linestyle = '--', label = 'ConumptionRework')
 
     # Add the first legend
     if nurseplot:
@@ -255,8 +255,8 @@ if __name__ == "__main__":
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
     file_formats = ["svg", "png"]
 
-    folder = testfolders[-1]
-    file_format = file_formats[1]       # 0 = svg, 1 = png
+    folder = testfolders[4]
+    file_format = file_formats[0]       # 0 = svg, 1 = png
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
     agg_all = True
@@ -314,7 +314,7 @@ if __name__ == "__main__":
             multiyear_app[folder]
         )
         plot_popstructure(
-            "nursebeecs_testing/" + folder + "/oldbc.csv",
+            "nursebeecs_testing/" + folder + "/beecs.csv",
             "nursebeecs_testing/" + folder + "/newbc.csv",
             "nursebeecs_testing/" + folder ,
             file_format,

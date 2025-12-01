@@ -78,6 +78,9 @@ func (s *Init_etox) Initialize(w *ecs.World) {
 	}
 	ecs.AddResource(w, &storages_etox)
 
+	PPPfate := globals_etox.PPPfate{}
+	ecs.AddResource(w, &PPPfate)
+
 	// nursebeecs consumption changes to larvae get initializd here
 	s.nursecons = ecs.GetResource[params_etox.ConsumptionRework](w)
 	// assume total honey need of 65.4 mg based on Rortais et al. 2005 and original BEEHAVE, but spread throughout the different stages

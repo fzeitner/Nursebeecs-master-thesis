@@ -123,23 +123,24 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 		TotalNursesLastDay := s.nstats.TotalNurses // in case of etox mortality events in between last day´s consumption proc and now we recount available nurses here
 		// now evaluate current state of nursing metrics
 		s.calcNursingMetrics(w)
+		totalAdults := s.pop.WorkersForagers + s.pop.WorkersInHive
 
 		// special rules if all nurses die due to etox related mass deaths --> foragers get called back to make the hive continue somehow
 		// may also make sense to have this activate if there are simply far too little nurses and a large fraction of foragers present
 		// technically they should have a reduced nursing efficiency, but this has not been implemented as of yet
-		if (s.nstats.NurseFraction <= 0.05 && s.pop.TotalAdults > 0) || s.nstats.TotalNurses == 0 {
+		if (s.nstats.NurseFraction <= 0.05 && totalAdults > 0) || s.nstats.TotalNurses == 0 {
 			recruitedNurses := 0
 			for i := s.nglobals.NurseAgeMax; i < s.aff.Aff; i++ {
 				if s.inHive.Workers[i] != 0 {
 					recruitedNurses += s.inHive.Workers[i]
 					s.nglobals.NurseAgeMax = util.Clamp(i, 5, 50) // emergency increase to NurseAgeMax
 
-					if float64(recruitedNurses+s.nstats.TotalNurses)/float64(s.pop.TotalAdults) >= 0.05 && float64(recruitedNurses) >= 0.5*float64(TotalNursesLastDay) && s.nstats.TotalNurses != 0 { // reach 5% nurses and at least half of last day; this is experimental
+					if float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) >= 0.05 && float64(recruitedNurses) >= 0.5*float64(TotalNursesLastDay) && s.nstats.TotalNurses != 0 { // reach 5% nurses and at least half of last day; this is experimental
 						break
 					}
 				}
 			}
-			if (float64(recruitedNurses) < 0.5*float64(TotalNursesLastDay) || float64(recruitedNurses+s.nstats.TotalNurses)/float64(s.pop.TotalAdults) <= 0.05 || s.nstats.TotalNurses == 0) && s.newCohorts.Foragers > 0 {
+			if (float64(recruitedNurses) < 0.5*float64(TotalNursesLastDay) || float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) <= 0.05 || s.nstats.TotalNurses == 0) && s.newCohorts.Foragers > 0 {
 				s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax+1, 5, 50)
 
 				s.inHive.Workers[s.aff.Aff] = s.newCohorts.Foragers * 100
@@ -147,7 +148,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 				s.newCohorts.Foragers = 0
 				recruitedNurses += s.inHive.Workers[s.nglobals.NurseAgeMax]
 			}
-			if (float64(recruitedNurses) < 0.5*float64(TotalNursesLastDay) || float64(recruitedNurses+s.nstats.TotalNurses)/float64(s.pop.TotalAdults) <= 0.05 || s.nstats.TotalNurses == 0) && s.pop.WorkersForagers > 0 {
+			if (float64(recruitedNurses) < 0.5*float64(TotalNursesLastDay) || float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) <= 0.05 || s.nstats.TotalNurses == 0) && s.pop.WorkersForagers > 0 {
 				s.revertForagers(w, recruitedNurses, TotalNursesLastDay)
 			}
 		}
@@ -178,8 +179,8 @@ func (s *NursingNeeds) calcNursingMetrics(w *ecs.World) {
 			s.nglobals.Reverted = append(s.nglobals.Reverted, query.Entity())
 		}
 	}
-	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
-	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.TotalAdults)) * 100   // expressed in %
+	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees                       // maybe ignore winterbees here as they are a bit of a special case?
+	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.WorkersForagers+s.pop.WorkersInHive)) * 100 // expressed in %
 
 	s.nstats.NonNurseIHbees = 0
 	for i := 0; i < 4; i++ {

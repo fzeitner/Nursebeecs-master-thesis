@@ -37,4 +37,24 @@ type Storages_etox struct {
 
 	Pollenconcbeforeeating float64 // added for bugfixing
 	Nectarconcbeforeeating float64 // added for bugfixing
+
+	PPPpollenTotal float64 // total amount of PPP in pollen stores this timestep
+	PPPhoneyTotal  float64 // total amount of PPP in honey stores this timestep
+	PPPTotal       float64 // total amount of PPP in all stores this timestep
+}
+
+type PPPfate struct {
+	TotalPPPforaged      float64 // Total amount of PPP foraged by all foragers; used to create a mass balance
+	PPPhoneyStores       float64 // Total amount of PPP that ends up in honey stores after being foraged
+	PPPpollenStores      float64 // Total amount of PPP that ends up in pollen stores after being foraged
+	PPPforagersImmediate float64 // amount of PPP taken in by foragers immediately while foraging
+	ForagerDiedInFlight  float64 // amount of PPP "lost" by foragers dying midflight of bringing back a PPPload
+
+	PPPforagersinHive float64 // amount of PPP taken in by foragers via normal in-hive oral uptake
+	PPPforagersTotal  float64 // total amount of PPP taken in by foragers via all oral routes
+	PPPIHbees         float64 // amount of PPP taken in by IHbees
+	PPPNurses         float64 // amount of PPP taken in by nurse bees
+	PPPlarvae         float64 // amount of PPP taken in by larvae
+	PPPdrones         float64 // amount of PPP taken in by drones
+	PPPdlarvae        float64 // amount of PPP taken in by drone larvae
 }

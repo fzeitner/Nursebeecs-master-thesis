@@ -20,8 +20,8 @@ func main() {
 
 	pe := params_etox.Default_etox()
 	pe.ETOXparams = params_etox.ETOXparams{
-		Application:               true,
-		GUTS:                      true,
+		Application: true,
+		//GUTS:                      true,
 		ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
@@ -57,22 +57,23 @@ func main() {
 		NursebeesPollen: 1.,   // Factor describing the filter effect of nurse bees for pollen [ ]
 	}
 
-	pe.GUTSParams = params_etox.GUTSParams{ // param estimates for dimethoate; taken from Baas et al. 2022
-		Type: "IT",  // GUTS mode
-		K_SR: 0.625, //default values taken from Baas et al. 2022
-		K_CA: 0.4,   //default values taken from Baas et al. 2022
-		T:    10,    // amount of timesteps per day for numeric GUTS approximation
+	/*
+		pe.GUTSParams = params_etox.GUTSParams{ // param estimates for dimethoate; taken from Baas et al. 2022
+			Type: "IT",  // GUTS mode
+			K_SR: 0.625, //default values taken from Baas et al. 2022
+			K_CA: 0.4,   //default values taken from Baas et al. 2022
+			T:    10,    // amount of timesteps per day for numeric GUTS approximation
 
-		// IT params
-		Kd_IT: 0.012,  // Dominant rate constant for the reduced-IT-model
-		MW_IT: 0.0024, // Median of the distribution of thresholds for calculating IT threshold distribution
-		F_S:   3,    // Fraction spread in distribution of thresholds; used to calculate beta for the threshold distribution calc
+			// IT params
+			Kd_IT: 0.012,  // Dominant rate constant for the reduced-IT-model
+			MW_IT: 0.0024, // Median of the distribution of thresholds for calculating IT threshold distribution
+			F_S:   3,    // Fraction spread in distribution of thresholds; used to calculate beta for the threshold distribution calc
 
-		// SD params
-		Kd_SD: 0.39,  // Dominant rate constant for the reduced-SD-model
-		MW_SD: 0.013, // Median of the distribution of thresholds for calculating h in the red-SD-model
-		BW_SD: 14.,   // Killing rate for calculating h in the red-SD-model
-	}
+			// SD params
+			Kd_SD: 0.39,  // Dominant rate constant for the reduced-SD-model
+			MW_SD: 0.013, // Median of the distribution of thresholds for calculating h in the red-SD-model
+			BW_SD: 14.,   // Killing rate for calculating h in the red-SD-model
+		}*/
 
 	start := time.Now()
 

@@ -39,6 +39,7 @@ type Foraging_etox struct {
 	stores        *globals.Stores
 	stores_etox   *globals_etox.Storages_etox
 	foragingStats *globals_etox.ForagingStats_etox
+	pppfate       *globals_etox.PPPfate
 	pop           *globals.PopulationStats
 	newCohorts    *globals.NewCohorts
 	aff           *globals.AgeFirstForaging
@@ -68,6 +69,7 @@ type Foraging_etox struct {
 	activityFilter       *ecs.Filter1[comp_etox.Activity_etox]
 	ageFilter            *ecs.Filter1[comp.Age]
 	loadFilter           *ecs.Filter3[comp_etox.Activity_etox, comp.NectarLoad, comp_etox.EtoxLoad]
+	loadexpoFilter       *ecs.Filter4[comp_etox.Activity_etox, comp.NectarLoad, comp_etox.EtoxLoad, comp_etox.PPPExpo]
 	foragerFilter        *ecs.Filter3[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage]
 	foragerFilterLoadPPP *ecs.Filter6[comp_etox.Activity_etox, comp_etox.KnownPatch_etox, comp.Milage, comp.NectarLoad, comp_etox.EtoxLoad, comp_etox.PPPExpo]
 	foragerFilterSimple  *ecs.Filter2[comp_etox.Activity_etox, comp_etox.KnownPatch_etox]
@@ -93,6 +95,7 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.foragePeriod = ecs.GetResource[globals.ForagingPeriod](w)
 	s.stores = ecs.GetResource[globals.Stores](w)
 	s.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
+	s.pppfate = ecs.GetResource[globals_etox.PPPfate](w)
 	s.pop = ecs.GetResource[globals.PopulationStats](w)
 	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
 	s.aff = ecs.GetResource[globals.AgeFirstForaging](w)
@@ -101,6 +104,7 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 	s.activityFilter = s.activityFilter.New(w)
 	s.ageFilter = s.ageFilter.New(w)
 	s.loadFilter = s.loadFilter.New(w)
+	s.loadexpoFilter = s.loadexpoFilter.New(w)
 	s.foragerFilter = s.foragerFilter.New(w)
 	s.foragerFilterLoadPPP = s.foragerFilterLoadPPP.New(w)
 	s.foragerFilterSimple = s.foragerFilterSimple.New(w)
@@ -558,6 +562,11 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 			// exposition from nectar foraging
 			PPPload.PPPLoad = load.Energy * etoxprops.PPPconcentrationNectar // kJ * mug/kJ = mug / load
 			PPPexpo.OralDose += PPPload.PPPLoad * s.toxic.HSuptake
+			// pppfate is simply used to create a ppp mass balance to analyze and debug
+			s.pppfate.PPPforagersImmediate += PPPload.PPPLoad * s.toxic.HSuptake * float64(s.foragerParams.SquadronSize)
+			s.pppfate.PPPforagersTotal += PPPload.PPPLoad * s.toxic.HSuptake * float64(s.foragerParams.SquadronSize)
+			s.pppfate.TotalPPPforaged += PPPload.PPPLoad * float64(s.foragerParams.SquadronSize)
+
 			PPPload.PPPLoad -= PPPload.PPPLoad * s.toxic.HSuptake
 
 			if patch.VisitedthisDay {
@@ -590,6 +599,7 @@ func (s *Foraging_etox) collecting(w *ecs.World) {
 
 			// exposition from pollen foraging
 			PPPload.PPPLoad = s.foragerParams.PollenLoad * etoxprops.PPPconcentrationPollen // g * mug/g = mug / load
+			s.pppfate.TotalPPPforaged += PPPload.PPPLoad * float64(s.foragerParams.SquadronSize)
 
 			if patch.VisitedthisDay {
 				s.foragingStats.ContactExp_repeat++
@@ -645,7 +655,11 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 			s.stores.Honey -= en * float64(s.foragerParams.SquadronSize)
 			eload.EnergyUsed += en
 
-			ppp.OralDose += s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
+			flightintake := s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
+
+			s.pppfate.PPPforagersinHive += flightintake * float64(s.foragerParams.SquadronSize)
+			s.pppfate.PPPforagersTotal += flightintake * float64(s.foragerParams.SquadronSize)
+			ppp.OralDose += flightintake
 
 			duration += s.forageParams.SearchLength / s.foragerParams.FlightVelocity
 			foragers++
@@ -662,7 +676,12 @@ func (s *Foraging_etox) flightCost(w *ecs.World) (duration float64, foragers int
 			}
 			s.stores.Honey -= en * float64(s.foragerParams.SquadronSize)
 			eload.EnergyUsed += en
-			ppp.OralDose += s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
+
+			flightintake := s.FeedOnHoneyStores(w, en*float64(s.foragerParams.SquadronSize), float64(s.foragerParams.SquadronSize), false)
+
+			s.pppfate.PPPforagersinHive += flightintake * float64(s.foragerParams.SquadronSize)
+			s.pppfate.PPPforagersTotal += flightintake * float64(s.foragerParams.SquadronSize)
+			ppp.OralDose += flightintake
 
 			foragers++
 		}
@@ -679,7 +698,7 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 
 	foragerQuery := s.foragerFilterLoadPPP.Query()
 	for foragerQuery.Next() {
-		act, patch, _, _, _, PPPexpo := foragerQuery.Get()
+		act, patch, _, _, PPPload, PPPexpo := foragerQuery.Get()
 
 		if act.Reverted {
 			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
@@ -687,7 +706,7 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 
 		// Acute toxicity during flight
 		lethaldose := false
-		if s.etox.ForagerImmediateMortality { // always false for now; might as well be deactivateds
+		if s.etox.ForagerImmediateMortality { // always false for now; might as well be deactivated
 			if PPPexpo.RdmSurvivalOral < 1-(1/(1+math.Pow(PPPexpo.OralDose/s.toxic.ForagerOralLD50, s.toxic.ForagerOralSlope))) {
 				lethaldose = true
 			}
@@ -706,11 +725,13 @@ func (s *Foraging_etox) mortality(w *ecs.World) {
 			m := s.patchMortalityMapper.Get(patch.Nectar)
 			if s.rng.Float64() < m.Nectar || lethaldose {
 				s.toRemove = append(s.toRemove, foragerQuery.Entity())
+				s.pppfate.ForagerDiedInFlight += PPPload.PPPLoad * float64(s.foragerParams.SquadronSize)
 			}
 		} else if act.Current == activity.BringPollen {
 			m := s.patchMortalityMapper.Get(patch.Pollen)
 			if s.rng.Float64() < m.Pollen || lethaldose {
 				s.toRemove = append(s.toRemove, foragerQuery.Entity())
+				s.pppfate.ForagerDiedInFlight += PPPload.PPPLoad * float64(s.foragerParams.SquadronSize)
 			}
 		}
 	}
@@ -835,9 +856,9 @@ func (s *Foraging_etox) unloading(w *ecs.World) {
 
 	// TODO: water unloading, postponed ...
 
-	query := s.loadFilter.Query()
+	query := s.loadexpoFilter.Query()
 	for query.Next() {
-		act, load, PPPload := query.Get()
+		act, load, PPPload, ppp := query.Get()
 		if act.Current == activity.BringNectar {
 
 			s.stores.Honey += load.Energy * float64(s.foragerParams.SquadronSize)
@@ -846,6 +867,13 @@ func (s *Foraging_etox) unloading(w *ecs.World) {
 			// HSuptake actually gets applied a second time in here; it already got applied to PPPload when the foragers took up the load; the lost fraction then got added to the foragers OralDose
 			// here PPPLoad loses another 10% (in total 19% are "lost" to the forager), but these 10% just dissipate. There is no addition to foragers OralDose, 9% of total pesticide taken in via honey is thus lost in the model
 			// BEEHAVE_ecotox ODD´s do not talk about HSuptake anywhere sadly
+			if s.etox.HSUfix {
+				ppp.OralDose += PPPload.PPPLoad * s.toxic.HSuptake
+				s.pppfate.PPPforagersImmediate += PPPload.PPPLoad * s.toxic.HSuptake * float64(s.foragerParams.SquadronSize)
+				s.pppfate.PPPforagersTotal += PPPload.PPPLoad * s.toxic.HSuptake * float64(s.foragerParams.SquadronSize)
+			}
+			s.pppfate.PPPhoneyStores += PPPload.PPPLoad * (1 - s.toxic.HSuptake) * float64(s.foragerParams.SquadronSize)
+
 			s.stores_etox.ETOX_HES_E_D0 += load.Energy * float64(s.foragerParams.SquadronSize)
 			if s.stores.Honey > s.maxHoneyStore ||
 				s.stores_etox.ETOX_HES_E_Capped+s.stores_etox.ETOX_HES_E_D0+s.stores_etox.ETOX_HES_E_D1+s.stores_etox.ETOX_HES_E_D2+s.stores_etox.ETOX_HES_E_D3+s.stores_etox.ETOX_HES_E_D4 > s.maxHoneyStore {
@@ -858,6 +886,8 @@ func (s *Foraging_etox) unloading(w *ecs.World) {
 			act.Current = activity.Experienced
 		} else if act.Current == activity.BringPollen {
 			s.stores_etox.PPPInHivePollenConc = ((s.stores_etox.PPPInHivePollenConc * s.stores.Pollen) + (PPPload.PPPLoad * float64(s.foragerParams.SquadronSize))) / (s.stores.Pollen + s.foragerParams.PollenLoad*float64(s.foragerParams.SquadronSize)) // may need to readjust
+
+			s.pppfate.PPPpollenStores += PPPload.PPPLoad * float64(s.foragerParams.SquadronSize)
 
 			s.stores.Pollen += s.foragerParams.PollenLoad * float64(s.foragerParams.SquadronSize)
 			PPPload.PPPLoad = 0.

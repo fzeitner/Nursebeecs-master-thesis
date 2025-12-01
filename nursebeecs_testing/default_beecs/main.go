@@ -35,7 +35,7 @@ func main() {
 		p.Nursing.WinterBees = true
 		pe := params_etox.Default_etox()
 		pe.ETOXparams.ReworkedThermoETOX = false
-		pe.ConsumptionRework.Nursebeecs = true
+		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = false
 
@@ -52,7 +52,7 @@ func main() {
 		p.Nursing.WinterBees = true
 		pe := params_etox.Default_etox()
 		pe.ETOXparams.ReworkedThermoETOX = false
-		pe.ConsumptionRework.Nursebeecs = true
+		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
 

@@ -9,6 +9,8 @@ type ETOXparams struct {
 	ContactExposureOneDay     bool // Determines whether contact exposure shall only be relevant on the one day of application
 	RealisticStoch            bool // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
 	ReworkedThermoETOX        bool // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
+	Nursebeefix               bool // Determines if the nurse bee intake from BEEHAVE_ecotox's nursebeefactors shall be added to IHbees instead of dissipating
+	HSUfix                    bool // Determines if the PPP lost to the second call of HSuptake when unloading nectar shall be redirected to IHbees (true) insted of dissipating
 
 	PPPname                string  // Identifier for the PPP used.
 	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kg]
@@ -68,8 +70,6 @@ type WaterForagingPeriod struct {
 
 // this contains all the adjusted new estimates for consumption that became necessary in the nurse rework
 type ConsumptionRework struct {
-	Nursebeecs bool // switch to turn on this rework of consumption behavior via nursebees
-
 	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
 	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
 
@@ -103,10 +103,12 @@ type Nursing struct {
 	BroodCannibalismChance []float64 // chance of brood to be cannibalized based on age (Schmickl & Crailsheim 2001,2002)
 	NurseWorkLoadTH        float64   // threshold of nurse workload above which ProteinFactorNurses gets reduced
 
-	WinterBees   bool // switch to turn starting foragers into winter bees and for foraging submodule to initiate new Winterbees late in the season --> necessary if we start simulating at the beginning of the year
-	NewBroodCare bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
-	ScrambleComp bool // switch to turn on scramble competition mechanism within new brood care which kicks in if nurse workload is too high
-	Nbeecsv1     bool // switch to turn on Nbeecs v.1 --> cannibalization depending on time passed since last pollen influx
+	NewConsumption bool // switch to turn on this rework of consumption behavior via nursebees
+	WinterBees     bool // switch to turn starting foragers into winter bees and for foraging submodule to initiate new Winterbees late in the season --> necessary if we start simulating at the beginning of the year
+	NewBroodCare   bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
+	//ScrambleComp           bool // switch to turn on scramble competition mechanism within new brood care which kicks in if nurse workload is too high
+	Nursebeecsv1           bool // switch to turn on Nbeecs v.1 --> coupling of nurseworkload to ProteinFactorNurses
+	ForesightedCannibalism bool // switch to turn on ForesightedCannibalism based on Schmickl&Crailsheim 2001&2002--> cannibalization depending on time passed since last pollen influx
 
 	HPGeffects   bool // switch to turn on reduced brood care capabilies from PPP induced reduced HPG activity
 	HGFoodIntake bool // switch to turn on reduced maximum food intake capability as a PPP induced sublethal effect

@@ -30,8 +30,10 @@ func main() {
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
 		ContactExposureOneDay:     true,
-		ReworkedThermoETOX:        false,
 		RealisticStoch:            false,
+		ReworkedThermoETOX:        true,
+		Nursebeefix:               true,
+		HSUfix:                    true,
 
 		PPPname:                "dimethoate", // Identifier for the PPP used.
 		PPPconcentrationNectar: 990,
@@ -64,7 +66,7 @@ func main() {
 	}
 
 	start := time.Now()
-	run_beecs := true // switch to run normal and/or nurse beecs
+	run_beecs := false // switch to run normal and/or nurse beecs
 	if run_beecs {
 		for i := 0; i < 100; i++ {
 			run(app, i, &p, &pe)
@@ -75,10 +77,11 @@ func main() {
 
 	run_nbeecs := true // switch to run normal and/or nurse beecs
 	if run_nbeecs {
-		pe.ConsumptionRework.Nursebeecs = true
+		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = true
-		pe.Nursing.Nbeecsv1 = false
+		pe.Nursing.NewBroodCare = false
+		pe.Nursing.Nursebeecsv1 = false
+		pe.Nursing.ForesightedCannibalism = false
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs(app, i, &p, &pe)
@@ -89,10 +92,11 @@ func main() {
 
 	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
-		pe.ConsumptionRework.Nursebeecs = true
+		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
-		pe.Nursing.Nbeecsv1 = true
+		pe.Nursing.Nursebeecsv1 = false
+		pe.Nursing.ForesightedCannibalism = false
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs2(app, i, &p, &pe)
@@ -115,7 +119,7 @@ func run(app *app.App, idx int, params params.Params, params_etox params_etox.Pa
 }
 
 func run_nursebeecs(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.NurseBeecsDefault(params, params_etox, app)
+	app = model_etox.Default_nbeecs(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.DebugNursing{},
@@ -127,7 +131,7 @@ func run_nursebeecs(app *app.App, idx int, params params.Params, params_etox par
 }
 
 func run_nursebeecs2(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.NurseBeecsDefault(params, params_etox, app)
+	app = model_etox.Default_nbeecs(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.DebugNursing{},

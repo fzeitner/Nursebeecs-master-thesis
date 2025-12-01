@@ -233,17 +233,33 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 		}
 
 		// REWPORK FROM HERE: ProteinFactorNurses
-		if s.stores.Pollen > 0 && s.nglobals.NurseWorkLoad < s.nurseParams.NurseWorkLoadTH { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
-			threshold := 1.0
-			if s.nglobals.NurseWorkLoad >= threshold {
-				threshold = s.nglobals.NurseWorkLoad
+		if s.nurseParams.Nursebeecsv1 {
+			if s.stores.Pollen > 0 && s.nglobals.NurseWorkLoad < s.nurseParams.NurseWorkLoadTH { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
+				threshold := 1.0
+				if s.nglobals.NurseWorkLoad >= threshold {
+					threshold = s.nglobals.NurseWorkLoad
+				}
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses+(threshold-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // increase of reservoir dependent on workload as well
+			} else if s.stores.Pollen <= 0 {
+				workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 5.0)                                                                 // using values > 1 destabilizes model dynamics a lot, maybe look for an alternative solution
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-workLoad/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+			} else {
+				s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-(s.nglobals.NurseWorkLoad-1.0)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 			}
-			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses+(threshold-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // increase of reservoir dependent on workload as well
-		} else if s.stores.Pollen <= 0 {
-			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 5.0)                                                                 // using values > 1 destabilizes model dynamics a lot, maybe look for an alternative solution
-			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-workLoad/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
-		} else {
-			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-(s.nglobals.NurseWorkLoad-1.0)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+		} else { // old ProteinFactorNurses dependent on colony size
+			if s.stores.Pollen > 0 {
+				s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + 1.0/s.storeParams.ProteinStoreNurse // this still makes sense
+			} else {
+
+				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+					s.oldNurseParams.MaxBroodNurseRatio // this will probably need to be reworked still
+				workLoad := 0.0 // not necessary anymore because workload is now defined directly via forced protein intake of nurses which adresses the same idea
+				if maxBrood > 0 {
+					workLoad = float64(s.pop.TotalBrood) / maxBrood
+				}
+				s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+			}
+			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
 		}
 
 		// effects on ProteinFactorNurses by reduced HG-activity based on Schott et al. 2021
@@ -294,8 +310,8 @@ func (s *NurseConsumption) calcNursingMetrics(w *ecs.World) (nursingcap float64,
 		}
 	}
 	nursingcap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.nglobals.CurrentMaxPollenNurse
-	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
-	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.TotalAdults)) * 100   // expressed in %
+	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees                       // maybe ignore winterbees here as they are a bit of a special case?
+	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.WorkersInHive+s.pop.WorkersForagers)) * 100 // expressed in %
 
 	s.nstats.NonNurseIHbees = 0
 	for i := 0; i < 4; i++ {

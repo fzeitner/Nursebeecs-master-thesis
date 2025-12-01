@@ -38,7 +38,7 @@ func main() {
 	run_nbeecs := true // switch to run normal and/or nurse beecs
 	if run_nbeecs {
 		pe := params_etox.Default_etox()
-		pe.ConsumptionRework.Nursebeecs = true
+		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = false
 
@@ -52,7 +52,7 @@ func main() {
 	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
 		pe := params_etox.Default_etox()
-		pe.ConsumptionRework.Nursebeecs = true
+		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
 

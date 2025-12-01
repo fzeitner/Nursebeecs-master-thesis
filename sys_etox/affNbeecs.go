@@ -23,7 +23,6 @@ type CalcAffNbeecs struct {
 	time *resource.Tick
 	aff  globals.AgeFirstForaging
 
-	newCons    *params_etox.ConsumptionRework
 	nparamsNew *params_etox.Nursing
 	nstats     *globals_etox.Nursing_stats
 	nglobals   *globals_etox.Nursing_globals
@@ -45,7 +44,6 @@ func (s *CalcAffNbeecs) Initialize(w *ecs.World) {
 	s.time = ecs.GetResource[resource.Tick](w)
 
 	s.nparamsNew = ecs.GetResource[params_etox.Nursing](w)
-	s.newCons = ecs.GetResource[params_etox.ConsumptionRework](w)
 	s.nstats = ecs.GetResource[globals_etox.Nursing_stats](w)
 	s.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
 }
@@ -79,18 +77,18 @@ func (s *CalcAffNbeecs) Update(w *ecs.World) {
 		}
 		maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
 			s.nurseParams.MaxBroodNurseRatio
-
 		if maxBrood > 0 && float64(s.pop.TotalBrood)/maxBrood > broodTH {
 			aff += 2
 		}
-		if s.newCons.Nursebeecs {
-			if s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.TotalAdults) > minNurseTH { // regulate aff down if there are suficient nurses
+
+		if s.nparamsNew.Nursebeecsv1 {
+			if s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) > minNurseTH { // regulate aff down if there are suficient nurses
 				aff -= 2 // can adjust to -1 as well
 			}
-			if !s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.TotalAdults) < maxNurseTH { // regulate it up if there are insufficient
+			if !s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) < maxNurseTH { // regulate it up if there are insufficient
 				aff += 1
 			}
-			if float64(s.nstats.NonNurseIHbees)/float64(s.pop.TotalAdults) < minIHbeeTH { // if there are completely inplausible amounts of non-nurse IHbees upregulate aff as well
+			if float64(s.nstats.NonNurseIHbees)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) < minIHbeeTH { // if there are completely inplausible amounts of non-nurse IHbees upregulate aff as well
 				aff += 1
 			}
 		}
@@ -101,12 +99,18 @@ func (s *CalcAffNbeecs) Update(w *ecs.World) {
 			aff--
 		}
 
-		if aff < s.aff.Aff && aff > s.nglobals.NurseAgeMax {
-			aff = s.aff.Aff - 1
-		} else if aff > s.aff.Aff {
-			aff = s.aff.Aff + 1
-		} else {
-			aff = s.aff.Aff
+		if s.nparamsNew.Nursebeecsv1 {
+			if aff < s.aff.Aff && aff > s.nglobals.NurseAgeMax {
+				aff = s.aff.Aff - 1
+			} else if aff > s.aff.Aff {
+				aff = s.aff.Aff + 1
+			}
+		} else { // old aff
+			if aff < s.aff.Aff {
+				aff = s.aff.Aff - 1
+			} else if aff > s.aff.Aff {
+				aff = s.aff.Aff + 1
+			}
 		}
 		s.aff.Aff = util.Clamp(aff, s.affParams.Min, s.affParams.Max)
 	}
