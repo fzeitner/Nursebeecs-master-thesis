@@ -40,9 +40,9 @@ func (s *PPPApplication) Initialize(w *ecs.World) {
 }
 
 func (s *PPPApplication) Update(w *ecs.World) {
-	if s.time.Tick > 0 && s.etox.Application {
-		dayOfYear := int((s.time.Tick - 1) % 365)
-		etox_year := int(s.time.Tick-1) / 365
+	if s.etox.Application {
+		dayOfYear := int(s.time.Tick % 365)
+		etox_year := int(s.time.Tick / 365)
 
 		constQuery := s.constantFilter.Query()
 		for constQuery.Next() {

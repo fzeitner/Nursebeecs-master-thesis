@@ -37,7 +37,7 @@ func run(app *app.App, idx int, params params.Params) {
 	app = model.Default(params, app)
 
 	app.AddSystem(&reporter.CSV{
-		Observer: &obs.Debug{},
+		Observer: &obs.DebugDrones{},
 		File:     fmt.Sprintf("out/beecs-%04d.csv", idx),
 		Sep:      ";",
 	})

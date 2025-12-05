@@ -162,7 +162,7 @@ def plot_popstructure(file1, file2, out_dir, format, appday, multiyear):
     ax.plot(data2.ticks, data2['TotalLarvae_Q50'], c= 'green', linestyle = lines[1])
     #ax.plot(data2.ticks, data2['TotalEggs_Q50'], c= 'gray', linestyle = lines[1])
 
-    ax.set_title('PopStructure')
+    #ax.set_title('PopStructure')
     #ax.set_xlabel("month", fontsize="12")
     ax.set_xlim(0,365*multiyear)
 

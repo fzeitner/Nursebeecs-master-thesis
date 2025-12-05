@@ -5,7 +5,6 @@ import (
 
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/params"
-	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -19,7 +18,6 @@ type BroodCare struct {
 	eggs   *globals.Eggs
 	larvae *globals.Larvae
 	pupae  *globals.Pupae
-	time   *resource.Tick
 }
 
 func (s *BroodCare) Initialize(w *ecs.World) {
@@ -31,26 +29,22 @@ func (s *BroodCare) Initialize(w *ecs.World) {
 	s.eggs = ecs.GetResource[globals.Eggs](w)
 	s.larvae = ecs.GetResource[globals.Larvae](w)
 	s.pupae = ecs.GetResource[globals.Pupae](w)
-	s.time = ecs.GetResource[resource.Tick](w)
-
 }
 
 func (s *BroodCare) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
-			s.nurseParams.MaxBroodNurseRatio
+	maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
+		s.nurseParams.MaxBroodNurseRatio
 
-		excessBrood := int(math.Ceil(float64(s.pop.TotalBrood) - maxBrood))
-		lacksNurses := excessBrood > 0
+	excessBrood := int(math.Ceil(float64(s.pop.TotalBrood) - maxBrood))
+	lacksNurses := excessBrood > 0
 
-		starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses))))
+	starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses))))
 
-		if starved > excessBrood {
-			excessBrood = starved
-		}
-
-		s.killBrood(excessBrood, lacksNurses)
+	if starved > excessBrood {
+		excessBrood = starved
 	}
+
+	s.killBrood(excessBrood, lacksNurses)
 }
 
 func (s *BroodCare) Finalize(w *ecs.World) {}

@@ -34,20 +34,18 @@ func (s *CalcWaterForagingPeriod) Initialize(w *ecs.World) {
 }
 
 func (s *CalcWaterForagingPeriod) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		dayOfYear := int((s.time.Tick - 1) % 365)
+	dayOfYear := int((s.time.Tick) % 365)
 
-		if s.waterParams.WaterForaging { // not bugfixed yet, WaterForaging should not be turned on anyways and thus this never gets accessed
-			if dayOfYear == 0 {
-				if s.waterPeriodParams.RandomYears {
-					s.waterPeriodData.CurrentYear = s.rng.IntN(len(s.waterPeriodData.Years))
-				} else {
-					s.waterPeriodData.CurrentYear = int((s.time.Tick-1)/365) % len(s.waterPeriodData.Years)
-				}
+	if s.waterParams.WaterForaging { // not bugfixed yet, WaterForaging should not be turned on anyways and thus this never gets accessed
+		if dayOfYear == 0 {
+			if s.waterPeriodParams.RandomYears {
+				s.waterPeriodData.CurrentYear = s.rng.IntN(len(s.waterPeriodData.Years))
+			} else {
+				s.waterPeriodData.CurrentYear = int((s.time.Tick-1)/365) % len(s.waterPeriodData.Years)
 			}
-			wateryear := s.waterPeriodData.Years[s.waterPeriodData.CurrentYear]
-			s.waterNeeds.ETOX_Waterneedforcooling = wateryear[dayOfYear]
 		}
+		wateryear := s.waterPeriodData.Years[s.waterPeriodData.CurrentYear]
+		s.waterNeeds.ETOX_Waterneedforcooling = wateryear[dayOfYear]
 	}
 }
 

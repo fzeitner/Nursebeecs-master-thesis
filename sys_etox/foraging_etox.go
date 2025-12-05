@@ -133,75 +133,72 @@ func (s *Foraging_etox) Initialize(w *ecs.World) {
 
 func (s *Foraging_etox) Update(w *ecs.World) {
 
-	if s.time.Tick > 0 {
-		s.foragingStats.Reset()
+	s.foragingStats.Reset()
 
-		if s.newCohorts.Foragers > 0 {
-			s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
-		}
-		s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storeParams.DecentHoneyPerWorker * s.energyParams.Honey // added this here, because Netlogo recalculates this in foragingRound and a countingproc happened since last calc.
-
-		if s.foragePeriod.SecondsToday <= 0 ||
-			(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
-			return
-		}
-
-		query := s.foragerFilter.Query()
-		for query.Next() {
-			_, patch, milage := query.Get()
-			milage.Today = 0
-			patch.VisitedthisDay = false
-		}
-
-		hangAroundDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
-		forageProb := s.calcForagingProb()
-		s.foragingStats.Prob = forageProb // added these for debugging
-
-		// TODO: Lazy winter bees.
-		round := 0
-		totalDuration := 0.0
-		for {
-			duration, foragers := s.foragingRound(w, forageProb)
-			meanDuration := 0.0
-			if foragers > 0 {
-				meanDuration = duration / float64(foragers)
-			} else {
-				meanDuration = hangAroundDuration
-			}
-			totalDuration += meanDuration
-
-			s.foragingStats.SumDur = totalDuration // added these for debugging
-
-			if totalDuration >= float64(s.foragePeriod.SecondsToday) {
-				break
-			}
-
-			round++
-		}
-		query2 := s.loadFilter.Query() // changed this to a query that also checks load to track mean and max energy expended by foragers per day
-		c := query2.Count()
-		for query2.Next() {
-			act, _, load := query2.Get()
-			act.Current = activity.Resting
-
-			if act.Reverted {
-				continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
-			}
-
-			s.foragingStats.MeanEnergyExpenditure += load.EnergyUsed
-			if load.EnergyUsed > s.foragingStats.MaxEnergyExpenditure {
-				s.foragingStats.MaxEnergyExpenditure = load.EnergyUsed
-			}
-		}
-		s.foragingStats.MeanEnergyExpenditure /= float64(c)
+	if s.newCohorts.Foragers > 0 {
+		s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
 	}
+
+	if s.foragePeriod.SecondsToday <= 0 ||
+		(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
+		return
+	}
+
+	query := s.foragerFilter.Query()
+	for query.Next() {
+		_, patch, milage := query.Get()
+		milage.Today = 0
+		patch.VisitedthisDay = false
+	}
+
+	hangAroundDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
+	forageProb := s.calcForagingProb()
+	s.foragingStats.Prob = forageProb // added these for debugging
+
+	// TODO: Lazy winter bees.
+	round := 0
+	totalDuration := 0.0
+	for {
+		duration, foragers := s.foragingRound(w, forageProb)
+		meanDuration := 0.0
+		if foragers > 0 {
+			meanDuration = duration / float64(foragers)
+		} else {
+			meanDuration = hangAroundDuration
+		}
+		totalDuration += meanDuration
+
+		s.foragingStats.SumDur = totalDuration // added these for debugging
+
+		if totalDuration >= float64(s.foragePeriod.SecondsToday) {
+			break
+		}
+
+		round++
+	}
+	query2 := s.loadFilter.Query() // changed this to a query that also checks load to track mean and max energy expended by foragers per day
+	c := query2.Count()
+	for query2.Next() {
+		act, _, load := query2.Get()
+		act.Current = activity.Resting
+
+		if act.Reverted {
+			continue // reverted foragers get passed over; they do not act as foraging foragers but as nurses until reverted gets switched off again
+		}
+
+		s.foragingStats.MeanEnergyExpenditure += load.EnergyUsed
+		if load.EnergyUsed > s.foragingStats.MaxEnergyExpenditure {
+			s.foragingStats.MaxEnergyExpenditure = load.EnergyUsed
+		}
+	}
+	s.foragingStats.MeanEnergyExpenditure /= float64(c)
 }
 
 func (s *Foraging_etox) Finalize(w *ecs.World) {}
 
 func (s *Foraging_etox) newForagers(w *ecs.World) {
 	if s.newCohorts.Foragers > 0 {
-		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff)
+		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick)-s.aff.Aff)
 	}
 	s.newCohorts.Foragers = 0
 
@@ -215,7 +212,7 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 		s.pppExpoAdder.Add(e, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
 	}
 
-	year := int((s.time.Tick - 1) / 365)
+	year := int((s.time.Tick) / 365)
 	for _, e := range s.toAdd {
 		age := s.ageMapper.Get(e)
 		if s.nursingParams.WinterBees {
@@ -256,6 +253,7 @@ func (s *Foraging_etox) calcForagingProb() float64 {
 func (s *Foraging_etox) foragingRound(w *ecs.World, forageProb float64) (duration float64, foragers int) {
 	probCollectPollen := (1.0 - s.stores.Pollen/s.stores.IdealPollen) * s.danceParams.MaxProportionPollenForagers
 
+	s.stores.DecentHoney = math.Max(float64(s.pop.WorkersInHive+s.pop.WorkersForagers), 1) * s.storeParams.DecentHoneyPerWorker * s.energyParams.Honey // added this here, because Netlogo recalculates this in foragingRound and a countingproc happened since last calc.
 	if s.stores.Honey/s.stores.DecentHoney < 0.5 {
 		probCollectPollen *= s.stores.Honey / s.stores.DecentHoney
 	}

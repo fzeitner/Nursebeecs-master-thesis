@@ -25,13 +25,17 @@ func main() {
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
 		ContactExposureOneDay:     true,
+		RealisticStoch:            false, // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
+		ReworkedThermoETOX:        false, // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
+		Nursebeefix:               false, // Determines whether the nurse bee intake from BEEHAVE_ecotox's nursebeefactors shall be added to IHbees instead of dissipating
+		HSUfix:                    false, // Determines if the PPP lost to the second call of HSuptake when unloading nectar shall be redirected to IHbees (true) insted of dissipating
 
 		PPPname:                "fenoxycarb", // Identifier for the PPP used.
 		PPPconcentrationNectar: 990,
 		PPPconcentrationPollen: 27150,
 		PPPcontactExposure:     0.3, // contact exposure at patch
 
-		AppDay:         188,   // Day of the year in which application starts [d].
+		AppDay:         189,   // Day of the year in which application starts [d].
 		ExposurePeriod: 8,     // Duration of exposure happening (irrespective of DT50) [d].
 		SpinupPhase:    0,     // Number of years before exposure starts (to stabilize colony; 0 = first year) [y].
 		ExposurePhase:  3,     // Number of years in which exposure takes place [y].
@@ -76,7 +80,7 @@ func run(app *app.App, idx int, params params.Params, etoxparams params_etox.Par
 	app = model_etox.Default(params, etoxparams, app)
 
 	app.AddSystem(&reporter.CSV{
-		Observer: &obs.DebugEcotox{},
+		Observer: &obs.DebugDrones{},
 		File:     fmt.Sprintf("out/beecs-%04d.csv", idx),
 		Sep:      ";",
 	})

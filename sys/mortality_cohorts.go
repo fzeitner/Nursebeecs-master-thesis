@@ -17,7 +17,6 @@ type MortalityCohorts struct {
 	workerMort *params.WorkerMortality
 	droneMort  *params.DroneMortality
 	rng        *resource.Rand
-	time       *resource.Tick
 
 	eggs   *globals.Eggs
 	larvae *globals.Larvae
@@ -29,7 +28,6 @@ func (s *MortalityCohorts) Initialize(w *ecs.World) {
 	s.workerMort = ecs.GetResource[params.WorkerMortality](w)
 	s.droneMort = ecs.GetResource[params.DroneMortality](w)
 	s.rng = ecs.GetResource[resource.Rand](w)
-	s.time = ecs.GetResource[resource.Tick](w)
 
 	s.eggs = ecs.GetResource[globals.Eggs](w)
 	s.larvae = ecs.GetResource[globals.Larvae](w)
@@ -38,19 +36,17 @@ func (s *MortalityCohorts) Initialize(w *ecs.World) {
 }
 
 func (s *MortalityCohorts) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		applyMortality(s.eggs.Workers, s.workerMort.Eggs, s.rng)
-		applyMortality(s.eggs.Drones, s.droneMort.Eggs, s.rng)
+	applyMortality(s.eggs.Workers, s.workerMort.Eggs, s.rng)
+	applyMortality(s.eggs.Drones, s.droneMort.Eggs, s.rng)
 
-		applyMortality(s.larvae.Workers, s.workerMort.Larvae, s.rng)
-		applyMortality(s.larvae.Drones, s.droneMort.Larvae, s.rng)
+	applyMortality(s.larvae.Workers, s.workerMort.Larvae, s.rng)
+	applyMortality(s.larvae.Drones, s.droneMort.Larvae, s.rng)
 
-		applyMortality(s.pupae.Workers, s.workerMort.Pupae, s.rng)
-		applyMortality(s.pupae.Drones, s.droneMort.Pupae, s.rng)
+	applyMortality(s.pupae.Workers, s.workerMort.Pupae, s.rng)
+	applyMortality(s.pupae.Drones, s.droneMort.Pupae, s.rng)
 
-		applyMortality(s.inHive.Workers, s.workerMort.InHive, s.rng)
-		applyMortality(s.inHive.Drones, s.droneMort.InHive, s.rng)
-	}
+	applyMortality(s.inHive.Workers, s.workerMort.InHive, s.rng)
+	applyMortality(s.inHive.Drones, s.droneMort.InHive, s.rng)
 }
 
 func (s *MortalityCohorts) Finalize(w *ecs.World) {}

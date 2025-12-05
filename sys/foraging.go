@@ -115,50 +115,47 @@ func (s *Foraging) Initialize(w *ecs.World) {
 }
 
 func (s *Foraging) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		s.foragingStats.Reset()
+	s.foragingStats.Reset()
 
-		s.newForagers(w)                                                                                                                                             // here the foragers get initialized now; mimics BEEHAVE exactly.
-		s.stores.DecentHoney = math.Max(float64(s.popStats.WorkersInHive+s.popStats.WorkersForagers), 1) * s.storeParams.DecentHoneyPerWorker * s.energyParams.Honey // added this here, because Netlogo recalculates this in foragingRound and a countingproc happened since last calc.
-		if s.foragePeriod.SecondsToday <= 0 ||
-			(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
-			return
+	s.newForagers(w) // here the foragers get initialized now; mimics BEEHAVE exactly.
+	if s.foragePeriod.SecondsToday <= 0 ||
+		(s.stores.Honey >= 0.95*s.maxHoneyStore && s.stores.Pollen >= s.stores.IdealPollen) {
+		return
+	}
+
+	query := s.foragerFilter.Query()
+	for query.Next() {
+		_, _, milage := query.Get()
+		milage.Today = 0
+	}
+
+	hangAroundDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
+	forageProb := s.calcForagingProb()
+
+	// TODO: Lazy winter bees.
+	round := 0
+	totalDuration := 0.0
+	for {
+		duration, foragers := s.foragingRound(w, forageProb)
+		meanDuration := 0.0
+		if foragers > 0 {
+			meanDuration = duration / float64(foragers)
+		} else {
+			meanDuration = hangAroundDuration
+		}
+		totalDuration += meanDuration
+
+		if totalDuration > float64(s.foragePeriod.SecondsToday) {
+			break
 		}
 
-		query := s.foragerFilter.Query()
-		for query.Next() {
-			_, _, milage := query.Get()
-			milage.Today = 0
-		}
+		round++
+	}
 
-		hangAroundDuration := s.forageParams.SearchLength / s.foragerParams.FlightVelocity
-		forageProb := s.calcForagingProb()
-
-		// TODO: Lazy winter bees.
-		round := 0
-		totalDuration := 0.0
-		for {
-			duration, foragers := s.foragingRound(w, forageProb)
-			meanDuration := 0.0
-			if foragers > 0 {
-				meanDuration = duration / float64(foragers)
-			} else {
-				meanDuration = hangAroundDuration
-			}
-			totalDuration += meanDuration
-
-			if totalDuration > float64(s.foragePeriod.SecondsToday) {
-				break
-			}
-
-			round++
-		}
-
-		query = s.foragerFilter.Query()
-		for query.Next() {
-			act, _, _ := query.Get()
-			act.Current = activity.Resting
-		}
+	query = s.foragerFilter.Query()
+	for query.Next() {
+		act, _, _ := query.Get()
+		act.Current = activity.Resting
 	}
 }
 
@@ -166,14 +163,14 @@ func (s *Foraging) Finalize(w *ecs.World) {}
 
 func (s *Foraging) newForagers(w *ecs.World) {
 	if s.newCohorts.Foragers > 0 {
-		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick-1)-s.aff.Aff) // make sure this -1 for the tick makes sense before publishing this anywhere
+		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick)-s.aff.Aff) // make sure this -1 for the tick makes sense before publishing this anywhere
 	}
 	s.newCohorts.Foragers = 0
 
 	// may have to start adding winterbee component here in case we are simulating nursebeecs over multiple years
 	// postpone for now though
 	if s.nursingparams.WinterBees {
-		year := int((s.time.Tick - 1) / 365)
+		year := int((s.time.Tick) / 365)
 		agequery := s.ageFilter.Without(ecs.C[comp_etox.Activity_etox]()).Query()
 		for agequery.Next() {
 			s.toAdd = append(s.toAdd, agequery.Entity())

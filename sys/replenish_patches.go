@@ -27,57 +27,55 @@ func (s *ReplenishPatches) Initialize(w *ecs.World) {
 }
 
 func (s *ReplenishPatches) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
 
-		constQuery := s.constantFilter.Query()
-		for constQuery.Next() {
-			props, con := constQuery.Get()
+	constQuery := s.constantFilter.Query()
+	for constQuery.Next() {
+		props, con := constQuery.Get()
 
-			props.MaxNectar = con.Nectar
-			props.MaxPollen = con.Pollen
-			props.DetectionProbability = con.DetectionProbability
-			props.NectarConcentration = con.NectarConcentration
-		}
+		props.MaxNectar = con.Nectar
+		props.MaxPollen = con.Pollen
+		props.DetectionProbability = con.DetectionProbability
+		props.NectarConcentration = con.NectarConcentration
+	}
 
-		seasonalQuery := s.seasonalFilter.Query()
-		for seasonalQuery.Next() {
-			props, seas := seasonalQuery.Get()
+	seasonalQuery := s.seasonalFilter.Query()
+	for seasonalQuery.Next() {
+		props, seas := seasonalQuery.Get()
 
-			day := (s.time.Tick - 1 + int64(seas.SeasonShift)) % 365
-			season := util.Season(day)
+		day := (s.time.Tick + int64(seas.SeasonShift)) % 365
+		season := util.Season(day)
 
-			props.MaxNectar = seas.MaxNectar * season
-			props.MaxPollen = seas.MaxPollen * season
+		props.MaxNectar = seas.MaxNectar * season
+		props.MaxPollen = seas.MaxPollen * season
 
-			props.DetectionProbability = seas.DetectionProbability
-			props.NectarConcentration = seas.NectarConcentration
-		}
+		props.DetectionProbability = seas.DetectionProbability
+		props.NectarConcentration = seas.NectarConcentration
+	}
 
-		day := (s.time.Tick - 1) % 365
-		scriptedQuery := s.scriptedFilter.Query()
-		for scriptedQuery.Next() {
-			props, scr := scriptedQuery.Get()
+	day := (s.time.Tick) % 365
+	scriptedQuery := s.scriptedFilter.Query()
+	for scriptedQuery.Next() {
+		props, scr := scriptedQuery.Get()
 
-			props.MaxNectar = util.Interpolate(scr.Nectar, float64(day), scr.Interpolation)
-			props.MaxPollen = util.Interpolate(scr.Pollen, float64(day), scr.Interpolation)
+		props.MaxNectar = util.Interpolate(scr.Nectar, float64(day), scr.Interpolation)
+		props.MaxPollen = util.Interpolate(scr.Pollen, float64(day), scr.Interpolation)
 
-			props.DetectionProbability = util.Interpolate(scr.DetectionProbability, float64(day), scr.Interpolation)
-			props.NectarConcentration = util.Interpolate(scr.NectarConcentration, float64(day), scr.Interpolation)
-		}
+		props.DetectionProbability = util.Interpolate(scr.DetectionProbability, float64(day), scr.Interpolation)
+		props.NectarConcentration = util.Interpolate(scr.NectarConcentration, float64(day), scr.Interpolation)
+	}
 
-		query := s.filter.Query()
-		for query.Next() {
-			conf, res, visits := query.Get()
+	query := s.filter.Query()
+	for query.Next() {
+		conf, res, visits := query.Get()
 
-			res.MaxNectar = conf.MaxNectar * 1000 * 1000
-			res.MaxPollen = conf.MaxPollen * 1000
+		res.MaxNectar = conf.MaxNectar * 1000 * 1000
+		res.MaxPollen = conf.MaxPollen * 1000
 
-			res.Nectar = res.MaxNectar
-			res.Pollen = res.MaxPollen
+		res.Nectar = res.MaxNectar
+		res.Pollen = res.MaxPollen
 
-			visits.Nectar = 0
-			visits.Pollen = 0
-		}
+		visits.Nectar = 0
+		visits.Pollen = 0
 	}
 }
 

@@ -28,8 +28,7 @@ type MortalityCohorts_etox struct {
 	etox  *params_etox.ETOXparams
 	toxic *params_etox.Toxicityparams
 
-	time *resource.Tick
-	rng  *resource.Rand
+	rng *resource.Rand
 }
 
 func (s *MortalityCohorts_etox) Initialize(w *ecs.World) {
@@ -46,24 +45,18 @@ func (s *MortalityCohorts_etox) Initialize(w *ecs.World) {
 	s.toxic = ecs.GetResource[params_etox.Toxicityparams](w)
 	s.etox = ecs.GetResource[params_etox.ETOXparams](w)
 
-	s.time = ecs.GetResource[resource.Tick](w)
 	s.rng = ecs.GetResource[resource.Rand](w)
-
 }
 
 func (s *MortalityCohorts_etox) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
+	s.applyMortalityEtox(s.larvae.Workers, s.larvae_etox.WorkerCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
+	s.applyMortalityEtox(s.larvae.Drones, s.larvae_etox.DroneCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
 
-		s.applyMortalityEtox(s.larvae.Workers, s.larvae_etox.WorkerCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
-		s.applyMortalityEtox(s.larvae.Drones, s.larvae_etox.DroneCohortDose, s.toxic.LarvaeOralSlope, s.toxic.LarvaeOralLD50)
+	s.applyMortalityEtox(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
 
-		s.applyMortalityEtox(s.inHive.Workers, s.inHive_etox.WorkerCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
+	s.applyMortalityEtox(s.inHive.Drones, s.inHive_etox.DroneCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
 
-		s.applyMortalityEtox(s.inHive.Drones, s.inHive_etox.DroneCohortDose, s.toxic.ForagerOralSlope, s.toxic.ForagerOralLD50)
-
-		s.popstats.Reset() // resets cumulative and mean doses for the timestep
-	}
-
+	s.popstats.Reset() // resets cumulative and mean doses for the timestep
 }
 
 func (s *MortalityCohorts_etox) Finalize(w *ecs.World) {}

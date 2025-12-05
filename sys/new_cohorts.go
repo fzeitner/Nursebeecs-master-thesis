@@ -27,13 +27,11 @@ func (s *NewCohorts) Initialize(w *ecs.World) {
 }
 
 func (s *NewCohorts) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		s.inHive.Drones[0] = s.newCohorts.Drones
-		s.inHive.Workers[0] = s.newCohorts.IHbees
+	s.inHive.Drones[0] = s.newCohorts.Drones
+	s.inHive.Workers[0] = s.newCohorts.IHbees
 
-		s.newCohorts.Drones = 0
-		s.newCohorts.IHbees = 0
-	}
+	s.newCohorts.Drones = 0
+	s.newCohorts.IHbees = 0
 }
 
 func (s *NewCohorts) Finalize(w *ecs.World) {}

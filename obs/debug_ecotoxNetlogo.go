@@ -31,7 +31,7 @@ func (o *NetlogoETOX) Initialize(w *ecs.World) {
 }
 func (o *NetlogoETOX) Update(w *ecs.World) {}
 func (o *NetlogoETOX) Header() []string {
-	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Mean_Dose_Larvae", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Forager", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "nIHbeeCohorts", "pollenconcbeforeeating", "nectarconcbeforeeating"}
+	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "ETOX_Mean_Dose_Larvae", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Forager", "ETOX_Cum_Dose_Larvae", "ETOX_Cum_Dose_IHbee", "ETOX_Cum_Dose_Forager", "pollenconcbeforeeating", "nectarconcbeforeeating", "TotalPop"}
 }
 func (o *NetlogoETOX) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.foraging.SecondsToday)
@@ -52,9 +52,9 @@ func (o *NetlogoETOX) Values(w *ecs.World) []float64 {
 	o.data[12] = float64(o.popetox.CumDoseIHBees)
 	o.data[13] = float64(o.popetox.CumDoseForagers)
 
-	o.data[14] = float64(o.popetox.NumberIHbeeCohorts)
-	o.data[15] = float64(o.stores_etox.Pollenconcbeforeeating)
-	o.data[16] = float64(o.stores_etox.Nectarconcbeforeeating)
+	o.data[14] = float64(o.stores_etox.Pollenconcbeforeeating)
+	o.data[15] = float64(o.stores_etox.Nectarconcbeforeeating)
+	o.data[16] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
 
 	return o.data
 }

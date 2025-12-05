@@ -25,6 +25,10 @@ func main() {
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
 		ContactExposureOneDay:     true,
+		RealisticStoch:            false,
+		ReworkedThermoETOX:        false,
+		Nursebeefix:               false,
+		HSUfix:                    false,
 
 		PPPname:                "fenoxycarb", // Identifier for the PPP used.
 		PPPconcentrationNectar: 990,
@@ -52,8 +56,8 @@ func main() {
 		LarvaeOralLD50:  0.0014, // fenoxycarb
 		LarvaeOralSlope: 1.6,    // fenoxycarb
 
-		NursebeesNectar: 1., // Factor describing the filter effect of nurse bees for nectar [ ], 1 = no filtering effect, 0 = everything gets filtered
-		NursebeesPollen: 1., // Factor describing the filter effect of nurse bees for pollen [ ], 1 = no filtering effect, 0 = everything gets filtered
+		NursebeesNectar: 0.25, // Factor describing the filter effect of nurse bees for nectar [ ], 1 = no filtering effect, 0 = everything gets filtered
+		NursebeesPollen: 1.,   // Factor describing the filter effect of nurse bees for pollen [ ], 1 = no filtering effect, 0 = everything gets filtered
 	}
 
 	p.ForagingPeriod = params.ForagingPeriod{
@@ -76,7 +80,7 @@ func run(app *app.App, idx int, params params.Params, etoxparams params_etox.Par
 	app = model_etox.Default(params, etoxparams, app)
 
 	app.AddSystem(&reporter.CSV{
-		Observer: &obs.DebugEcotox{},
+		Observer: &obs.NetlogoETOX{},
 		File:     fmt.Sprintf("out/beecs-%04d.csv", idx),
 		Sep:      ";",
 	})

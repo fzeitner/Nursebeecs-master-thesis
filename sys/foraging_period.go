@@ -31,19 +31,17 @@ func (s *CalcForagingPeriod) Initialize(w *ecs.World) {
 }
 
 func (s *CalcForagingPeriod) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		dayOfYear := int((s.time.Tick - 1) % 365)
+	dayOfYear := int((s.time.Tick) % 365)
 
-		if dayOfYear == 0 {
-			if s.periodParams.RandomYears {
-				s.periodData.CurrentYear = s.rng.IntN(len(s.periodData.Years))
-			} else {
-				s.periodData.CurrentYear = int((s.time.Tick)/365) % len(s.periodData.Years)
-			}
+	if dayOfYear == 0 {
+		if s.periodParams.RandomYears {
+			s.periodData.CurrentYear = s.rng.IntN(len(s.periodData.Years))
+		} else {
+			s.periodData.CurrentYear = int((s.time.Tick)/365) % len(s.periodData.Years)
 		}
-		year := s.periodData.Years[s.periodData.CurrentYear]
-		s.period.SecondsToday = int(year[dayOfYear] * 3600)
 	}
+	year := s.periodData.Years[s.periodData.CurrentYear]
+	s.period.SecondsToday = int(year[dayOfYear] * 3600)
 }
 
 func (s *CalcForagingPeriod) Finalize(w *ecs.World) {}

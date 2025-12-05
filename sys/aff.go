@@ -4,7 +4,6 @@ import (
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/fzeitner/beecs_masterthesis/util"
-	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -18,8 +17,7 @@ type CalcAff struct {
 	stores       *globals.Stores
 	pop          *globals.PopulationStats
 
-	time *resource.Tick
-	aff  globals.AgeFirstForaging
+	aff globals.AgeFirstForaging
 }
 
 func (s *CalcAff) Initialize(w *ecs.World) {
@@ -34,54 +32,48 @@ func (s *CalcAff) Initialize(w *ecs.World) {
 		Aff: s.affParams.Base,
 	}
 	ecs.AddResource(w, &s.aff)
-
-	s.time = ecs.GetResource[resource.Tick](w)
-
 }
 
 func (s *CalcAff) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		pollenTH := 0.5
-		proteinTH := 1.0
-		honeyTH := 35.0 * (s.consStats.HoneyDaily / 1000) * s.energyParams.Honey
-		broodTH := 0.1
-		foragerToWorkerTH := 0.3
+	pollenTH := 0.5
+	proteinTH := 1.0
+	honeyTH := 35.0 * (s.consStats.HoneyDaily / 1000) * s.energyParams.Honey
+	broodTH := 0.1
+	foragerToWorkerTH := 0.3
 
-		aff := s.aff.Aff
+	aff := s.aff.Aff
 
-		if s.stores.Pollen/s.stores.IdealPollen < pollenTH {
-			aff--
-		}
-		if s.stores.ProteinFactorNurses < proteinTH {
-			aff--
-		}
-		if s.stores.Honey < honeyTH {
-			aff -= 2
-		}
-		if s.pop.WorkersInHive > 0 &&
-			float64(s.pop.WorkersForagers)/float64(s.pop.WorkersInHive) < foragerToWorkerTH {
-			aff--
-		}
-		maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
-			s.nurseParams.MaxBroodNurseRatio
-		if maxBrood > 0 && float64(s.pop.TotalBrood)/maxBrood > broodTH {
-			aff += 2
-		}
-
-		if s.aff.Aff < s.affParams.Base-7 {
-			aff++
-		} else if s.aff.Aff > s.affParams.Base+7 {
-			aff--
-		}
-
-		if aff < s.aff.Aff {
-			aff = s.aff.Aff - 1
-		} else if aff > s.aff.Aff {
-			aff = s.aff.Aff + 1
-		}
-		s.aff.Aff = util.Clamp(aff, s.affParams.Min, s.affParams.Max)
+	if s.stores.Pollen/s.stores.IdealPollen < pollenTH {
+		aff--
+	}
+	if s.stores.ProteinFactorNurses < proteinTH {
+		aff--
+	}
+	if s.stores.Honey < honeyTH {
+		aff -= 2
+	}
+	if s.pop.WorkersInHive > 0 &&
+		float64(s.pop.WorkersForagers)/float64(s.pop.WorkersInHive) < foragerToWorkerTH {
+		aff--
+	}
+	maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.nurseParams.ForagerNursingContribution) *
+		s.nurseParams.MaxBroodNurseRatio
+	if maxBrood > 0 && float64(s.pop.TotalBrood)/maxBrood > broodTH {
+		aff += 2
 	}
 
+	if s.aff.Aff < s.affParams.Base-7 {
+		aff++
+	} else if s.aff.Aff > s.affParams.Base+7 {
+		aff--
+	}
+
+	if aff < s.aff.Aff {
+		aff = s.aff.Aff - 1
+	} else if aff > s.aff.Aff {
+		aff = s.aff.Aff + 1
+	}
+	s.aff.Aff = util.Clamp(aff, s.affParams.Min, s.affParams.Max)
 }
 
 func (s *CalcAff) Finalize(w *ecs.World) {}

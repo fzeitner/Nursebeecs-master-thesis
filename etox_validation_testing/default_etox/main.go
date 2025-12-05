@@ -20,6 +20,10 @@ func main() {
 
 	pe := params_etox.Default_etox()
 
+	pe.ETOXparams.HSUfix = false
+	pe.ETOXparams.Nursebeefix = false
+	pe.ETOXparams.ReworkedThermoETOX = false
+
 	start := time.Now()
 
 	for i := 0; i < 100; i++ {
@@ -34,7 +38,7 @@ func run(app *app.App, idx int, params params.Params, params_etox params_etox.Pa
 	app = model_etox.Default(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
-		Observer: &obs.DebugEcotox{},
+		Observer: &obs.DebugDrones{},
 		File:     fmt.Sprintf("out/beecs-%04d.csv", idx),
 		Sep:      ";",
 	})

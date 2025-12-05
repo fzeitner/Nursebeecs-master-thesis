@@ -11,6 +11,7 @@ def agg_netlogo(file, out_file):
     runs.sort()
     ticks = pd.unique(data.ticks)
     ticks.sort()
+    ticks = ticks[1:] # skip first tick to compare plot better to beecs, Netlogo prints init conditions at tick 0
 
     columns = list(data.columns)[-17:]
 
@@ -32,6 +33,8 @@ def agg_netlogo(file, out_file):
             values = data[column][data.ticks == tick]
             q = np.quantile(values, [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95])
             out.loc[tick, cols] = q
+        out = out.copy()      # to keep df from becoming highly fragmented
+
 
     out.to_csv(out_file, sep=";", index=False)
     
@@ -149,21 +152,22 @@ if __name__ == "__main__":
     ### adding a visual indicator in plots, does not change anything regarding the results
     appdays = {"default_beecs" : 0,  
                "default_etox" : 0,                     # appday = 0 for no application
-              "default_dimethoate": 189, 
+              "default_dimethoate": 217, 
               "Rothamsted2009_fenoxycarb": 189, 
               "Rothamsted2009_etox": 0,
               "Rothamsted2009_beecs": 0,
     }
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox"]
-    folder = testfolders[1]
+    folder = testfolders[-2]
 
 
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
     agg_all = False
-    agg_net = False
-    agg_beec = True
+    agg_net = True
+    agg_beec = False
+    plot = False
 
     if run_all:
         for folder in testfolders:
@@ -175,15 +179,15 @@ if __name__ == "__main__":
             elif agg_beec:
                 agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
 
-
-            plot_quantiles(
-                "etox_validation_testing/" + folder + "/netlogo.csv",
-                "etox_validation_testing/" + folder + "/beecs.csv",
-                "etox_validation_testing/" + folder ,
-                #"png",
-                "svg",
-                appdays[folder],
-            )
+            if plot:
+                plot_quantiles(
+                    "etox_validation_testing/" + folder + "/netlogo.csv",
+                    "etox_validation_testing/" + folder + "/beecs.csv",
+                    "etox_validation_testing/" + folder ,
+                    #"png",
+                    "svg",
+                    appdays[folder],
+                )
     else:
         if agg_all:
             agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
@@ -193,12 +197,12 @@ if __name__ == "__main__":
         elif agg_beec:
             agg_beecs("etox_validation_testing/" + folder + "/out/beecs-%04d.csv", "etox_validation_testing/"+ folder +"/beecs.csv")
 
-
-        plot_quantiles(
-            "etox_validation_testing/" + folder + "/netlogo.csv",
-            "etox_validation_testing/" + folder + "/beecs.csv",
-            "etox_validation_testing/" + folder ,
-            #"png",
-            "svg",
-            appdays[folder],
-        )
+        if plot:
+            plot_quantiles(
+                "etox_validation_testing/" + folder + "/netlogo.csv",
+                "etox_validation_testing/" + folder + "/beecs.csv",
+                "etox_validation_testing/" + folder ,
+                #"png",
+                "svg",
+                appdays[folder],
+            )

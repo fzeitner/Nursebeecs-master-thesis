@@ -29,7 +29,6 @@ type Nbroodcare struct {
 	inHive   *globals.InHive
 	nglobals *globals_etox.Nursing_globals
 	pop      *globals.PopulationStats
-	time     *resource.Tick
 	rng      *resource.Rand
 }
 
@@ -45,113 +44,110 @@ func (s *Nbroodcare) Initialize(w *ecs.World) {
 	s.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
 
 	s.pop = ecs.GetResource[globals.PopulationStats](w)
-	s.time = ecs.GetResource[resource.Tick](w)
 	s.rng = ecs.GetResource[resource.Rand](w)
 }
 
 func (s *Nbroodcare) Update(w *ecs.World) {
-	if s.time.Tick > 0 {
-		// implement rules for killing of larvae here as per old brood care proc
+	// implement rules for killing of larvae here as per old brood care proc
 
-		if !s.NurseParams.NewBroodCare { // old broodcare
+	if !s.NurseParams.NewBroodCare { // old broodcare
+		maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+			s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for nursing (literal feeding of brood through bees)
+
+		excessBrood := int(math.Ceil(float64(s.pop.TotalBrood) - maxBrood))
+		lacksNurses := excessBrood > 0 // so this actually a lack of total bees thermoregulating the hive and not a lack of "feeding nurses"
+
+		starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein
+
+		if starved > excessBrood {
+			excessBrood = starved
+		}
+		s.killBrood(excessBrood, lacksNurses)
+
+	} else { // new broodcare
+		if s.nglobals.AbortNursing { // stop nursing completely and kill everything that needs active care aside from thermoregulation
+			nonPupaeBrood := s.pop.DroneEggs + s.pop.DroneLarvae + s.pop.WorkerEggs + s.pop.WorkerLarvae
+			s.killBrood(nonPupaeBrood, true) // simply kill all larvae and eggs; capped pupae do not die, as they are not reliant on being fed, they might still die via reduction of excess brood though
+
 			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-				s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for nursing (literal feeding of brood through bees)
+				s.oldNurseParams.MaxBroodNurseRatio // Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
 
-			excessBrood := int(math.Ceil(float64(s.pop.TotalBrood) - maxBrood))
-			lacksNurses := excessBrood > 0 // so this actually a lack of total bees thermoregulating the hive and not a lack of "feeding nurses"
+			excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-nonPupaeBrood)-maxBrood)), 0)
+			s.ReduceBroodCells(excessBrood)
 
-			starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein
+		} else if s.NurseParams.ForesightedCannibalism { // normal case for new broodcare; gets called as long as there are some nurses left
 
-			if starved > excessBrood {
-				excessBrood = starved
+			// calculate relative cannibalism intensity here; this is experimental for now
+			cann_mean := 0.
+			cann_rel := 0.
+
+			for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalizable brood (Schmickl&Crailsheim 2001)
+				cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assume drone and worker larvae get treated indifferently
 			}
-			s.killBrood(excessBrood, lacksNurses)
-
-		} else { // new broodcare
-			if s.nglobals.AbortNursing { // stop nursing completely and kill everything that needs active care aside from thermoregulation
-				nonPupaeBrood := s.pop.DroneEggs + s.pop.DroneLarvae + s.pop.WorkerEggs + s.pop.WorkerLarvae
-				s.killBrood(nonPupaeBrood, true) // simply kill all larvae and eggs; capped pupae do not die, as they are not reliant on being fed, they might still die via reduction of excess brood though
-
-				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-					s.oldNurseParams.MaxBroodNurseRatio // Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
-
-				excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-nonPupaeBrood)-maxBrood)), 0)
-				s.ReduceBroodCells(excessBrood)
-
-			} else if s.NurseParams.ForesightedCannibalism { // normal case for new broodcare; gets called as long as there are some nurses left
-
-				// calculate relative cannibalism intensity here; this is experimental for now
-				cann_mean := 0.
-				cann_rel := 0.
-
-				for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalizable brood (Schmickl&Crailsheim 2001)
-					cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assume drone and worker larvae get treated indifferently
-				}
-				// calculate brood to be cannibalized based on pollen influx in the last few days
-				if s.nglobals.LastPollenInflux > 0 { // if there has not been a pollen influx this day increase cannibalized brood fraction
-					cann_rel = min(float64(s.nglobals.LastPollenInflux/6), 1.5) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 3 days; Schmickl&Crailsheim 2001)
-				}
-
-				starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
-				if cann_mean > 0 {
-					cann_rel = util.Clamp(cann_rel+float64(starved)/cann_mean, 0, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
-				}
-
-				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-					s.oldNurseParams.MaxBroodNurseRatio // Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
-
-					/*
-						// maybe add some sort of nurse-based death mechanism here depending on scenario
-						if s.NurseParams.ScrambleComp { // this does not do anything atm and is a placeholder for eventual scenario creation
-							killed := s.Cannibalize(starved, cann_rel)
-
-							excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
-							s.ReduceBroodCells(excessBrood)
-						} else { // this does not do anything atm and is a placeholder for eventual scenario creation
-					*/
-				killed := s.Cannibalize(starved, cann_rel)
-
-				excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
-				s.ReduceBroodCells(excessBrood)
-				//}
-			} else { // no cannibalism based on days since last pollen influx
-				starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
-
-				// calculate relative cannibalism intensity here; this is experimental for now
-				cann_mean := 0. // mean count of typically cannibalizable brood in times of no pollen income; based on Schmickl&Crailsheim 2001
-				cann_rel := 0.  // relative cannibalism intensity that is necessary to reduce brood far enough based on mean cannibalism estimates and protein stores of nurses
-
-				for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalize brood (Schmickl&Crailsheim 2001)
-					cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assumes drone and worker larvae get treated indifferently
-				}
-				if cann_mean != 0 {
-					cann_rel = min(float64(starved)/cann_mean, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
-				}
-
-				maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-					s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
-
-					/*
-						// add some sort of nurse-based death mechanism here depending on scenario; this has not been finished and atm both competition types do not differ from each other
-						if s.NurseParams.ScrambleComp { // scramble competition; assumes minimum of direct cannibalism based on foraging income and otherwise weakens larvae if there is too little protein
-
-							//starved := int(cann_rel * cann_mean)  // define cannibalized brood here only dependent on foraging based cannibalism
-							killed := s.Cannibalize(starved, cann_rel)
-
-							excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
-							s.ReduceBroodCells(excessBrood)
-
-							// weaken brood depending on protein stores / ProteinFactorNurses here
-							// as of now I am sadly not sure if BEEHAVE can be seen as a good framework for a change of this caliber
-
-						} else { */
-				// "winner takes it all"; basically assumes the old BEEHAVE brood care dynamics stay correct with the addition of foraging-income based cannibalism
-				killed := s.Cannibalize(starved, cann_rel)
-
-				excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
-				s.ReduceBroodCells(excessBrood)
-				//}
+			// calculate brood to be cannibalized based on pollen influx in the last few days
+			if s.nglobals.LastPollenInflux > 0 { // if there has not been a pollen influx this day increase cannibalized brood fraction
+				cann_rel = min(float64(s.nglobals.LastPollenInflux/6), 1.5) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 3 days; Schmickl&Crailsheim 2001)
 			}
+
+			starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
+			if cann_mean > 0 {
+				cann_rel = util.Clamp(cann_rel+float64(starved)/cann_mean, 0, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
+			}
+
+			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+				s.oldNurseParams.MaxBroodNurseRatio // Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
+
+				/*
+					// maybe add some sort of nurse-based death mechanism here depending on scenario
+					if s.NurseParams.ScrambleComp { // this does not do anything atm and is a placeholder for eventual scenario creation
+						killed := s.Cannibalize(starved, cann_rel)
+
+						excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
+						s.ReduceBroodCells(excessBrood)
+					} else { // this does not do anything atm and is a placeholder for eventual scenario creation
+				*/
+			killed := s.Cannibalize(starved, cann_rel)
+
+			excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
+			s.ReduceBroodCells(excessBrood)
+			//}
+		} else { // no cannibalism based on days since last pollen influx
+			starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
+
+			// calculate relative cannibalism intensity here; this is experimental for now
+			cann_mean := 0. // mean count of typically cannibalizable brood in times of no pollen income; based on Schmickl&Crailsheim 2001
+			cann_rel := 0.  // relative cannibalism intensity that is necessary to reduce brood far enough based on mean cannibalism estimates and protein stores of nurses
+
+			for i := 0; i < 4; i++ { // calculate the mean realistic amount of cannibalize brood (Schmickl&Crailsheim 2001)
+				cann_mean += s.NurseParams.BroodCannibalismChance[i] * float64(s.larvae.Drones[i]+s.larvae.Workers[i]) // assumes drone and worker larvae get treated indifferently
+			}
+			if cann_mean != 0 {
+				cann_rel = min(float64(starved)/cann_mean, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
+			}
+
+			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
+				s.oldNurseParams.MaxBroodNurseRatio // I actually think Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
+
+				/*
+					// add some sort of nurse-based death mechanism here depending on scenario; this has not been finished and atm both competition types do not differ from each other
+					if s.NurseParams.ScrambleComp { // scramble competition; assumes minimum of direct cannibalism based on foraging income and otherwise weakens larvae if there is too little protein
+
+						//starved := int(cann_rel * cann_mean)  // define cannibalized brood here only dependent on foraging based cannibalism
+						killed := s.Cannibalize(starved, cann_rel)
+
+						excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
+						s.ReduceBroodCells(excessBrood)
+
+						// weaken brood depending on protein stores / ProteinFactorNurses here
+						// as of now I am sadly not sure if BEEHAVE can be seen as a good framework for a change of this caliber
+
+					} else { */
+			// "winner takes it all"; basically assumes the old BEEHAVE brood care dynamics stay correct with the addition of foraging-income based cannibalism
+			killed := s.Cannibalize(starved, cann_rel)
+
+			excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
+			s.ReduceBroodCells(excessBrood)
+			//}
 		}
 	}
 }

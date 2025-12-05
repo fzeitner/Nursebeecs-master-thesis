@@ -27,14 +27,16 @@ func main() {
 		ContactExposureOneDay:     true,
 		RealisticStoch:            false,
 		ReworkedThermoETOX:        false,
+		Nursebeefix:               false,
+		HSUfix:                    false,
 
 		PPPname:                "dimethoate", // Identifier for the PPP used.
-		PPPconcentrationNectar: 990,
-		PPPconcentrationPollen: 26631,
-		PPPcontactExposure:     0.3, // contact exposure at patch
+		PPPconcentrationNectar: 1320,
+		PPPconcentrationPollen: 36200,
+		PPPcontactExposure:     0.4, // contact exposure at patch
 
-		AppDay:         189,   // Day of the year in which application starts [d].
-		ExposurePeriod: 8,     // Duration of exposure happening (irrespective of DT50) [d].
+		AppDay:         217,   // Day of the year in which application starts [d].
+		ExposurePeriod: 9,     // Duration of exposure happening (irrespective of DT50) [d].
 		SpinupPhase:    0,     // Number of years before exposure starts (to stabilize colony; 0 = first year) [y].
 		ExposurePhase:  3,     // Number of years in which exposure takes place [y].
 		DT50:           1000., // Whole plant DT50 from residue studies [d].
@@ -72,7 +74,7 @@ func run(app *app.App, idx int, params params.Params, params_etox params_etox.Pa
 	app = model_etox.Default(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
-		Observer: &obs.DebugEcotox{},
+		Observer: &obs.DebugDrones{},
 		File:     fmt.Sprintf("out/beecs-%04d.csv", idx),
 		Sep:      ";",
 	})
