@@ -21,11 +21,14 @@ func main() {
 
 	pe.ETOXparams = params_etox.ETOXparams{
 		Application:               true,
-		ReworkedThermoETOX:        false,
 		ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
 		ContactExposureOneDay:     true,
+		RealisticStoch:            false,
+		ReworkedThermoETOX:        true,
+		HSUfix:                    true,
+		Nursebeefix:               true,
 
 		PPPname:                "fenoxycarb", // Identifier for the PPP used.
 		PPPconcentrationNectar: 990,
@@ -74,9 +77,8 @@ func main() {
 	dur := time.Since(start)
 	fmt.Println(dur)
 
-	run_nbeecs := false // switch to run normal and/or nurse beecs
+	run_nbeecs := true // switch to run normal and/or nurse beecs
 	if run_nbeecs {
-		pe.ETOXparams.ReworkedThermoETOX = true
 		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = false
@@ -88,9 +90,8 @@ func main() {
 	dur = time.Since(start)
 	fmt.Println(dur)
 
-	run_nbeecs2 := false // switch to run normal and/or nurse beecs
+	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
-		pe.ETOXparams.ReworkedThermoETOX = true
 		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true

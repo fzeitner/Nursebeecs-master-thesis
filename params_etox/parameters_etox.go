@@ -102,11 +102,13 @@ type Nursing struct {
 	NurseAgeCeiling        int       // baseline age until model assumes that workers will act as nurses
 	BroodCannibalismChance []float64 // chance of brood to be cannibalized based on age (Schmickl & Crailsheim 2001,2002)
 	NurseWorkLoadTH        float64   // threshold of nurse workload above which ProteinFactorNurses gets reduced
+	MinimumTH              float64   // threshold of nurse workload below which ProteinFactorNurses is allowed to recover
 
 	NewConsumption bool // switch to turn on this rework of consumption behavior via nursebees
 	WinterBees     bool // switch to turn starting foragers into winter bees and for foraging submodule to initiate new Winterbees late in the season --> necessary if we start simulating at the beginning of the year
 	NewBroodCare   bool // switch to turn on new nurse based brood care mechanism (i.e. killing of brood based on nursing capacitys)
 	//ScrambleComp           bool // switch to turn on scramble competition mechanism within new brood care which kicks in if nurse workload is too high
+	Nursebeecsv0           bool // switch to turn on Nbeecs v0.5 --> first attempt at coupling of nurseworkload ending up with large fluctuations
 	Nursebeecsv1           bool // switch to turn on Nbeecs v.1 --> coupling of nurseworkload to ProteinFactorNurses
 	ForesightedCannibalism bool // switch to turn on ForesightedCannibalism based on Schmickl&Crailsheim 2001&2002--> cannibalization depending on time passed since last pollen influx
 

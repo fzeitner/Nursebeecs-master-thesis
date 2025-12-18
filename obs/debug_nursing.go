@@ -35,7 +35,7 @@ func (o *DebugNursing) Initialize(w *ecs.World) {
 }
 func (o *DebugNursing) Update(w *ecs.World) {}
 func (o *DebugNursing) Header() []string {
-	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses", "NonNurseIHbees", "NurseMeanHoneyIntake", "NurseMeanPollenIntake", "Winterbees", "TotalPop"}
+	return []string{"Pollendaily", "HoneyDaily", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "NurseAgeMax", "Aff", "NurseWorkLoad", "ProteinFactorNurses", "TotalNurses", "NurseLarvaRatio", "FractionNurses", "NonNurseIHbees", "NurseMaxHoneyIntake", "NurseMaxPollenIntake", "Winterbees", "TotalPop", "IHbeeNurses", "NonWinterbees", "WorkerLarvaRatio"}
 }
 func (o *DebugNursing) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.cons.PollenDaily)
@@ -59,11 +59,26 @@ func (o *DebugNursing) Values(w *ecs.World) []float64 {
 	o.data[15] = o.nstats.NurseFraction
 	o.data[16] = float64(o.nstats.NonNurseIHbees)
 
-	o.data[17] = o.nstats.MeanHoneyIntake
-	o.data[18] = o.nstats.MeanPollenIntake
+	o.data[17] = o.nstats.MaxHoneyIntake
+	o.data[18] = o.nstats.MaxPollenIntake
 
 	o.data[19] = float64(o.nstats.WinterBees)
 	o.data[20] = float64(o.pop.WorkerEggs + o.pop.WorkerLarvae + o.pop.WorkerPupae + o.pop.WorkersInHive + o.pop.WorkersForagers + o.pop.DroneEggs + o.pop.DroneLarvae + o.pop.DronePupae + o.pop.DronesInHive)
+
+	o.data[21] = float64(o.nstats.IHbeeNurses)
+	o.data[22] = float64(o.pop.WorkersForagers - o.nstats.WinterBees)
+
+	larvae := float64(o.pop.WorkerLarvae)
+	workerAdults := float64(o.pop.WorkersForagers + o.pop.WorkersInHive)
+	if larvae == 0 {
+		larvae = 1.
+		workerAdults = 0.
+	}
+	workerLarvaRatio := workerAdults / larvae
+	if workerLarvaRatio > 5. {
+		workerLarvaRatio = 5.
+	}
+	o.data[23] = workerLarvaRatio
 
 	return o.data
 }

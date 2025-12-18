@@ -56,8 +56,8 @@ func main() {
 		LarvaeOralLD50:  0.0014, // fenoxycarb
 		LarvaeOralSlope: 1.6,    // fenoxycarb
 
-		NursebeesNectar: 0.05, // Factor describing the filter effect of nurse bees for nectar [ ], 1 = no filtering effect, 0 = everything gets filtered
-		NursebeesPollen: 0.05, // Factor describing the filter effect of nurse bees for pollen [ ], 1 = no filtering effect, 0 = everything gets filtered
+		NursebeesNectar: 0.25, // Factor describing the filter effect of nurse bees for nectar [ ], 1 = no filtering effect, 0 = everything gets filtered
+		NursebeesPollen: 1.,   // Factor describing the filter effect of nurse bees for pollen [ ], 1 = no filtering effect, 0 = everything gets filtered
 	}
 
 	p.ForagingPeriod = params.ForagingPeriod{
@@ -82,7 +82,7 @@ func main() {
 	if run_nbeecs {
 		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = false
+		pe.Nursing.NewBroodCare = true
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs(app, i, &p, &pe)
@@ -96,7 +96,7 @@ func main() {
 		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
-		pe.Nursing.Nursebeecsv1 = false
+		pe.Nursing.Nursebeecsv1 = true
 		pe.Nursing.ForesightedCannibalism = false
 
 		for i := 0; i < 100; i++ {

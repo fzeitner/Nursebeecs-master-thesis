@@ -97,6 +97,8 @@ def plot_popmosaic(file1, file2, out_dir, format, appday, appdur):
 
     metrics = ["TotalForagers", "TotalIHbees", "TotalLarvae", "TotalEggs"]
     #metrics = ["ETOX_Mean_Dose_Forager", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Larvae", "HoneyEnergyStore"]
+    labels = metrics
+    #labels = ["Mean Dose per Forager [µg]", "Mean Dose per IHbee [µg]", "Mean Dose per Larvae [µg]", "Honey Store [kJ]"]
     
     for i in range(2):
         for j in range(2):
@@ -112,7 +114,7 @@ def plot_popmosaic(file1, file2, out_dir, format, appday, appdur):
                 axs[i][j].fill_between(data.ticks, q10, q90, color=col, alpha=0.1)
 
             axs[i][j].set_ylim(0, 1.05*max(max(data1[metrics[i*2+j]+"_Q95"]), max(data2[metrics[i*2+j]+"_Q95"])))
-            axs[i][j].set_ylabel(metrics[i*2+j], fontsize="12")
+            axs[i][j].set_ylabel(labels[i*2+j], fontsize="12")
             if appday > 0:
                 axs[i][j].axvspan(appday, appday+appdur, alpha=0.3, color='black', label = 'Application')
             axs[i][j].legend(loc='best')

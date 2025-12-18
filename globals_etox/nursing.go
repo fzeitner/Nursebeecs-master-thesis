@@ -8,6 +8,7 @@ type Nursing_globals struct {
 	SuffNurses        bool // were there sufficient nurses last consumption proc?
 	Reductionpossible bool // is a reduction in the nursing force possible?
 	AbortNursing      bool // can only be turned true if there is a severe lack of nurses and makes all brood starve next day
+	KillDrones        bool // can only be turned on once the amount of available nurses gets reduced below the minimum threshold (200 atm, based on Kama and Shpigler 2025); kills all adult drones that are still dependent on being fed
 
 	LastPollenInflux   int     // days/ticks since the lase pollen influx --> regulates cannibalism in times of reudced pollen income
 	PollenStoreLastDay float64 // amount of pollen in store yesterday to calculate if any fresh pollen were added without changing foraging submodule

@@ -51,17 +51,23 @@ func (s *CalcAffNbeecs) Update(w *ecs.World) {
 	broodTH := 0.1
 	foragerToWorkerTH := 0.3
 
-	maxNurseTH := 0.5
-	minNurseTH := 0.2
-	minIHbeeTH := 0.05 // non-Nurse IHbees are meant here
+	//maxNurseTH := 0.5
+	//minNurseTH := 0.2
+	//minIHbeeTH := 0.1 // non-Nurse IHbees are meant here
 
 	aff := s.aff.Aff
 
-	if s.stores.Pollen/s.stores.IdealPollen < pollenTH {
+	if s.stores.Pollen/s.stores.IdealPollen < pollenTH { // included a second pollen criterion, because Protein criterion based on ProteinFactorNurses got removed
 		aff--
 	}
-	if s.stores.ProteinFactorNurses < proteinTH {
-		aff--
+	if s.nparamsNew.Nursebeecsv1 {
+		if s.stores.Pollen <= 0. { // introduced this second pollen criterion, because Protein criterion based on ProteinFactorNurses got removed
+			aff--
+		}
+	} else {
+		if s.stores.ProteinFactorNurses < proteinTH {
+			aff--
+		}
 	}
 	if s.stores.Honey < honeyTH {
 		aff -= 2
@@ -75,38 +81,38 @@ func (s *CalcAffNbeecs) Update(w *ecs.World) {
 	if maxBrood > 0 && float64(s.pop.TotalBrood)/maxBrood > broodTH {
 		aff += 2
 	}
-
-	if s.nparamsNew.Nursebeecsv1 {
-		if s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) > minNurseTH { // regulate aff down if there are suficient nurses
-			aff -= 2 // can adjust to -1 as well
-		}
-		if !s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) < maxNurseTH { // regulate it up if there are insufficient
-			aff += 1
-		}
-		if float64(s.nstats.NonNurseIHbees)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) < minIHbeeTH { // if there are completely inplausible amounts of non-nurse IHbees upregulate aff as well
-			aff += 1
-		}
-	}
+	/*
+		if float64(s.nstats.WinterBees)/float64(s.pop.TotalAdults) <= 0.5 {
+			if s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) > minNurseTH { // regulate aff down if there are suficient nurses
+				aff -= 1 // can adjust to -1 as well
+			}
+			if !s.nglobals.SuffNurses && float64(s.nstats.TotalNurses)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) < maxNurseTH { // regulate it up if there are insufficient
+				aff += 1
+			}
+			if float64(s.nstats.NonNurseIHbees)/float64(s.pop.WorkersInHive+s.pop.WorkersForagers) < minIHbeeTH { // if there are completely inplausible amounts of non-nurse IHbees upregulate aff as well
+				aff += 1
+			}
+		}*/
 
 	if s.aff.Aff < s.affParams.Base-7 {
 		aff++
 	} else if s.aff.Aff > s.affParams.Base+7 {
 		aff--
 	}
-
-	if s.nparamsNew.Nursebeecsv1 {
-		if aff < s.aff.Aff && aff > s.nglobals.NurseAgeMax {
-			aff = s.aff.Aff - 1
-		} else if aff > s.aff.Aff {
-			aff = s.aff.Aff + 1
-		}
-	} else { // old aff
-		if aff < s.aff.Aff {
-			aff = s.aff.Aff - 1
-		} else if aff > s.aff.Aff {
-			aff = s.aff.Aff + 1
-		}
+	/*
+		if s.nparamsNew.Nursebeecsv1 {
+			if aff < s.aff.Aff && aff > s.nglobals.NurseAgeMax {
+				aff = s.aff.Aff - 1
+			} else if aff > s.aff.Aff {
+				aff = s.aff.Aff + 1
+			}
+		} else { // old aff*/
+	if aff < s.aff.Aff {
+		aff = s.aff.Aff - 1
+	} else if aff > s.aff.Aff {
+		aff = s.aff.Aff + 1
 	}
+	//}
 	s.aff.Aff = util.Clamp(aff, s.affParams.Min, s.affParams.Max)
 }
 

@@ -66,6 +66,9 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 
 	} else { // new broodcare
 		if s.nglobals.AbortNursing { // stop nursing completely and kill everything that needs active care aside from thermoregulation
+			if s.nglobals.KillDrones {
+				s.killDrones()
+			}
 			nonPupaeBrood := s.pop.DroneEggs + s.pop.DroneLarvae + s.pop.WorkerEggs + s.pop.WorkerLarvae
 			s.killBrood(nonPupaeBrood, true) // simply kill all larvae and eggs; capped pupae do not die, as they are not reliant on being fed, they might still die via reduction of excess brood though
 
@@ -76,6 +79,9 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 			s.ReduceBroodCells(excessBrood)
 
 		} else if s.NurseParams.ForesightedCannibalism { // normal case for new broodcare; gets called as long as there are some nurses left
+			if s.nglobals.KillDrones {
+				s.killDrones()
+			}
 
 			// calculate relative cannibalism intensity here; this is experimental for now
 			cann_mean := 0.
@@ -86,32 +92,27 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 			}
 			// calculate brood to be cannibalized based on pollen influx in the last few days
 			if s.nglobals.LastPollenInflux > 0 { // if there has not been a pollen influx this day increase cannibalized brood fraction
-				cann_rel = min(float64(s.nglobals.LastPollenInflux/6), 1.5) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 3 days; Schmickl&Crailsheim 2001)
+				cann_rel = min(float64(s.nglobals.LastPollenInflux/5), 1.5) // adds relative cannibalism rate on top of this based on time of last pollen influx (assume relative strengt grows linearly over 3 days; Schmickl&Crailsheim 2001)
 			}
+			toStarve := cann_rel * cann_mean
 
 			starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
-			if cann_mean > 0 {
-				cann_rel = util.Clamp(cann_rel+float64(starved)/cann_mean, 0, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
+			if float64(starved) > toStarve {
+				cann_rel = util.Clamp(float64(starved)/cann_mean, 0, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
 			}
+
+			killed := s.Cannibalize(starved, cann_rel)
 
 			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
 				s.oldNurseParams.MaxBroodNurseRatio // Matthias Becher means a maxBrood for thermoregulation capacities here and NOT for literal feeding of brood through nurses
-
-				/*
-					// maybe add some sort of nurse-based death mechanism here depending on scenario
-					if s.NurseParams.ScrambleComp { // this does not do anything atm and is a placeholder for eventual scenario creation
-						killed := s.Cannibalize(starved, cann_rel)
-
-						excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
-						s.ReduceBroodCells(excessBrood)
-					} else { // this does not do anything atm and is a placeholder for eventual scenario creation
-				*/
-			killed := s.Cannibalize(starved, cann_rel)
-
 			excessBrood := util.MaxInt(int(math.Ceil(float64(s.pop.TotalBrood-killed)-maxBrood)), 0)
+
 			s.ReduceBroodCells(excessBrood)
-			//}
 		} else { // no cannibalism based on days since last pollen influx
+			if s.nglobals.KillDrones {
+				s.killDrones()
+			}
+
 			starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // and THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
 
 			// calculate relative cannibalism intensity here; this is experimental for now
@@ -153,6 +154,12 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 }
 
 func (s *Nbroodcare) Finalize(w *ecs.World) {}
+
+func (s *Nbroodcare) killDrones() {
+	for i := 0; i < 9; i++ { // if the age of maturity for drones changes this should be changed too; this is overall rather crude and should not be kept forever
+		s.inHive.Drones[i] = 0 // technically all drones rely on getting fed by nurses and get yeeted out of the brood nest in times of resource scarcity, so this should be changed one day
+	}
+}
 
 func (s *Nbroodcare) Cannibalize(excess int, cann_rel float64) (killed int) {
 	killed = 0

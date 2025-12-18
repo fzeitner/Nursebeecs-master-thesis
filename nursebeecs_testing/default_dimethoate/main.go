@@ -25,16 +25,18 @@ func main() {
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
 		ContactExposureOneDay:     true,
-		ReworkedThermoETOX:        false,
+		ReworkedThermoETOX:        true,
 		RealisticStoch:            false,
+		HSUfix:                    true,
+		Nursebeefix:               true,
 
 		PPPname:                "dimethoate", // Identifier for the PPP used.
-		PPPconcentrationNectar: 990,
-		PPPconcentrationPollen: 26631,
-		PPPcontactExposure:     0.3, // contact exposure at patch
+		PPPconcentrationNectar: 1320,
+		PPPconcentrationPollen: 36200,
+		PPPcontactExposure:     0.4, // contact exposure at patch
 
 		AppDay:         217,   // Day of the year in which application starts [d].
-		ExposurePeriod: 8,     // Duration of exposure happening (irrespective of DT50) [d].
+		ExposurePeriod: 9,     // Duration of exposure happening (irrespective of DT50) [d].
 		SpinupPhase:    0,     // Number of years before exposure starts (to stabilize colony; 0 = first year) [y].
 		ExposurePhase:  3,     // Number of years in which exposure takes place [y].
 		DT50:           1000., // Whole plant DT50 from residue studies [d].
@@ -74,7 +76,7 @@ func main() {
 	if run_nbeecs {
 		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = false
+		pe.Nursing.NewBroodCare = true
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs(app, i, &p, &pe)
@@ -88,6 +90,7 @@ func main() {
 		pe.Nursing.NewConsumption = true
 		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
+		pe.Nursing.Nursebeecsv1 = true
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs2(app, i, &p, &pe)

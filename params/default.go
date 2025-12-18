@@ -171,7 +171,7 @@ func Default() DefaultParams {
 			DroneEggLayingSeasonStart:  115,
 			DroneEggLayingSeasonEnd:    240,
 
-			WinterBees: false,
+			WinterBees: true, // necessary to run Nursebeecs over multiple years; does not affect normal beecs runs in any way
 		},
 		InitialPopulation: InitialPopulation{
 			Count:     10_000,

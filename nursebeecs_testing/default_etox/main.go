@@ -25,8 +25,10 @@ func main() {
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 		ContactSum:                false,
 		ContactExposureOneDay:     true,
-		ReworkedThermoETOX:        false,
+		ReworkedThermoETOX:        true,
 		RealisticStoch:            false,
+		HSUfix:                    true,
+		Nursebeefix:               true,
 
 		PPPname:                "dimethoate", // Identifier for the PPP used.
 		PPPconcentrationNectar: 990,
@@ -48,6 +50,7 @@ func main() {
 	run_beecs := true // switch to run normal and/or nurse beecs
 	if run_beecs {
 		pe.Nursing.NewConsumption = false
+		pe.Nursing.NewBroodCare = false
 		for i := 0; i < 100; i++ {
 			run(app, i, &p, &pe)
 		}
@@ -55,11 +58,12 @@ func main() {
 	dur := time.Since(start)
 	fmt.Println(dur)
 
-	run_nbeecs := true // switch to run normal and/or nurse beecs
+	run_nbeecs := false // switch to run normal and/or nurse beecs
 	if run_nbeecs {
 		pe.Nursing.NewConsumption = true
-		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = false
+		pe.Nursing.NewBroodCare = true
+		pe.Nursing.Nursebeecsv0 = false
+		pe.Nursing.ForesightedCannibalism = false
 		pe.Nursing.Nursebeecsv1 = false
 
 		for i := 0; i < 100; i++ {
@@ -72,9 +76,10 @@ func main() {
 	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
 		pe.Nursing.NewConsumption = true
-		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
-		pe.Nursing.Nursebeecsv1 = false
+		pe.Nursing.Nursebeecsv0 = false
+		pe.Nursing.ForesightedCannibalism = false
+		pe.Nursing.Nursebeecsv1 = true
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs2(app, i, &p, &pe)

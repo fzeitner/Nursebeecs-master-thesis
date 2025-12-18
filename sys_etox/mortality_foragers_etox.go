@@ -41,14 +41,14 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 	query := s.foragerFilter.Query()
 	s.etoxstats.MeanDoseForager = 0.
 	s.etoxstats.CumDoseForagers = 0.
+	c := query.Count()
 
 	for query.Next() {
 		p := query.Get()
-
 		// mortality from PPP exposition, either dose-response relationship depending on their susceptibility to the contaminant or BeeGUTS can be called here
 		lethaldose := false
 		if s.etox.Application {
-			s.etoxstats.CumDoseForagers += p.OralDose
+			s.etoxstats.CumDoseForagers += p.OralDose * 100
 			if p.OralDose > 1e-20 && p.OralDose < s.toxic.ForagerOralLD50*1e5 {
 				if p.RdmSurvivalOral < 1-(1/(1+math.Pow(p.OralDose/s.toxic.ForagerOralLD50, s.toxic.ForagerOralSlope))) {
 					lethaldose = true
@@ -72,9 +72,9 @@ func (s *MortalityForagers_etox) Update(w *ecs.World) {
 	}
 	s.toRemove = s.toRemove[:0]
 
-	querysimple := s.foragersFilterSimple.Query()
-	c := querysimple.Count()
-	querysimple.Close()
+	//querysimple := s.foragersFilterSimple.Query()
+	//c := querysimple.Count()
+	//querysimple.Close()
 
 	if c > 0 {
 		s.etoxstats.MeanDoseForager = s.etoxstats.CumDoseForagers / float64(c*100)

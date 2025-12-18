@@ -1,6 +1,7 @@
 package sys
 
 import (
+	"github.com/fzeitner/beecs_masterthesis/comp"
 	"github.com/fzeitner/beecs_masterthesis/globals"
 	"github.com/fzeitner/beecs_masterthesis/params"
 	"github.com/mlange-42/ark-tools/resource"
@@ -15,6 +16,10 @@ type FixedTermination struct {
 	popStats   *globals.PopulationStats
 	step       int64
 	time       *resource.Tick
+
+	foragersFilter *ecs.Filter0
+	toKill         []ecs.Entity
+	inHive         *globals.InHive
 }
 
 func (s *FixedTermination) Initialize(w *ecs.World) {
@@ -24,13 +29,16 @@ func (s *FixedTermination) Initialize(w *ecs.World) {
 	s.step = 0
 	s.time = ecs.GetResource[resource.Tick](w)
 
+	s.foragersFilter = ecs.NewFilter0(w).With(ecs.C[comp.Age]())
+	s.inHive = ecs.GetResource[globals.InHive](w)
 }
 
 func (s *FixedTermination) Update(w *ecs.World) {
 
-	if s.termParams.OnExtinction && s.termParams.WinterCritExtinction { // extinction at the end of year depending on colony size; exactly the same as in BEEHAVE now
+	if s.termParams.WinterCritExtinction { // extinction at the end of year depending on colony size; exactly the same as in BEEHAVE now
 		if (s.time.Tick)%365 == 0 && (s.popStats.WorkersForagers+s.popStats.WorkersInHive) < s.termParams.CritColonySizeWinter {
-			s.termRes.Terminate = true
+			s.KillColony(w)
+			//s.termRes.Terminate = true
 		}
 	}
 	if s.termParams.OnExtinction && s.popStats.TotalPopulation == 0 {
@@ -44,3 +52,21 @@ func (s *FixedTermination) Update(w *ecs.World) {
 
 // Finalize the system
 func (s *FixedTermination) Finalize(w *ecs.World) {}
+
+func (s *FixedTermination) KillColony(w *ecs.World) {
+	for i := range s.inHive.Workers {
+		s.inHive.Workers[i] = 0
+	}
+	for i := range s.inHive.Drones {
+		s.inHive.Drones[i] = 0
+	}
+
+	q := s.foragersFilter.Query()
+	for q.Next() {
+		s.toKill = append(s.toKill, q.Entity())
+	}
+	for _, e := range s.toKill {
+		w.RemoveEntity(e)
+	}
+	s.toKill = s.toKill[:0]
+}

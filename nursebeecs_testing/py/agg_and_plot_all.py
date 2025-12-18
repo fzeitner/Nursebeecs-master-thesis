@@ -51,8 +51,51 @@ def agg_beecs(file_pattern, out_file):
             if sum(inf) > 0:
                 _ = 1
 
+            #q = np.nanpercentile(values, [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95])
             q = np.quantile(values, [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95])
             out.loc[tick, cols] = q
+        out = out.copy()      # to keep df from becoming highly fragmented
+
+    out.to_csv(out_file, sep=";", index=False)
+
+def agg_beecs_mean(file_pattern, out_file):
+    data = None
+
+    idx = 0
+    while True:
+        file = file_pattern % (idx,)
+        if not path.exists(file):
+            break
+
+        run = pd.read_csv(file, delimiter=";")
+        run = run.rename(columns={"t": "ticks"})
+        run.insert(1, "run", idx)
+        if data is None:
+            data = run
+        else:
+            data = pd.concat([data, run])
+
+        idx += 1
+
+    runs = pd.unique(data.run)
+    runs.sort()
+    ticks = pd.unique(data.ticks)
+    ticks.sort()
+
+    columns = list(data.columns)[2:]
+
+    out = pd.DataFrame(data={"ticks": ticks}, index=ticks)
+
+    for column in columns:
+        for tick in ticks:
+            values = data[column][data.ticks == tick]
+
+            inf = np.isinf(values)
+            if sum(inf) > 0: # debugging anchor
+                _ = 1
+
+            q = np.mean(values)
+            out.loc[tick, column] = q
         out = out.copy()      # to keep df from becoming highly fragmented
 
     out.to_csv(out_file, sep=";", index=False)
@@ -93,9 +136,9 @@ def plot_column(data_beecs, data_nbeecs, data_nbeecs2, column, quantiles, image_
 
     fig, ax = plt.subplots(figsize=(10, 4))
     for data, col, model in [
-        (data_beecs, "blue", "beecs"),
-        (data_nbeecs, "red", "oldBC"),
-        (data_nbeecs2, "green", "newBC"),
+        (data_beecs, "blue", "nbeecs"),
+        (data_nbeecs, "red", "nbeecsHG"),
+        (data_nbeecs2, "green", "nbeecsHGFood"),
     ]:      
         q10 = data[column + "_Q05"]
         q90 = data[column + "_Q95"]
@@ -248,20 +291,21 @@ if __name__ == "__main__":
             "Rothamsted2009_beecs": 1,
             "Rothamsted2009_fenoxycarb_5years" : 5,
             "Rothamsted2009_etox_5years": 1,
-            "Rothamsted2009_clothianidin_5years": 5,
+            "Rothamsted2009_clothianidin_5years": 7,
     }
 
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
     file_formats = ["svg", "png"]
 
-    folder = testfolders[4]
+    folder = testfolders[0]
     file_format = file_formats[0]       # 0 = svg, 1 = png
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
     agg_all = True
     agg_nbeecs = False
     agg_beec = False
+    plot = False
 
     if run_all:
         for folder in testfolders:
@@ -275,7 +319,37 @@ if __name__ == "__main__":
             elif agg_beec:
                 agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
 
+            if plot:
+                plot_quantiles(
+                    "nursebeecs_testing/" + folder + "/beecs.csv",
+                    "nursebeecs_testing/" + folder + "/oldbc.csv",
+                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    "nursebeecs_testing/" + folder ,
+                    file_format,
+                    appdays[folder],
+                    multiyear_app[folder]
+                )
+                plot_popstructure(
+                    "nursebeecs_testing/" + folder + "/beecs.csv",
+                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    "nursebeecs_testing/" + folder ,
+                    file_format,
+                    appdays[folder],
+                    multiyear_app[folder],
+                    False
+                )
+    else:
+        if agg_all:
+                agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+        elif agg_nbeecs:
+            agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+        elif agg_beec:
+            agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
 
+        if plot:
             plot_quantiles(
                 "nursebeecs_testing/" + folder + "/beecs.csv",
                 "nursebeecs_testing/" + folder + "/oldbc.csv",
@@ -294,32 +368,33 @@ if __name__ == "__main__":
                 multiyear_app[folder],
                 False
             )
-    else:
+            """
         if agg_all:
-            agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
-            agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
-            agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecs-%04d.csv", "nursebeecs_testing/"+ folder +"/nbeecs.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecsHG-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecsHG.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecsHGFood-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecsHGFood.csv")
         elif agg_nbeecs:
-            agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
-            agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecsHG-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecsHG.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/nbeecsHGFood-%04d.csv", "nursebeecs_testing/" + folder + "/nbeecsHGFood.csv")
         elif agg_beec:
             agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
-        plot_quantiles(
-            "nursebeecs_testing/" + folder + "/beecs.csv",
-            "nursebeecs_testing/" + folder + "/oldbc.csv",
-            "nursebeecs_testing/" + folder + "/newbc.csv",
-            "nursebeecs_testing/" + folder ,
-            file_format,
-            appdays[folder],
-            multiyear_app[folder]
-        )
-        plot_popstructure(
-            "nursebeecs_testing/" + folder + "/beecs.csv",
-            "nursebeecs_testing/" + folder + "/newbc.csv",
-            "nursebeecs_testing/" + folder ,
-            file_format,
-            appdays[folder],
-            multiyear_app[folder],
-            False
-        )
+        if plot:
+            plot_quantiles(
+                "nursebeecs_testing/" + folder + "/nbeecs.csv",
+                "nursebeecs_testing/" + folder + "/nbeecsHG.csv",
+                "nursebeecs_testing/" + folder + "/nbeecsHGFood.csv",
+                "nursebeecs_testing/" + folder ,
+                file_format,
+                appdays[folder],
+                multiyear_app[folder]
+            )
+            plot_popstructure(
+                "nursebeecs_testing/" + folder + "/nbeecs.csv",
+                "nursebeecs_testing/" + folder + "/nbeecsHG.csv",
+                "nursebeecs_testing/" + folder ,
+                file_format,
+                appdays[folder],
+                multiyear_app[folder],
+                False
+            )"""
 

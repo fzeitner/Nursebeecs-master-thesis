@@ -207,15 +207,14 @@ func (s *Foraging_etox) newForagers(w *ecs.World) {
 		s.toAdd = append(s.toAdd, agequery.Entity())
 	}
 
-	// adding etox components to the newly initialized forager entities
-	for _, e := range s.toAdd {
-		s.pppExpoAdder.Add(e, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
-	}
-
 	year := int((s.time.Tick) / 365)
 	for _, e := range s.toAdd {
-		age := s.ageMapper.Get(e)
+		// adding etox components to the newly initialized forager entities
+		s.pppExpoAdder.Add(e, &comp_etox.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: s.rng.Float64(), RdmSurvivalOral: s.rng.Float64()}, &comp_etox.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})
+
+		// check if the squadron is to be considered a winter bee or not
 		if s.nursingParams.WinterBees {
+			age := s.ageMapper.Get(e)
 			if age.DayOfBirth >= 205+year*365 && age.DayOfBirth < 265+year*365 { // original BEEHAVE assumes starting foragers (=winter bees) are aged 100 - 160 days already; Aff + 21 = current age of the cohort; 21 = dev-time from egg - adult; Aff = adult time before foraging
 				if s.rng.Float64() <= (1./60.)*float64(age.DayOfBirth-204+year*365) { // assume linear increase in likelihood to turn into winterbees
 					s.foragerMapper.Add(e, &comp_etox.Activity_etox{Current: activity.Resting, Winterbee: true}, &comp_etox.KnownPatch_etox{}) // assumes bees turning into foragers are winterbees again;

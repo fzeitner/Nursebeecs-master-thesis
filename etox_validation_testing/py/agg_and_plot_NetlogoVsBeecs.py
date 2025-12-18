@@ -164,8 +164,8 @@ if __name__ == "__main__":
 
 
     run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
-    agg_all = False
-    agg_net = True
+    agg_all = True
+    agg_net = False
     agg_beec = False
     plot = False
 

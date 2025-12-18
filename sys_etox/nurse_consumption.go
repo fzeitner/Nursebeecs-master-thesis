@@ -101,42 +101,32 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 	// larvae consumption first; gets halted if there are actually no nurses present (large scale death events)
 	s.nglobals.AbortNursing = false
 	if s.nstats.TotalNurses == 0 { // means all nurses already died this timestep
-		s.nglobals.AbortNursing = true
+		s.nglobals.AbortNursing = true // stops all subsystems from calculating consumption of larvae
 	} else {
-		// larval honey consumption
+		// larval honey and pollen consumption for worker larvae
 		for i := 0; i < len(s.larvae.Workers); i++ {
 			hneedLarvae += s.newCons.HoneyWorkerLarva[i] * float64(s.larvae.Workers[i])
-			if i > 2 {
-				s.nglobals.WLHoney += s.newCons.HoneyWorkerLarva[i] * float64(s.larvae.Workers[i]) * s.newCons.HoneyDirect // assumes a fraction of honey gets taken in directly from age 3 onwards
-			}
-		}
-		s.nglobals.Total_honey = hneedLarvae - s.nglobals.WLHoney // other honey needs to be predigested by nurses
-
-		hneedLarvae = 0.
-		for i := 0; i < len(s.larvae.Drones); i++ {
-			hneedLarvae += s.newCons.HoneyDroneLarva[i] * float64(s.larvae.Drones[i])
-			if i > 2 {
-				s.nglobals.DLHoney += s.newCons.HoneyDroneLarva[i] * float64(s.larvae.Drones[i]) * s.newCons.HoneyDirect // assumes a fraction of honey gets taken in directly from age 3 onwards
-			}
-		}
-		s.nglobals.Total_honey += (hneedLarvae - s.nglobals.DLHoney) // other honey needs to be predigested by nurses
-
-		// and larval pollen consumption
-		for i := 0; i < len(s.larvae.Workers); i++ {
 			pneedLarvae += s.newCons.PollenWorkerLarva[i] * float64(s.larvae.Workers[i])
 			if i > 2 {
+				s.nglobals.WLHoney += s.newCons.HoneyWorkerLarva[i] * float64(s.larvae.Workers[i]) * s.newCons.HoneyDirect    // assumes a fraction of honey gets taken in directly from age 3 onwards
 				s.nglobals.WLPollen += s.newCons.PollenWorkerLarva[i] * float64(s.larvae.Workers[i]) * s.newCons.PollenDirect // assumes a fraction of pollen gets taken in directly from age 3 onwards
 			}
 		}
+		s.nglobals.Total_honey = hneedLarvae - s.nglobals.WLHoney     // other honey needs to be predigested by nurses
 		s.nglobals.Total_pollen = (pneedLarvae - s.nglobals.WLPollen) // roughly 95% of pollen predigested by nurses
 
+		// larval honey and pollen consumption for drone larvae
+		hneedLarvae = 0.
 		pneedLarvae = 0.
 		for i := 0; i < len(s.larvae.Drones); i++ {
+			hneedLarvae += s.newCons.HoneyDroneLarva[i] * float64(s.larvae.Drones[i])
 			pneedLarvae += s.newCons.PollenDroneLarva[i] * float64(s.larvae.Drones[i])
 			if i > 2 {
+				s.nglobals.DLHoney += s.newCons.HoneyDroneLarva[i] * float64(s.larvae.Drones[i]) * s.newCons.HoneyDirect    // assumes a fraction of honey gets taken in directly from age 3 onwards
 				s.nglobals.DLPollen += s.newCons.PollenDroneLarva[i] * float64(s.larvae.Drones[i]) * s.newCons.PollenDirect // assumes a fraction of pollen gets taken in directly from age 3 onwards
 			}
 		}
+		s.nglobals.Total_honey += (hneedLarvae - s.nglobals.DLHoney)   // other honey needs to be predigested by nurses
 		s.nglobals.Total_pollen += (pneedLarvae - s.nglobals.DLPollen) // assume 95% of pollen need gets predigested by nurses, technically only 4+ day old larvae any get pollen directly though, so maybe adjust later
 
 		// increased needs of young adult drones
@@ -193,23 +183,27 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 			s.nglobals.NurseWorkLoad = s.nglobals.Total_pollen / TotalNurseCap
 		}
 	}
-	if s.nstats.TotalNurses != 0 {
+	if s.nstats.TotalNurses != 0 && s.nglobals.NurseWorkLoad != 0 {
 		s.nstats.MeanPollenIntake = s.nglobals.Total_pollen/float64(s.nstats.TotalNurses) + s.newCons.PollenAdultWorker
 		s.nstats.MaxPollenIntake = maxpollenpernurse*s.nglobals.NurseWorkLoad + s.newCons.PollenAdultWorker
 		s.nstats.MeanHoneyIntake = s.nglobals.Total_honey/float64(s.nstats.TotalNurses) + s.newCons.HoneyAdultWorker
-		s.nstats.MaxHoneyIntake = s.nstats.MaxPollenIntake/s.nglobals.Total_pollen*s.nglobals.Total_honey + s.newCons.HoneyAdultWorker
+		s.nstats.MaxHoneyIntake = (s.nstats.MaxPollenIntake-s.newCons.PollenAdultWorker)/s.nglobals.Total_pollen*s.nglobals.Total_honey + s.newCons.HoneyAdultWorker
 	} else {
-		s.nstats.MeanPollenIntake = 0
-		s.nstats.MaxPollenIntake = 0
-		s.nstats.MaxHoneyIntake = 0
-		s.nstats.MeanHoneyIntake = 0
+		s.nstats.MeanPollenIntake = s.newCons.PollenAdultWorker
+		s.nstats.MaxPollenIntake = s.newCons.PollenAdultWorker
+		s.nstats.MaxHoneyIntake = s.newCons.HoneyAdultWorker
+		s.nstats.MeanHoneyIntake = s.newCons.HoneyAdultWorker
 	}
 
 	// is a reduction in the nursing force possible?
 	s.nglobals.SquadstoReduce = 0
 	s.nglobals.Reductionpossible = false
 
-	if s.nglobals.SuffNurses && s.nstats.WinterBees+s.nstats.RevertedForagers == 0 { // is a reduction in the nursing force possible?
+	foragernursefrac := 0.
+	if s.nstats.TotalNurses > 0 {
+		foragernursefrac = float64(s.nstats.WinterBees+s.nstats.RevertedForagers) / float64(s.nstats.TotalNurses)
+	}
+	if s.nglobals.SuffNurses && foragernursefrac <= 0.1 && s.nstats.RevertedForagers == 0 { // is a reduction in the nursing force possible?
 		TotalNurseCap_red := TotalNurseCap - float64(s.inHive.Workers[s.nglobals.NurseAgeMax])*s.newCons.MaxPollenNurse*s.newCons.Nursingcapabiliies[s.nglobals.NurseAgeMax] // could also use nonZeroCohort here for reducing to NurseAgeMax to that spot
 		if TotalNurseCap_red >= s.nglobals.Total_pollen {
 			s.nglobals.Reductionpossible = true
@@ -229,30 +223,31 @@ func (s *NurseConsumption) Update(w *ecs.World) {
 
 	// REWPORK FROM HERE: ProteinFactorNurses
 	if s.nurseParams.Nursebeecsv1 {
-		if s.stores.Pollen > 0 && s.nglobals.NurseWorkLoad < s.nurseParams.NurseWorkLoadTH { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
-			threshold := 1.0
-			if s.nglobals.NurseWorkLoad >= threshold {
-				threshold = s.nglobals.NurseWorkLoad
-			}
+		if s.stores.Pollen > 0 { // REWORKED to use NurseWorkload instead of overall colony size including foragers
+			threshold := util.Clamp(s.nglobals.NurseWorkLoad, s.nurseParams.MinimumTH, s.nurseParams.NurseWorkLoadTH)
 			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses+(threshold-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // increase of reservoir dependent on workload as well
 		} else if s.stores.Pollen <= 0 {
 			workLoad := util.Clamp(s.nglobals.NurseWorkLoad, 0.0, 5.0)                                                                 // using values > 1 destabilizes model dynamics a lot, maybe look for an alternative solution
 			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-workLoad/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
-		} else {
-			s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses-(s.nglobals.NurseWorkLoad-1.0)/s.storeParams.ProteinStoreNurse, 0.0, 1.0) // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+		}
+	} else if s.nurseParams.Nursebeecsv0 {
+		// old version that leads to large fluctuations in larval abundance
+		if s.stores.Pollen > 0 { // REWORK MAYBE NECESSARY; the idea behind this is to simulate a lack of protein based on pollen
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + (s.nurseParams.NurseWorkLoadTH-s.nglobals.NurseWorkLoad)/s.storeParams.ProteinStoreNurse
+		} else if s.stores.Pollen <= 0 {
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - s.nglobals.NurseWorkLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
 		}
 	} else { // old ProteinFactorNurses dependent on colony size
 		if s.stores.Pollen > 0 {
 			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses + 1.0/s.storeParams.ProteinStoreNurse // this still makes sense
 		} else {
-
 			maxBrood := (float64(s.pop.WorkersInHive) + float64(s.pop.WorkersForagers)*s.oldNurseParams.ForagerNursingContribution) *
-				s.oldNurseParams.MaxBroodNurseRatio // this will probably need to be reworked still
-			workLoad := 0.0 // not necessary anymore because workload is now defined directly via forced protein intake of nurses which adresses the same idea
+				s.oldNurseParams.MaxBroodNurseRatio
+			workLoad := 0.0
 			if maxBrood > 0 {
 				workLoad = float64(s.pop.TotalBrood) / maxBrood
 			}
-			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse // now uses NurseWorkLoad instead of old workLoad which was weirdly dependent on Foragers and thus overall colony size
+			s.stores.ProteinFactorNurses = s.stores.ProteinFactorNurses - workLoad/s.storeParams.ProteinStoreNurse
 		}
 		s.stores.ProteinFactorNurses = util.Clamp(s.stores.ProteinFactorNurses, 0.0, 1.0)
 	}
@@ -303,9 +298,12 @@ func (s *NurseConsumption) calcNursingMetrics(w *ecs.World) (nursingcap float64,
 			s.nglobals.Reverted = append(s.nglobals.Reverted, query.Entity())
 		}
 	}
+	if s.nstats.WinterBees != 0 {
+		maxpollenpernurse = s.nglobals.CurrentMaxPollenNurse // winterbees always work at 100% for now; should be rethought down the line
+	}
 	nursingcap += float64(s.nstats.RevertedForagers+s.nstats.WinterBees) * s.nglobals.CurrentMaxPollenNurse
-	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees                       // maybe ignore winterbees here as they are a bit of a special case?
-	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.WorkersInHive+s.pop.WorkersForagers)) * 100 // expressed in %
+	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
+	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.WorkersInHive+s.pop.WorkersForagers))
 
 	s.nstats.NonNurseIHbees = 0
 	for i := 0; i < 4; i++ {

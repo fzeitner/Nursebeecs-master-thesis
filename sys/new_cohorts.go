@@ -2,7 +2,6 @@ package sys
 
 import (
 	"github.com/fzeitner/beecs_masterthesis/globals"
-	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -15,15 +14,11 @@ import (
 type NewCohorts struct {
 	inHive     *globals.InHive
 	newCohorts *globals.NewCohorts
-
-	time *resource.Tick
 }
 
 func (s *NewCohorts) Initialize(w *ecs.World) {
 	s.inHive = ecs.GetResource[globals.InHive](w)
 	s.newCohorts = ecs.GetResource[globals.NewCohorts](w)
-
-	s.time = ecs.GetResource[resource.Tick](w)
 }
 
 func (s *NewCohorts) Update(w *ecs.World) {

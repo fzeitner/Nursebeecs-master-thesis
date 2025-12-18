@@ -38,9 +38,9 @@ type NursingNeeds struct {
 	foragermapper *ecs.Map1[comp.Age]
 	actMapper     *ecs.Map1[comp_etox.Activity_etox]
 
-	toRevert []ecs.Entity
-	ageslice []int // experimental; used to sort forager squadrons that are to be reverted to IHbees because of a mass death event leaving the hive without nurses
-	sorted   []int // experimental; used to sort forager squadrons that are to be reverted to IHbees because of a mass death event leaving the hive without nurses
+	toRevert []ecs.Entity // saves foragers squadrons that could potentially be reverted if the need arises
+	ageslice []int        // used to sort forager squadrons that are to be reverted to IHbees because of a mass death event leaving the hive without nurses
+	sorted   []int        // used to sort forager squadrons that are to be reverted to IHbees because of a mass death event leaving the hive without nurses
 }
 
 func (s *NursingNeeds) Initialize(w *ecs.World) {
@@ -70,87 +70,105 @@ func (s *NursingNeeds) Initialize(w *ecs.World) {
 }
 
 func (s *NursingNeeds) Update(w *ecs.World) {
-	// implement rules for nurse recruitment
-	doy := s.time.Tick % 365
-	//oldNurseAge := s.nglobals.NurseAgeMax
-	// regular nurse recruitment by moving age up or down by 1 depending on some metrics; down below there is the special case if there are far too little nurses
-	if (!s.nglobals.SuffNurses && s.nglobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0 && len(s.nglobals.WinterBees) < 5) {
-		// && float64(NonNurseIHbees/s.pop.TotalAdults) >= 0.1  && float64(s.nstats.TotalNurses/s.pop.TotalAdults) < 0.5 {
-		s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax+1, 5, 50)
-	} else if (s.stores.ProteinFactorNurses < 1. && s.stores.Pollen <= 0 && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
-		s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax-1, 5, 50)
-	}
 
-	if doy == 0 { // reset NurseAgeMax to default value at the start of a new year
-		s.nglobals.NurseAgeMax = s.NurseParams.NurseAgeCeiling
-	}
+	s.nglobals.KillDrones = false
+	TotalNursesLastDay := s.nstats.TotalNurses // in case of etox mortality events in between last day´s consumption proc and now we recount available nurses here
+	MinimumNurses := max(int(0.5*float64(TotalNursesLastDay)), 200)
 
-	/*
-		// function to adjust NurseAgeMax to next nonzero cohort, this is still to be tested though
-		if (!s.nglobals.SuffNurses && s.nglobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0 && len(s.nglobals.WinterBees) < 5) {
-			PufferCohortAvailable := false
-			nextCohort := 50
-			for i := s.nglobals.NurseAgeMax + 1; i < s.aff.Aff; i++ {
-				if s.inHive.Workers[i] != 0 {
-					nextCohort = min(i, nextCohort)
-					if nextCohort < i {
-						PufferCohortAvailable = true
-					}
-				}
-			}
-			if PufferCohortAvailable && nextCohort != 50 {
-				s.nglobals.NurseAgeMax = util.Clamp(nextCohort, 5, 50)
-			}
-		} else if (s.stores.ProteinFactorNurses < 1. && s.stores.Pollen <= 0 && len(s.nglobals.WinterBees) == 0) || s.nglobals.Reductionpossible {
-			nextCohort := 0
-			for i := s.nglobals.NurseAgeMax - 1; i > 4; i-- {
-				if s.inHive.Workers[i] != 0 {
-					nextCohort = max(i, nextCohort)
-			}
-			if nextCohort != 0 {
-				s.nglobals.NurseAgeMax = util.Clamp(nextCohort, 5, 50)
-			}
-		}
-	*/
-
+	s.calcNursingMetrics(w)
 	// un-revert redundant reverted foragers
 	if s.nglobals.SquadstoReduce > 0 {
 		s.unRevertForagers(w, s.nglobals.SquadstoReduce)
 	}
+	doy := s.time.Tick % 365
 
-	TotalNursesLastDay := s.nstats.TotalNurses // in case of etox mortality events in between last day´s consumption proc and now we recount available nurses here
-	// now evaluate current state of nursing metrics
-	s.calcNursingMetrics(w)
-	totalAdults := s.pop.WorkersForagers + s.pop.WorkersInHive
+	WinterBeeRatio := 0.
+	if s.nstats.TotalNurses > 0 {
+		WinterBeeRatio = float64(s.nstats.WinterBees) / float64(s.nstats.TotalNurses)
+	}
 
-	// special rules if all nurses die due to etox related mass deaths --> foragers get called back to make the hive continue somehow
-	// may also make sense to have this activate if there are simply far too little nurses and a large fraction of foragers present
-	// technically they should have a reduced nursing efficiency, but this has not been implemented as of yet
-	if (s.nstats.NurseFraction <= 0.05 && totalAdults > 0) || s.nstats.TotalNurses == 0 {
-		recruitedNurses := 0
-		for i := s.nglobals.NurseAgeMax; i < s.aff.Aff; i++ {
-			if s.inHive.Workers[i] != 0 {
-				recruitedNurses += s.inHive.Workers[i]
-				s.nglobals.NurseAgeMax = util.Clamp(i, 5, 50) // emergency increase to NurseAgeMax
+	if WinterBeeRatio <= 0.9 || s.nstats.TotalNurses <= MinimumNurses {
+		// implement rules for nurse recruitment
+		// regular nurse recruitment by moving age up or down by 1 depending on some metrics; down below there is the special case if there are far too little nurses
 
-				if float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) >= 0.05 && float64(recruitedNurses) >= 0.5*float64(TotalNursesLastDay) && s.nstats.TotalNurses != 0 { // reach 5% nurses and at least half of last day; this is experimental
-					break
+		if s.nstats.TotalNurses <= MinimumNurses {
+			s.nglobals.KillDrones = true
+		}
+
+		NewNurseAgeMax := s.nglobals.NurseAgeMax
+		if !s.nglobals.SuffNurses || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0) {
+			NewNurseAgeMax++
+		}
+		if s.nglobals.Reductionpossible { //|| s.stores.Pollen <= 0.5*s.stores.IdealPollen {
+			NewNurseAgeMax--
+		}
+		s.nglobals.NurseAgeMax = util.Clamp(NewNurseAgeMax, 5, s.aff.Aff-1)
+
+		if doy == 0 { // reset NurseAgeMax to default value at the start of a new year
+			s.nglobals.NurseAgeMax = s.NurseParams.NurseAgeCeiling
+		}
+
+		/*
+			// function to adjust NurseAgeMax to next nonzero cohort, this is still to be tested though
+			if (!s.nglobals.SuffNurses && s.nglobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0) {
+				PufferCohortAvailable := false
+				nextCohort := 50
+				for i := s.nglobals.NurseAgeMax + 1; i < s.aff.Aff; i++ {
+					if s.inHive.Workers[i] != 0 {
+						nextCohort = min(i, nextCohort)
+						if nextCohort < i {
+							PufferCohortAvailable = true
+						}
+					}
+				}
+				if PufferCohortAvailable && nextCohort != 50 {
+					s.nglobals.NurseAgeMax = util.Clamp(nextCohort, 5, s.aff.Aff)
+				}
+			} else if s.stores.Pollen <= 0 || s.nglobals.Reductionpossible {
+				nextCohort := 0
+				for i := s.nglobals.NurseAgeMax - 1; i > 4; i-- {
+					if s.inHive.Workers[i] != 0 {
+						nextCohort = max(i, nextCohort)
+				}
+				if nextCohort != 0 {
+					s.nglobals.NurseAgeMax = util.Clamp(nextCohort, 5, s.aff.Aff)
 				}
 			}
-		}
-		if (float64(recruitedNurses) < 0.5*float64(TotalNursesLastDay) || float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) <= 0.05 || s.nstats.TotalNurses == 0) && s.newCohorts.Foragers > 0 {
-			s.nglobals.NurseAgeMax = util.Clamp(s.nglobals.NurseAgeMax+1, 5, 50)
+		*/
 
-			s.inHive.Workers[s.aff.Aff] = s.newCohorts.Foragers * 100
-			s.aff.Aff++ // experimental
-			s.newCohorts.Foragers = 0
-			recruitedNurses += s.inHive.Workers[s.nglobals.NurseAgeMax]
-		}
-		if (float64(recruitedNurses) < 0.5*float64(TotalNursesLastDay) || float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) <= 0.05 || s.nstats.TotalNurses == 0) && s.pop.WorkersForagers > 0 {
-			s.revertForagers(w, recruitedNurses, TotalNursesLastDay)
+		// now evaluate current state of nursing metrics
+		s.calcNursingMetrics(w)
+
+		// special rules if all nurses die due to etox related mass deaths --> foragers get called back to make the hive continue somehow
+		// may also make sense to have this activate if there are simply far too little nurses and a large fraction of foragers present
+		// technically they should have a reduced nursing efficiency, but this has not been implemented as of yet
+		totalAdults := s.pop.WorkersForagers + s.pop.WorkersInHive
+		if (s.nstats.NurseFraction <= 0.1 || s.nstats.TotalNurses < MinimumNurses) && totalAdults > 0 {
+			recruitedNurses := 0
+			for i := s.nglobals.NurseAgeMax; i < s.aff.Aff; i++ {
+				if s.inHive.Workers[i] != 0 {
+					recruitedNurses += s.inHive.Workers[i]
+					s.nglobals.NurseAgeMax = util.Clamp(i, 5, 50) // emergency increase to NurseAgeMax
+
+					if float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) >= 0.1 && recruitedNurses >= MinimumNurses { // reach 10% nurses and at least half of last dayl
+						break
+					}
+				}
+			}
+			if (recruitedNurses < MinimumNurses || float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) <= 0.1) && s.newCohorts.Foragers > 0 {
+				s.nglobals.NurseAgeMax = util.Clamp(s.aff.Aff, 5, 50)
+
+				s.inHive.Workers[s.aff.Aff] = s.newCohorts.Foragers * 100
+				s.aff.Aff++ // increase Aff by 1
+				s.newCohorts.Foragers = 0
+				recruitedNurses += s.inHive.Workers[s.nglobals.NurseAgeMax]
+			}
+			if (recruitedNurses < MinimumNurses || float64(recruitedNurses+s.nstats.TotalNurses)/float64(totalAdults) <= 0.1) && s.pop.WorkersForagers > 0 {
+				s.revertForagers(w, recruitedNurses, MinimumNurses)
+			}
+			s.calcNursingMetrics(w)
 		}
 	}
-	s.calcNursingMetrics(w)
 }
 
 func (s *NursingNeeds) Finalize(w *ecs.World) {}
@@ -159,8 +177,16 @@ func (s *NursingNeeds) calcNursingMetrics(w *ecs.World) {
 	s.nstats.IHbeeNurses = 0
 	s.nstats.WinterBees = 0
 	s.nstats.RevertedForagers = 0
-	for i := 4; i <= s.nglobals.NurseAgeMax; i++ {
-		s.nstats.IHbeeNurses += s.inHive.Workers[i]
+	s.nstats.NonNurseIHbees = 0
+
+	for i := 0; i < len(s.inHive.Workers); i++ {
+		if i < 4 {
+			s.nstats.NonNurseIHbees += s.inHive.Workers[i]
+		} else if i >= 4 && i <= s.nglobals.NurseAgeMax {
+			s.nstats.IHbeeNurses += s.inHive.Workers[i]
+		} else {
+			s.nstats.NonNurseIHbees += s.inHive.Workers[i]
+		}
 	}
 	// quick fix for the beginning and end of the year without IHbees via making starting foragers winterbees; also includes reverted foragers that might occur in times of great nursing needs or after mass death events
 	s.nglobals.WinterBees = s.nglobals.WinterBees[:0]
@@ -176,23 +202,18 @@ func (s *NursingNeeds) calcNursingMetrics(w *ecs.World) {
 			s.nglobals.Reverted = append(s.nglobals.Reverted, query.Entity())
 		}
 	}
-	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees                       // maybe ignore winterbees here as they are a bit of a special case?
-	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.WorkersForagers+s.pop.WorkersInHive)) * 100 // expressed in %
-
-	s.nstats.NonNurseIHbees = 0
-	for i := 0; i < 4; i++ {
-		s.nstats.NonNurseIHbees += s.inHive.Workers[i]
-	}
-	for i := s.nglobals.NurseAgeMax + 1; i < len(s.inHive.Workers); i++ {
-		s.nstats.NonNurseIHbees += s.inHive.Workers[i]
-	}
-
+	s.nstats.TotalNurses = s.nstats.IHbeeNurses + s.nstats.RevertedForagers + s.nstats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
+	s.nstats.NurseFraction = (float64(s.nstats.TotalNurses) / float64(s.pop.WorkersForagers+s.pop.WorkersInHive))
 }
 
 func (s *NursingNeeds) revertForagers(w *ecs.World, recruited int, recruitmenttarget int) {
 	// this function reverts foragers to IHbees if they are aged below IHbee maximum age or turns them into winterbees
 	// it will only revert as many squadrons as are necessary to meet the recruitment target
 	// this should be adjusted once winter bees are modelled explicitly
+	s.ageslice = s.ageslice[:0]
+	s.sorted = s.sorted[:0]
+	s.toRevert = s.toRevert[:0]
+
 	query := s.foragerfilter.Query()
 	for query.Next() {
 		act := query.Get()
@@ -234,7 +255,7 @@ func (s *NursingNeeds) revertForagers(w *ecs.World, recruited int, recruitmentta
 				break
 			}
 		}
-	} else {
+	} else { // just revert everyone
 		for _, e := range s.toRevert {
 			act := s.actMapper.Get(e)
 			act.Reverted = true

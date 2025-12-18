@@ -120,15 +120,17 @@ func Default_etox() DefaultParams_etox {
 			Nursingcapabiliies:    make([]float64, 51),
 		},
 		Nursing: Nursing{
-			MinWL_ratio:            2,                                           // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
-			NurseAgeCeiling:        13,                                          // default age at which nurses stop working as nurses, unless model dynamics increase this
-			BroodCannibalismChance: []float64{0.1, 0.35, 0.5, 0.05, 0., 0., 0.}, // based on data from Schmickl&Crailsheim (2001, 2002)
-			NurseWorkLoadTH:        1.5,                                         // just an assumption to start with
+			MinWL_ratio:            2,                                            // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 W:L gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
+			NurseAgeCeiling:        13,                                           // default age at which nurses stop working as nurses, unless model dynamics increase this
+			BroodCannibalismChance: []float64{0.23, 0.3, 0.58, 0.06, 0., 0., 0.}, // based on data from Schmickl&Crailsheim (2001, 2002) and HoPoMo model quoting these studies
+			NurseWorkLoadTH:        1.5,                                          // equals 11.25 mg of pollen per day, this should be a reasonable maximum intake for nurse bees (Rortais et al. 2005, Crailsheim et al. 1992)
+			MinimumTH:              1.0,                                          // 1.0 equals per calculation of NurseWorkload a reasonable mean intake of nurse bees, because NurseWorkload is designed to represent exactly this
 
 			NewConsumption: false, // turned off to keep basic model as default
 			WinterBees:     true,
 			NewBroodCare:   false,
 			//ScrambleComp:           false,
+			Nursebeecsv0:           false,
 			Nursebeecsv1:           false,
 			ForesightedCannibalism: false,
 
