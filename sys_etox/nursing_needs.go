@@ -72,10 +72,14 @@ func (s *NursingNeeds) Initialize(w *ecs.World) {
 func (s *NursingNeeds) Update(w *ecs.World) {
 
 	s.nglobals.KillDrones = false
-	TotalNursesLastDay := s.nstats.TotalNurses // in case of etox mortality events in between last day´s consumption proc and now we recount available nurses here
-	MinimumNurses := max(int(0.5*float64(TotalNursesLastDay)), 200)
+	TotalNursesLastDay := s.nstats.TotalNurses                      // in case of etox mortality events in between last day´s consumption proc and now we recount available nurses here
+	MinimumNurses := max(int(0.5*float64(TotalNursesLastDay)), 200) // minimum of 200 estimated from Kama&Shpigler (2025) as the minimum taskforce able to rear a healthy queen larva
 
 	s.calcNursingMetrics(w)
+	if s.nstats.TotalNurses <= MinimumNurses {
+		s.nglobals.KillDrones = true
+	}
+
 	// un-revert redundant reverted foragers
 	if s.nglobals.SquadstoReduce > 0 {
 		s.unRevertForagers(w, s.nglobals.SquadstoReduce)
@@ -90,10 +94,6 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 	if WinterBeeRatio <= 0.9 || s.nstats.TotalNurses <= MinimumNurses {
 		// implement rules for nurse recruitment
 		// regular nurse recruitment by moving age up or down by 1 depending on some metrics; down below there is the special case if there are far too little nurses
-
-		if s.nstats.TotalNurses <= MinimumNurses {
-			s.nglobals.KillDrones = true
-		}
 
 		NewNurseAgeMax := s.nglobals.NurseAgeMax
 		if !s.nglobals.SuffNurses || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nglobals.NurseAgeMax+1, 50)] > 0) {

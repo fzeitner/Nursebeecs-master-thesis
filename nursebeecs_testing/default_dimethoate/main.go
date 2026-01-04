@@ -72,10 +72,9 @@ func main() {
 	dur := time.Since(start)
 	fmt.Println(dur)
 
-	run_nbeecs := true // switch to run normal and/or nurse beecs
+	run_nbeecs := false // switch to run normal and/or nurse beecs
 	if run_nbeecs {
 		pe.Nursing.NewConsumption = true
-		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
 
 		for i := 0; i < 100; i++ {
@@ -88,9 +87,8 @@ func main() {
 	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
 		pe.Nursing.NewConsumption = true
-		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
 		pe.Nursing.NewBroodCare = true
-		pe.Nursing.Nursebeecsv1 = true
+		pe.Nursing.Nursebeecsv1 = false
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs2(app, i, &p, &pe)

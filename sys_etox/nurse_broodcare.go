@@ -99,6 +99,8 @@ func (s *Nbroodcare) Update(w *ecs.World) {
 			starved := int(math.Ceil((float64(s.pop.WorkerLarvae+s.pop.DroneLarvae) * (1.0 - s.stores.ProteinFactorNurses)))) // THIS is a lack of protein or a lack of "feeding nurses" that provide this protein which results in cannibalism
 			if float64(starved) > toStarve {
 				cann_rel = util.Clamp(float64(starved)/cann_mean, 0, 1.5) // calculate how the cannibalism rates shall be reduced relative starved brood from ProteinFactorNurses
+			} else {
+				starved = int(toStarve)
 			}
 
 			killed := s.Cannibalize(starved, cann_rel)

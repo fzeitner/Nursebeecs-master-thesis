@@ -75,7 +75,7 @@ def plot_popstructure(file1, file2, out_dir, format, appday, appdur, multiyear, 
         #ax.legend(handles=[beec, nbeec], loc='upper left')
 
     #plt.gca().add_artist(first_legend)
-    plt.text(0.05, 0.9, "A", fontsize=20, transform=ax.transAxes, va='top', weight = 'bold')
+    plt.text(0.05, 0.9, "a", fontsize=20, transform=ax.transAxes, va='top', weight = 'bold')
 
     if multiyear > 1:
         alignment = 'right'
@@ -205,7 +205,8 @@ def plot_adultstructure(file1, file2, out_dir, format, multiyear):
     ax[1].fill_between(data2.ticks, data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'], data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'], color=CB_color_cycle[0], alpha=alpha)
     #ax[1].plot(data2.ticks, data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['Winterbees_Q50'] + data2['NonWinterbees_Q50'], c="navy")
     #if data2['NonNurseIHbees_Q50'].empty() + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'] +data2['NormalForagers_Q50'] == 0.:
-    ax[1].fill_between(data2.ticks, data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'], data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'] + data2['NormalForagers_Q50'] , color="navy", alpha=alpha)
+    #ax[1].fill_between(data2.ticks, data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'], data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'] + data2['NormalForagers_Q50'] , color="navy", alpha=alpha)
+    ax[1].fill_between(data2.ticks, data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'], 100, color="navy", alpha=alpha)
     #else:
     #    ax[1].fill_between(data2.ticks, data2['NonNurseIHbees_Q50'] + data2['IHbeeNurses_Q50'] + data2['RevertedForagers_Q50'] + data2['Winterbees_Q50'], 100, color="navy", alpha=alpha)
     ax[1].set_xlim(0,365)
@@ -227,7 +228,8 @@ def plot_adultstructure(file1, file2, out_dir, format, multiyear):
             xticks.append(xticks[-1]+dayspermonth[i%12])
         labels = multiyear * months
 
-    #ax[0].text(0.05, 0.9, "A", fontsize=20, transform=ax[0].transAxes, va='top', weight = 'bold', color = "white")
+    ax[0].text(0.05, 0.9, "c", fontsize=20, transform=ax[0].transAxes, va='top', weight = 'bold', color = "white")
+    ax[1].text(0.05, 0.9, "d", fontsize=20, transform=ax[1].transAxes, va='top', weight = 'bold', color = "white")
 
     if multiyear > 1:
         alignment = 'right'
@@ -250,9 +252,9 @@ def plot_popmosaic(file1, file2, out_dir, format, appday, appdur):
 
     fig, axs = plt.subplots(nrows= 2, ncols=2, sharex=True,  figsize=(12, 6))
 
-    metrics = ["TotalForagers", "TotalIHbees", "TotalLarvae", "TotalEggs"]
+    #metrics = ["TotalForagers", "TotalIHbees", "TotalLarvae", "TotalEggs"]
     #metrics = ["ETOX_Mean_Dose_Forager", "ETOX_Mean_Dose_IHbee", "ETOX_Mean_Dose_Larvae", "HoneyEnergyStore"]
-    #metrics = ["TotalPop", "TotalLarvae", "NurseWorkLoad", "ProteinFactorNurses"]
+    metrics = ["TotalPop", "Aff", "TotalForagers", "TotalIHbees"]
     #metrics = ["Aff", "NurseAgeMax", "NurseWorkLoad", "ProteinFactorNurses"]
     labels = metrics
     #labels = ["Mean Dose per Forager [µg]", "Mean Dose per IHbee [µg]", "Mean Dose per Larvae [µg]", "Honey Store [kJ]"]
@@ -271,8 +273,8 @@ def plot_popmosaic(file1, file2, out_dir, format, appday, appdur):
 
                 axs[i][j].plot(data.ticks, q50, c=col, label=model)
                 axs[i][j].fill_between(data.ticks, q10, q90, color=col, alpha=0.1)
-                if i == 0 and j == 1:
-                    axs[i][j].plot(data.ticks, data["TotalNurses_Q50"], c=col, label=model, linestyle = "--")
+                #if i == 0 and j == 1:
+                    #axs[i][j].plot(data.ticks, data["TotalNurses_Q50"], c=col, label=model, linestyle = "--")
 
             axs[i][j].set_ylim(0, 1.05*max(max(data1[metrics[i*2+j]+"_Q95"]), max(data2[metrics[i*2+j]+"_Q95"])))
             axs[i][j].set_ylabel(labels[i*2+j], fontsize="12")
@@ -352,19 +354,21 @@ def plot_6mosaic(file1, file2, out_dir, format, appday, appdur):
     data2 = pd.read_csv(file2, sep=r'\s*;\s*', engine='python')
     #data3 = pd.read_csv(file3, sep=r'\s*;\s*', engine='python')
 
-    fig, axs = plt.subplots(nrows= 2, ncols=2, sharex=True,  figsize=(12, 9))
+    fig, axs = plt.subplots(nrows= 3, ncols=2, sharex=True,  figsize=(12, 9))
 
-    metrics = ["Aff", "NurseAgeMax", "ProteinFactorNurses", "NurseWorkLoad",]# "NurseMaxPollenIntake", "NurseMaxHoneyIntake" ] 
+    #metrics = ["TotalForagers", "TotalIHbees", "Aff", "NurseAgeMax", "NurseWorkLoad", "ProteinFactorNurses"] 
     #metrics = ["TotalForagers", "ETOX_Mean_Dose_Forager_mug", "TotalIHbees", "ETOX_Mean_Dose_IHbee_mug", "TotalLarvae", "ETOX_Mean_Dose_Larvae_mug", "TotalNurses", "ETOX_Mean_Dose_Nurses_mug" ] 
-    labels = ["AFF [d]", "NurseAgeMax [d]", "ProteinFactorNurses", "NurseWorkload",]# "NursePollenIntake [µg]", "NurseHoneyIntake [µg]" ]
+    metrics = ["Aff", "NurseAgeMax", "ProteinFactorNurses", "NurseWorkLoad", "NurseMaxPollenIntake", "NurseMaxHoneyIntake",] 
+    #labels = ["TotalForagers", "TotalIHbees", "AFF [d]", "NurseAgeMax [d]", "NurseWorkload", "ProteinFactorNurses",]
     #labels = ["TotalForagers", "Mean Dose per Forager [µg]", "TotalIHbees", "Mean Dose per IHbee [µg]", "TotalLarvae", "Mean Dose per Larva [µg]" ]
+    labels = ["AFF [d]", "NurseAgeMax [d]", "ProteinFactorNurses", "NurseWorkLoad", "NursePollenIntake [mg]", "NurseHoneyIntake [mg]" ]
     
-    for i in range(2):
+    for i in range(3):
         for j in range(2):
             for data, col, model in [
                 (data1, "navy", "beecs"),
                 (data2, "red", "Nbeecs"),
-                #(data3, "olive", "Cannibalism"),
+                #(data2, "olive", "Cannibalism"),
             ]:
                 q10 = data[metrics[i*2+j] + "_Q05"]
                 q90 = data[metrics[i*2+j] + "_Q95"]
@@ -381,9 +385,9 @@ def plot_6mosaic(file1, file2, out_dir, format, appday, appdur):
                 #    axs[i][j].hlines(1.0, 0, 365, linestyle = "--", color = "black", linewidth = 1)
                 #    axs[i][j].hlines(1.5, 0, 365, linestyle = "--", color = "black", linewidth = 1)
 
-            axs[i][j].set_ylim(0, 1.05*max(max(data1[metrics[i*2+j]+"_Q95"]), max(data2[metrics[i*2+j]+"_Q95"])))
-            if j == 1:
-                axs[i][j].set_ylim(0, 1.05*max(max(data1[metrics[i*2+j]+"_Q50"]*1.5), max(data2[metrics[i*2+j]+"_Q50"]*1.5)))
+            axs[i][j].set_ylim(0, 1.05*max(max(data1[metrics[i*2+j]+"_Q95"]), max(data2[metrics[i*2+j]+"_Q95"])))#, max(data3[metrics[i*2+j]+"_Q95"])))
+            #if j == 1:
+            #    axs[i][j].set_ylim(0, 1.05*max(max(data1[metrics[i*2+j]+"_Q50"]*1.5), max(data2[metrics[i*2+j]+"_Q50"]*1.5)))
 
             axs[i][j].set_ylabel(labels[i*2+j], fontsize="12")
             if appday > 0:
@@ -445,7 +449,7 @@ if __name__ == "__main__":
     testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
                    "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
 
-    folder = testfolders[4]
+    folder = testfolders[0]
     fileformats = ["svg", "png"]
     format = fileformats[0]
 
@@ -512,6 +516,7 @@ if __name__ == "__main__":
                 format,
                 multiyear_app[folder],
         ) 
+        
         plot_multiyear (
             "nursebeecs_testing/" + folder + "/nbeecs.csv",
             "nursebeecs_testing/" + folder + "/nbeecsHG.csv",
@@ -522,7 +527,7 @@ if __name__ == "__main__":
             appdur[folder],
             multiyear_app[folder],
             False
-            )"""
+            )
         plot_larvaratios(
             "nursebeecs_testing/" + testfolders[0] + "/beecs.csv",
             "nursebeecs_testing/" + testfolders[0] + "/newbc.csv",
@@ -531,5 +536,5 @@ if __name__ == "__main__":
             "nursebeecs_testing/" + testfolders[0] ,
             format,
 
-        )
+        )"""
 

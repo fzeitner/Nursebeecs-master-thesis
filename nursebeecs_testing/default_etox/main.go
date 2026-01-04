@@ -64,7 +64,7 @@ func main() {
 		pe.Nursing.NewBroodCare = true
 		pe.Nursing.Nursebeecsv0 = false
 		pe.Nursing.ForesightedCannibalism = false
-		pe.Nursing.Nursebeecsv1 = false
+		pe.Nursing.Nursebeecsv1 = true
 
 		for i := 0; i < 100; i++ {
 			run_nursebeecs(app, i, &p, &pe)
