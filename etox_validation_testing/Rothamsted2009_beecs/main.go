@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fzeitner/beecs_masterthesis/model"
-	"github.com/fzeitner/beecs_masterthesis/obs"
-	"github.com/fzeitner/beecs_masterthesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/model"
+	"github.com/fzeitner/Nursebeecs-master-thesis/obs"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/reporter"
 )

@@ -6,7 +6,7 @@ import (
 	"math/rand/v2"
 	"os"
 
-	"github.com/fzeitner/beecs_masterthesis/comp"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )

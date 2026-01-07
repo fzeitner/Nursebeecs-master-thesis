@@ -1,7 +1,7 @@
 package comp_etox
 
 import (
-	"github.com/fzeitner/beecs_masterthesis/enum/activity"
+	"github.com/fzeitner/Nursebeecs-master-thesis/enum/activity"
 	"github.com/mlange-42/ark/ecs"
 )
 

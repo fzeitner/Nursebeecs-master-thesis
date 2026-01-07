@@ -1,15 +1,15 @@
 package obs
 
 import (
-	"github.com/fzeitner/beecs_masterthesis/globals"
-	"github.com/fzeitner/beecs_masterthesis/globals_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
 // Debug is a row observer for several colony structure variables,
 // using the same names as the original BEEHAVE_ecotox implementation.
 //
-// Primarily meant for validation of beecs_masterthesis against BEEHAVE_ecotox.
+// Primarily meant for validation of Nursebeecs-master-thesis against BEEHAVE_ecotox.
 type DebugNursebees struct {
 	pop         *globals.PopulationStats
 	stores      *globals.Stores

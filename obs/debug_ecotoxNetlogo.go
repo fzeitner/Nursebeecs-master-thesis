@@ -1,8 +1,8 @@
 package obs
 
 import (
-	"github.com/fzeitner/beecs_masterthesis/globals"
-	"github.com/fzeitner/beecs_masterthesis/globals_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 

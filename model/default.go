@@ -1,9 +1,9 @@
 package model
 
 import (
-	"github.com/fzeitner/beecs_masterthesis/globals"
-	"github.com/fzeitner/beecs_masterthesis/params"
-	"github.com/fzeitner/beecs_masterthesis/sys"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/sys"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark/ecs"
 )

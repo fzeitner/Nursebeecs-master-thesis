@@ -1,2 +1,2 @@
-// Package model provides a constructor for the default beecs_masterthesis model.
+// Package model provides a constructor for the default Nursebeecs-master-thesis model.
 package model

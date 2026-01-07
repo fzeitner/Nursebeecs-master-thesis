@@ -3,7 +3,7 @@ package params_test
 import (
 	"testing"
 
-	"github.com/fzeitner/beecs_masterthesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
 	"github.com/stretchr/testify/assert"
 )
 

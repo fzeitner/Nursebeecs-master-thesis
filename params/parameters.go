@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 
-	"github.com/fzeitner/beecs_masterthesis/comp"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp"
 )
 
 // WorkingDirectory for file I/O.

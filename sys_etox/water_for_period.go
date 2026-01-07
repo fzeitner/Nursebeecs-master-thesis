@@ -5,8 +5,8 @@ package sys_etox
 import (
 	"math/rand/v2"
 
-	"github.com/fzeitner/beecs_masterthesis/globals_etox"
-	"github.com/fzeitner/beecs_masterthesis/params_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )

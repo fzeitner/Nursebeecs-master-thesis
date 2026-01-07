@@ -3,18 +3,15 @@ package sys_etox
 import (
 	"math"
 
-	"github.com/fzeitner/beecs_masterthesis/comp"
-	"github.com/fzeitner/beecs_masterthesis/comp_etox"
-	"github.com/fzeitner/beecs_masterthesis/globals_etox"
-	"github.com/fzeitner/beecs_masterthesis/params_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )
 
-// MortalityForagers applies worker mortality, including
-//   - background mortality from [params.WorkerMortality.InHive]
-//   - removal of squadrons reaching [params.WorkerDevelopment.MaxLifespan]
-//   - removal of squadrons exceeding [params.WorkerMortality.MaxMilage]
+// MortalityForagers_etox applies worker mortality, including
 //   - mortality from PPP exposure if applicable
 type MortalityForagers_etox struct {
 	rng                  *resource.Rand

@@ -3,7 +3,7 @@ package util
 import (
 	"fmt"
 
-	"github.com/fzeitner/beecs_masterthesis/enum/interp"
+	"github.com/fzeitner/Nursebeecs-master-thesis/enum/interp"
 )
 
 // Interpolate the given data using an [interp.Interpolation].

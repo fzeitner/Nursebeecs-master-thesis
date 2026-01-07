@@ -5,5 +5,4 @@
 *.png
 !netlogo.csv
 !beecs.csv
-!beecs_Nursebees.csv
 /out/

@@ -1,4 +1,4 @@
-// Package obs provides observers for extracting data from a beecs model.
+// Package obs provides observers for extracting data from a Nursebeecs-master-thesis model.
 //
 // Observers are most easily used with so-called reporters from [arche-model] or [arche-pixel].
 //

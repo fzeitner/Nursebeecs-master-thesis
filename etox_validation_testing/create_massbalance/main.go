@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fzeitner/beecs_masterthesis/model_etox"
-	"github.com/fzeitner/beecs_masterthesis/obs"
-	"github.com/fzeitner/beecs_masterthesis/params"
-	"github.com/fzeitner/beecs_masterthesis/params_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/model_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/obs"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/reporter"
 )
@@ -94,7 +94,7 @@ func main() {
 }
 
 func run(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default_nbeecs(params, params_etox, app)
+	app = model_etox.Default(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},
@@ -106,7 +106,7 @@ func run(app *app.App, idx int, params params.Params, params_etox params_etox.Pa
 }
 
 func run2(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default_nbeecs(params, params_etox, app)
+	app = model_etox.Default(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},
@@ -118,7 +118,7 @@ func run2(app *app.App, idx int, params params.Params, params_etox params_etox.P
 }
 
 func run3(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default_nbeecs(params, params_etox, app)
+	app = model_etox.Default(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},
@@ -130,7 +130,7 @@ func run3(app *app.App, idx int, params params.Params, params_etox params_etox.P
 }
 
 func run4(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default_nbeecs(params, params_etox, app)
+	app = model_etox.Default(params, params_etox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},

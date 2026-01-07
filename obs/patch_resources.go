@@ -3,8 +3,8 @@ package obs
 import (
 	"fmt"
 
-	"github.com/fzeitner/beecs_masterthesis/comp"
-	"github.com/fzeitner/beecs_masterthesis/comp_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 

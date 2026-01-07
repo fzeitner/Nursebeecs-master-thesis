@@ -1,10 +1,10 @@
 package model_etox
 
 import (
-	"github.com/fzeitner/beecs_masterthesis/params"
-	"github.com/fzeitner/beecs_masterthesis/params_etox"
-	"github.com/fzeitner/beecs_masterthesis/sys"
-	"github.com/fzeitner/beecs_masterthesis/sys_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/sys"
+	"github.com/fzeitner/Nursebeecs-master-thesis/sys_etox"
 	"github.com/mlange-42/ark-tools/app"
 )
 

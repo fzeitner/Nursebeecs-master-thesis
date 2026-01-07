@@ -3,7 +3,7 @@ package obs
 import (
 	"fmt"
 
-	"github.com/fzeitner/beecs_masterthesis/comp"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp"
 	"github.com/mlange-42/ark/ecs"
 )
 

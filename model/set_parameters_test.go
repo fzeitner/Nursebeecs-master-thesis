@@ -3,8 +3,8 @@ package model_test
 import (
 	"testing"
 
-	"github.com/fzeitner/beecs_masterthesis/model"
-	"github.com/fzeitner/beecs_masterthesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/model"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
 	"github.com/mlange-42/ark/ecs"
 	"github.com/stretchr/testify/assert"
 )

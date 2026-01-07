@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fzeitner/beecs_masterthesis/params"
-	"github.com/fzeitner/beecs_masterthesis/registry"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/registry"
 	"github.com/stretchr/testify/assert"
 )
 

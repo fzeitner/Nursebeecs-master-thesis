@@ -1,4 +1,4 @@
-module github.com/fzeitner/beecs_masterthesis
+module github.com/fzeitner/Nursebeecs-master-thesis
 
 go 1.24.0
 

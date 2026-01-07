@@ -5,10 +5,10 @@ package sys_etox
 import (
 	"math"
 
-	"github.com/fzeitner/beecs_masterthesis/comp"
-	"github.com/fzeitner/beecs_masterthesis/comp_etox"
-	"github.com/fzeitner/beecs_masterthesis/params"
-	"github.com/fzeitner/beecs_masterthesis/params_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp"
+	"github.com/fzeitner/Nursebeecs-master-thesis/comp_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params"
+	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/resource"
 	"github.com/mlange-42/ark/ecs"
 )

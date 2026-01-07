@@ -1,2 +1,2 @@
-// Package enum provides enumerations for beecs_masterthesis.
+// Package enum provides enumerations for Nursebeecs-master-thesis.
 package enum
