@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fzeitner/Nursebeecs-master-thesis/model_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/model"
 	"github.com/fzeitner/Nursebeecs-master-thesis/obs"
 	"github.com/fzeitner/Nursebeecs-master-thesis/params"
-	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/reporter"
 )
@@ -18,11 +17,11 @@ func main() {
 	p := params.Default()
 	p.Termination.MaxTicks = 365
 
-	pe := params_etox.Default_etox()
+	pe := params.DefaultEtox()
 
-	pe.ETOXparams.HSUfix = false
-	pe.ETOXparams.Nursebeefix = false
-	pe.ETOXparams.ReworkedThermoETOX = false
+	pe.PPPApplication.HSUfix = false
+	pe.PPPApplication.Nursebeefix = false
+	pe.PPPApplication.ReworkedThermoETOX = false
 
 	start := time.Now()
 
@@ -34,8 +33,8 @@ func main() {
 	fmt.Println(dur)
 }
 
-func run(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default(params, params_etox, app)
+func run(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox) {
+	app = model.DefaultEtox(params, paramsEtox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.DebugDrones{},

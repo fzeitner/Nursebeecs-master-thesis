@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/fzeitner/Nursebeecs-master-thesis/comp"
-	"github.com/fzeitner/Nursebeecs-master-thesis/comp_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -48,7 +47,7 @@ func (o *PatchNectar) Values(w *ecs.World) []float64 {
 // PatchPPPNectar is a row observer for the PPPNectar availability of all patches in .
 type PatchPPPNectar struct {
 	patchMapper      *ecs.Map1[comp.Resource]
-	patchMapper_etox *ecs.Map1[comp_etox.Resource_etox]
+	patchMapper_etox *ecs.Map1[comp.ResourceEtox]
 
 	data    []float64
 	patches []ecs.Entity
@@ -87,7 +86,7 @@ func (o *PatchPPPNectar) Values(w *ecs.World) []float64 {
 // PatchPPPPollen is a row observer for the PPPPollen availability of all patches in .
 type PatchPPPPollen struct {
 	patchMapper      *ecs.Map1[comp.Resource]
-	patchMapper_etox *ecs.Map1[comp_etox.Resource_etox]
+	patchMapper_etox *ecs.Map1[comp.ResourceEtox]
 
 	data    []float64
 	patches []ecs.Entity
@@ -126,7 +125,7 @@ func (o *PatchPPPPollen) Values(w *ecs.World) []float64 {
 // PatchPPPContact is a row observer for the contact dose in all patches in .
 type PatchPPPcontact struct {
 	patchMapper      *ecs.Map1[comp.Resource]
-	patchMapper_etox *ecs.Map1[comp_etox.Resource_etox]
+	patchMapper_etox *ecs.Map1[comp.ResourceEtox]
 
 	data    []float64
 	patches []ecs.Entity

@@ -461,7 +461,7 @@ if __name__ == "__main__":
         for folder in testfolders:
             plot_popmosaic(
                     "nursebeecs_testing/" + folder + "/beecs.csv",
-                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    "nursebeecs_testing/" + folder + "/new.csv",
                     "nursebeecs_testing/" + folder ,
                     format,
                     appdays[folder],
@@ -469,7 +469,7 @@ if __name__ == "__main__":
             )
             plot_popstructure(   
                     "nursebeecs_testing/" + folder + "/beecs.csv",
-                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    "nursebeecs_testing/" + folder + "/new.csv",
                     "nursebeecs_testing/" + folder ,
                     format,
                     appdays[folder],
@@ -481,8 +481,8 @@ if __name__ == "__main__":
         
         plot_popmosaic(
                     "nursebeecs_testing/" + folder + "/beecs.csv",
-                    #"nursebeecs_testing/" + folder + "/oldbc.csv",
-                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    #"nursebeecs_testing/" + folder + "/old.csv",
+                    "nursebeecs_testing/" + folder + "/new.csv",
                     "nursebeecs_testing/" + folder ,
                     format,
                     appdays[folder],
@@ -490,7 +490,7 @@ if __name__ == "__main__":
         )
         plot_popstructure(   
                 "nursebeecs_testing/" + folder + "/beecs.csv",
-                "nursebeecs_testing/" + folder + "/newbc.csv",
+                "nursebeecs_testing/" + folder + "/new.csv",
                 "nursebeecs_testing/" + folder ,
                 format,
                 appdays[folder],
@@ -501,8 +501,8 @@ if __name__ == "__main__":
         """
         plot_6mosaic(
                     "nursebeecs_testing/" + folder + "/beecs.csv",
-                    #"nursebeecs_testing/" + folder + "/oldbc.csv",
-                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    #"nursebeecs_testing/" + folder + "/old.csv",
+                    "nursebeecs_testing/" + folder + "/new.csv",
                     "nursebeecs_testing/" + folder ,
                     format,
                     appdays[folder],
@@ -511,7 +511,7 @@ if __name__ == "__main__":
         
         plot_adultstructure(   
                 "nursebeecs_testing/" + folder + "/beecs.csv",
-                "nursebeecs_testing/" + folder + "/newbc.csv",
+                "nursebeecs_testing/" + folder + "/new.csv",
                 "nursebeecs_testing/" + folder ,
                 format,
                 multiyear_app[folder],
@@ -530,9 +530,9 @@ if __name__ == "__main__":
             )
         plot_larvaratios(
             "nursebeecs_testing/" + testfolders[0] + "/beecs.csv",
-            "nursebeecs_testing/" + testfolders[0] + "/newbc.csv",
+            "nursebeecs_testing/" + testfolders[0] + "/new.csv",
             "nursebeecs_testing/" + testfolders[5] + "/beecs.csv",
-            "nursebeecs_testing/" + testfolders[5] + "/newbc.csv",
+            "nursebeecs_testing/" + testfolders[5] + "/new.csv",
             "nursebeecs_testing/" + testfolders[0] ,
             format,
 

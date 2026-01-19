@@ -2,33 +2,32 @@ package obs
 
 import (
 	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
-	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Debug is a row observer for several colony structure variables,
+// DebugForaging is a row observer for several foraging variables,
 // using the same names as the original BEEHAVE_ecotox implementation.
 //
 // Primarily meant for validation of beecs_ecotox against BEEHAVE_ecotox.
 type DebugForaging struct {
-	pop         *globals.PopulationStats
-	popetox     *globals_etox.PopulationStats_etox
-	stores_etox *globals_etox.Storages_etox
-	stores      *globals.Stores
-	foraging    *globals.ForagingPeriod
-	data        []float64
-	forstats    *globals_etox.ForagingStats_etox
-	cons        *globals.ConsumptionStats
+	pop        *globals.PopulationStats
+	popetox    *globals.PopulationStatsEtox
+	storesEtox *globals.StoragesEtox
+	stores     *globals.Stores
+	foraging   *globals.ForagingPeriod
+	data       []float64
+	forstats   *globals.ForagingStatsEtox
+	cons       *globals.ConsumptionStats
 }
 
 func (o *DebugForaging) Initialize(w *ecs.World) {
 	o.pop = ecs.GetResource[globals.PopulationStats](w)
-	o.popetox = ecs.GetResource[globals_etox.PopulationStats_etox](w)
-	o.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
+	o.popetox = ecs.GetResource[globals.PopulationStatsEtox](w)
+	o.storesEtox = ecs.GetResource[globals.StoragesEtox](w)
 	o.stores = ecs.GetResource[globals.Stores](w)
 	o.foraging = ecs.GetResource[globals.ForagingPeriod](w)
 	o.data = make([]float64, len(o.Header()))
-	o.forstats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
+	o.forstats = ecs.GetResource[globals.ForagingStatsEtox](w)
 	o.cons = ecs.GetResource[globals.ConsumptionStats](w)
 }
 

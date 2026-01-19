@@ -2,37 +2,35 @@ package obs
 
 import (
 	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
-	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Debug is a row observer for several colony structure variables,
-// using the same names as the original BEEHAVE implementation.
+// DebugNursingEtox is a row observer for several colony structure variables.
 //
-// Primarily meant for validation of beecs against BEEHAVE.
+// Primarily used for debugging Nursebeecs.
 type DebugNursingEtox struct {
-	pop         *globals.PopulationStats
-	popetox     *globals_etox.PopulationStats_etox
-	stores      *globals.Stores
-	stores_etox *globals_etox.Storages_etox
-	foraging    *globals.ForagingPeriod
-	cons        *globals.ConsumptionStats
-	nglobals    *globals_etox.Nursing_globals
-	nstats      *globals_etox.Nursing_stats
-	aff         *globals.AgeFirstForaging
+	pop        *globals.PopulationStats
+	popetox    *globals.PopulationStatsEtox
+	stores     *globals.Stores
+	storesEtox *globals.StoragesEtox
+	foraging   *globals.ForagingPeriod
+	cons       *globals.ConsumptionStats
+	nglobals   *globals.NursingGlobals
+	nstats     *globals.NursingStats
+	aff        *globals.AgeFirstForaging
 
 	data []float64
 }
 
 func (o *DebugNursingEtox) Initialize(w *ecs.World) {
 	o.pop = ecs.GetResource[globals.PopulationStats](w)
-	o.popetox = ecs.GetResource[globals_etox.PopulationStats_etox](w)
+	o.popetox = ecs.GetResource[globals.PopulationStatsEtox](w)
 	o.stores = ecs.GetResource[globals.Stores](w)
-	o.stores_etox = ecs.GetResource[globals_etox.Storages_etox](w)
+	o.storesEtox = ecs.GetResource[globals.StoragesEtox](w)
 	o.foraging = ecs.GetResource[globals.ForagingPeriod](w)
 	o.cons = ecs.GetResource[globals.ConsumptionStats](w)
-	o.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
-	o.nstats = ecs.GetResource[globals_etox.Nursing_stats](w)
+	o.nglobals = ecs.GetResource[globals.NursingGlobals](w)
+	o.nstats = ecs.GetResource[globals.NursingStats](w)
 	o.aff = ecs.GetResource[globals.AgeFirstForaging](w)
 
 	o.data = make([]float64, len(o.Header()))
@@ -64,8 +62,8 @@ func (o *DebugNursingEtox) Values(w *ecs.World) []float64 {
 	o.data[15] = float64(o.popetox.MeanDoseForager)
 	o.data[16] = float64(o.popetox.MeanDoseNurses)
 
-	o.data[17] = float64(o.stores_etox.Pollenconcbeforeeating)
-	o.data[18] = float64(o.stores_etox.Nectarconcbeforeeating)
+	o.data[17] = float64(o.storesEtox.Pollenconcbeforeeating)
+	o.data[18] = float64(o.storesEtox.Nectarconcbeforeeating)
 
 	o.data[19] = o.nstats.MeanHoneyIntake
 	o.data[20] = o.nstats.MeanPollenIntake

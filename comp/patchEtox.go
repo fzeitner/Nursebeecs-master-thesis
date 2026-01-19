@@ -1,0 +1,17 @@
+package comp
+
+// PatchProperties component for flower patches.
+type PatchPropertiesEtox struct {
+	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kJ]
+	PPPconcentrationPollen float64 // PPP concentration in pollen [mug/g]
+	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug/bee]
+}
+
+// Resource component for flower patches.
+//
+// Holds information on available nectar and pollen resources.
+type ResourceEtox struct {
+	PPPconcentrationNectar float64 // PPP concentration in nectar [mug/kJ]
+	PPPconcentrationPollen float64 // PPP concentration in pollen [mug/g]
+	PPPcontactDose         float64 // PPP concentration for contact exposure on patch [mug/bee]
+}

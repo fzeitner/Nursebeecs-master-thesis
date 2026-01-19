@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fzeitner/Nursebeecs-master-thesis/model_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/model"
 	"github.com/fzeitner/Nursebeecs-master-thesis/obs"
 	"github.com/fzeitner/Nursebeecs-master-thesis/params"
-	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/reporter"
 )
@@ -16,10 +15,10 @@ func main() {
 	app := app.New()
 
 	p := params.Default()
-	pe := params_etox.Default_etox()
+	pe := params.DefaultEtox()
 	p.Termination.MaxTicks = 365
 
-	pe.ETOXparams = params_etox.ETOXparams{
+	pe.PPPApplication = params.PPPApplication{
 		Application:               true,
 		ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
@@ -45,7 +44,7 @@ func main() {
 		RUD: 21., // Residue per Unit Dose  [(ha*mg)/(kg*kg)]
 	}
 
-	pe.Toxicityparams = params_etox.Toxicityparams{
+	pe.PPPToxicity = params.PPPToxicity{
 		ForagerOralLD50:  1000., // fenoxycarb
 		ForagerOralSlope: 100.,  // fenoxycarb
 		HSuptake:         0.1,   //
@@ -76,8 +75,8 @@ func main() {
 	fmt.Println(dur)
 }
 
-func run(app *app.App, idx int, params params.Params, etoxparams params_etox.Params_etox) {
-	app = model_etox.Default(params, etoxparams, app)
+func run(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox) {
+	app = model.DefaultEtox(params, paramsEtox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.NetlogoETOX{},

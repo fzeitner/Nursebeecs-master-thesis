@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fzeitner/Nursebeecs-master-thesis/model_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/model"
 	"github.com/fzeitner/Nursebeecs-master-thesis/obs"
 	"github.com/fzeitner/Nursebeecs-master-thesis/params"
-	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/reporter"
 )
@@ -18,8 +17,8 @@ func main() {
 	p := params.Default()
 	p.Termination.MaxTicks = 365
 
-	pe := params_etox.Default_etox()
-	pe.ETOXparams = params_etox.ETOXparams{
+	pe := params.DefaultEtox()
+	pe.PPPApplication = params.PPPApplication{
 		Application:               true,
 		ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
@@ -45,7 +44,7 @@ func main() {
 		RUD: 21., // Residue per Unit Dose  [(ha*mg)/(kg*kg)]
 	}
 
-	pe.Toxicityparams = params_etox.Toxicityparams{
+	pe.PPPToxicity = params.PPPToxicity{
 		ForagerOralLD50:  1000., // fenoxycarb
 		ForagerOralSlope: 100.,  // fenoxycarb
 		HSuptake:         0.1,   //
@@ -71,21 +70,21 @@ func main() {
 	dur := time.Since(start)
 	fmt.Println(dur)
 
-	pe.ETOXparams.ReworkedThermoETOX = true
+	pe.PPPApplication.ReworkedThermoETOX = true
 	for i := 0; i < 100; i++ {
 		run2(app, i, &p, &pe)
 	}
 	dur = time.Since(start)
 	fmt.Println(dur)
 
-	pe.ETOXparams.Nursebeefix = true
+	pe.PPPApplication.Nursebeefix = true
 	for i := 0; i < 100; i++ {
 		run3(app, i, &p, &pe)
 	}
 	dur = time.Since(start)
 	fmt.Println(dur)
 
-	pe.ETOXparams.HSUfix = true
+	pe.PPPApplication.HSUfix = true
 	for i := 0; i < 100; i++ {
 		run4(app, i, &p, &pe)
 	}
@@ -93,8 +92,8 @@ func main() {
 	fmt.Println(dur)
 }
 
-func run(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default(params, params_etox, app)
+func run(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox) {
+	app = model.DefaultEtox(params, paramsEtox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},
@@ -105,8 +104,8 @@ func run(app *app.App, idx int, params params.Params, params_etox params_etox.Pa
 	app.Run()
 }
 
-func run2(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default(params, params_etox, app)
+func run2(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox) {
+	app = model.DefaultEtox(params, paramsEtox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},
@@ -117,8 +116,8 @@ func run2(app *app.App, idx int, params params.Params, params_etox params_etox.P
 	app.Run()
 }
 
-func run3(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default(params, params_etox, app)
+func run3(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox) {
+	app = model.DefaultEtox(params, paramsEtox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},
@@ -129,8 +128,8 @@ func run3(app *app.App, idx int, params params.Params, params_etox params_etox.P
 	app.Run()
 }
 
-func run4(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default(params, params_etox, app)
+func run4(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox) {
+	app = model.DefaultEtox(params, paramsEtox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.PPPFateObs{},

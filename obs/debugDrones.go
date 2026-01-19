@@ -5,7 +5,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Debug is a row observer for several colony structure variables,
+// DebugDrones is a row observer for several colony structure variables,
 // using the same names as the original BEEHAVE implementation.
 //
 // Primarily meant for validation of beecs against BEEHAVE.

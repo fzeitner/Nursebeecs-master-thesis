@@ -136,9 +136,9 @@ def plot_column(data_beecs, data_nbeecs, data_nbeecs2, column, quantiles, image_
 
     fig, ax = plt.subplots(figsize=(10, 4))
     for data, col, model in [
-        (data_beecs, "blue", "nbeecs"),
-        (data_nbeecs, "red", "nbeecsHG"),
-        (data_nbeecs2, "green", "nbeecsHGFood"),
+        (data_beecs, "blue", "beecs"),
+        (data_nbeecs, "red", "old"),
+        (data_nbeecs2, "green", "new"),
     ]:      
         q10 = data[column + "_Q05"]
         q90 = data[column + "_Q95"]
@@ -290,40 +290,40 @@ if __name__ == "__main__":
             "Rothamsted2009_etox": 1,
             "Rothamsted2009_beecs": 1,
             "Rothamsted2009_fenoxycarb_5years" : 5,
-            "Rothamsted2009_etox_5years": 1,
+            "Rothamsted2009_etox_5years": 5,
             "Rothamsted2009_clothianidin_5years": 7,
     }
 
-    testfolders = ["default_etox", "default_dimethoate", "default_beecs", "Rothamsted2009_beecs",
-                   "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_fenoxycarb_5years", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
+    testfolders = ["default_beecs", "default_dimethoate", "default_etox", "Rothamsted2009_beecs",
+                   "Rothamsted2009_fenoxycarb", "Rothamsted2009_etox", "Rothamsted2009_etox_5years",  "Rothamsted2009_clothianidin_5years",]
     file_formats = ["svg", "png"]
 
     folder = testfolders[0]
     file_format = file_formats[0]       # 0 = svg, 1 = png
 
-    run_all = False                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
-    agg_all = True
+    run_all = True                   # True if you want to create all plots at once, just make sure to have run the sims beforehand
+    agg_all = False
     agg_nbeecs = False
     agg_beec = False
-    plot = False
+    plot = True
 
     if run_all:
         for folder in testfolders:
             if agg_all:
                 agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
-                agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
-                agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/old-%04d.csv", "nursebeecs_testing/" + folder + "/old.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/new-%04d.csv", "nursebeecs_testing/" + folder + "/new.csv")
             elif agg_nbeecs:
-                agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
-                agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/old-%04d.csv", "nursebeecs_testing/" + folder + "/old.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/new-%04d.csv", "nursebeecs_testing/" + folder + "/new.csv")
             elif agg_beec:
                 agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
 
             if plot:
                 plot_quantiles(
                     "nursebeecs_testing/" + folder + "/beecs.csv",
-                    "nursebeecs_testing/" + folder + "/oldbc.csv",
-                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    "nursebeecs_testing/" + folder + "/old.csv",
+                    "nursebeecs_testing/" + folder + "/new.csv",
                     "nursebeecs_testing/" + folder ,
                     file_format,
                     appdays[folder],
@@ -331,7 +331,7 @@ if __name__ == "__main__":
                 )
                 plot_popstructure(
                     "nursebeecs_testing/" + folder + "/beecs.csv",
-                    "nursebeecs_testing/" + folder + "/newbc.csv",
+                    "nursebeecs_testing/" + folder + "/new.csv",
                     "nursebeecs_testing/" + folder ,
                     file_format,
                     appdays[folder],
@@ -341,19 +341,19 @@ if __name__ == "__main__":
     else:
         if agg_all:
                 agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
-                agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
-                agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/old-%04d.csv", "nursebeecs_testing/" + folder + "/old.csv")
+                agg_beecs("nursebeecs_testing/" + folder + "/out/new-%04d.csv", "nursebeecs_testing/" + folder + "/new.csv")
         elif agg_nbeecs:
-            agg_beecs("nursebeecs_testing/" + folder + "/out/oldbc-%04d.csv", "nursebeecs_testing/" + folder + "/oldbc.csv")
-            agg_beecs("nursebeecs_testing/" + folder + "/out/newbc-%04d.csv", "nursebeecs_testing/" + folder + "/newbc.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/old-%04d.csv", "nursebeecs_testing/" + folder + "/old.csv")
+            agg_beecs("nursebeecs_testing/" + folder + "/out/new-%04d.csv", "nursebeecs_testing/" + folder + "/new.csv")
         elif agg_beec:
             agg_beecs("nursebeecs_testing/" + folder + "/out/beecs-%04d.csv", "nursebeecs_testing/"+ folder +"/beecs.csv")
 
         if plot:
             plot_quantiles(
                 "nursebeecs_testing/" + folder + "/beecs.csv",
-                "nursebeecs_testing/" + folder + "/oldbc.csv",
-                "nursebeecs_testing/" + folder + "/newbc.csv",
+                "nursebeecs_testing/" + folder + "/old.csv",
+                "nursebeecs_testing/" + folder + "/new.csv",
                 "nursebeecs_testing/" + folder ,
                 file_format,
                 appdays[folder],
@@ -361,7 +361,7 @@ if __name__ == "__main__":
             )
             plot_popstructure(
                 "nursebeecs_testing/" + folder + "/beecs.csv",
-                "nursebeecs_testing/" + folder + "/newbc.csv",
+                "nursebeecs_testing/" + folder + "/new.csv",
                 "nursebeecs_testing/" + folder ,
                 file_format,
                 appdays[folder],

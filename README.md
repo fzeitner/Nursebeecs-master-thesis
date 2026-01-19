@@ -13,18 +13,17 @@ Nursebeecs is an exploratory, nurse-bee-centered addition to the beecs/BEEHAVE m
 
 
 ## open ToDo´s still coming:
-- clean up the code: add some comments, delete old code fragments, rename some variables (to ensure adherence to naming conventions), improve runtime performance with more efficient code, ...
-- decouple nursing-related parameters from etox-related parameters for clarity 
+- clean up the code: add some comments, delete old code fragments, improve runtime performance with more efficient code, ...
 - re-implement this cleanly and in a way that ensures compatibility to M. Lange's [beecs-cli](https://github.com/mlange-42/beecs-cli) and [beecs-ui](https://github.com/mlange-42/beecs-ui), which allow much more intuitive controls of model simulations
 - reintroduce tests
-- fix the floating point error that (very rarely) occurs during comparison of the honey stores to the etox_honey stores (introduced by BEEHAVEecotox) and triggers a panic
+- fix the floating point error that (very rarely, but annoyingly) occurs during comparison of the honey stores to the etox_honey stores (introduced by BEEHAVE_ecotox) and triggers a panic
 
 
 ## Usage
 
 ### Clone this repository and use of main.go-files
 
-As of now, the only safe and tested way to run simulations and create results is to create a main.go file, choose a model version ("model.Default", "model.Default_nbeecs", "model_etox.Default", "model_etox.Default_nbeecs"), create the Default parameters and (optionally) change these, add observers with the metrics you want to observe and run the model. The observers will write CSV files with the metrics that can be aggregated and visualized. The easiest way to understand this process is to check some of the existing main.go files in the [etox_validation_testing](https://github.com/fzeitner/Nursebeecs-master-thesis/tree/main/etox_validation_testing) or [nursebeecs_testing](https://github.com/fzeitner/Nursebeecs-master-thesis/tree/main/nursebeecs_testing) folders. Note that - as of now - running the "Default_nbeecs" model versions requires to activate the boolean parameter "NewConsumption" of the Nursing-parameter ("params_etox.Nursing"), because in the Nursbeecs model the honey and pollen consumption subsystems have been replaced by one NurseConsumption subsystem, which regulates both. This will still be patched to be much more user friendly and clear. This complete project will not change its content anymore, but will be cleaned up tremendously to enable much more intuitive use for everyone not originally involved in the thesis.
+As of now, the only safe and tested way to run simulations and create results is to create a main.go file, choose a model version ("model.Default", "model.DefaultEtox", "model.DefaultNbeecs", "model.DefaultNbeecsEtox"), create the Default parameters and (optionally) change these, add observers with the metrics you want to observe and run the model. The observers will write CSV files with the metrics that can be aggregated and visualized. The easiest way to understand this process is to check some of the existing main.go files in the [etox_validation_testing](https://github.com/fzeitner/Nursebeecs-master-thesis/tree/main/etox_validation_testing) or [nursebeecs_testing](https://github.com/fzeitner/Nursebeecs-master-thesis/tree/main/nursebeecs_testing) folders. This complete project will not change its content anymore, but will be cleaned up tremendously to enable much more intuitive use for everyone not originally involved in the thesis.
 
 ### Command line app
 

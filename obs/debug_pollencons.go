@@ -5,8 +5,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Debug is a row observer for several colony structure variables,
-// using the same names as the original BEEHAVE_ecotox implementation.
+// DebugPollenCons is a row observer for several colony structure and consumption variables,
 //
 // Primarily meant for validation of beecs_ecotox against BEEHAVE_ecotox.
 type DebugPollenCons struct {

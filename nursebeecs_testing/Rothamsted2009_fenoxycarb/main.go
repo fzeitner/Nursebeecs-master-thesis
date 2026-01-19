@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fzeitner/Nursebeecs-master-thesis/model_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/model"
 	"github.com/fzeitner/Nursebeecs-master-thesis/obs"
 	"github.com/fzeitner/Nursebeecs-master-thesis/params"
-	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark-tools/reporter"
 )
@@ -16,10 +15,11 @@ func main() {
 	app := app.New()
 
 	p := params.Default()
-	pe := params_etox.Default_etox()
+	pe := params.DefaultEtox()
+	pn := params.DefaultNursebeecs()
 	p.Termination.MaxTicks = 365
 
-	pe.ETOXparams = params_etox.ETOXparams{
+	pe.PPPApplication = params.PPPApplication{
 		Application:               true,
 		ForagerImmediateMortality: false, // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
 		DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
@@ -45,7 +45,7 @@ func main() {
 		RUD: 21., // Residue per Unit Dose  [(ha*mg)/(kg*kg)]
 	}
 
-	pe.Toxicityparams = params_etox.Toxicityparams{
+	pe.PPPToxicity = params.PPPToxicity{
 		ForagerOralLD50:  1000., // fenoxycarb
 		ForagerOralSlope: 100.,  // fenoxycarb
 		HSuptake:         0.1,   //
@@ -70,7 +70,6 @@ func main() {
 
 	run_beecs := true // switch to run normal and/or nurse beecs
 	if run_beecs {
-		pe.Nursing.NewConsumption = false
 		for i := 0; i < 100; i++ {
 			run(app, i, &p, &pe)
 		}
@@ -78,37 +77,35 @@ func main() {
 	dur := time.Since(start)
 	fmt.Println(dur)
 
-	run_nbeecs := false // switch to run normal and/or nurse beecs
+	run_nbeecs := true // switch to run normal and/or nurse beecs
 	if run_nbeecs {
-		pe.Nursing.NewConsumption = true
-		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = true
+		pn.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
+		pn.NursingRework.NewBroodCare = true
 
 		for i := 0; i < 100; i++ {
-			run_nursebeecs(app, i, &p, &pe)
+			run_nursebeecs(app, i, &p, &pe, &pn)
 		}
 	}
 	dur = time.Since(start)
 	fmt.Println(dur)
 
-	run_nbeecs2 := false // switch to run normal and/or nurse beecs
+	run_nbeecs2 := true // switch to run normal and/or nurse beecs
 	if run_nbeecs2 {
-		pe.Nursing.NewConsumption = true
-		pe.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
-		pe.Nursing.NewBroodCare = true
-		pe.Nursing.Nursebeecsv1 = false
-		pe.Nursing.ForesightedCannibalism = false
+		pn.ConsumptionRework.HoneyAdultWorker = 11. // old BEEHAVE val
+		pn.NursingRework.NewBroodCare = true
+		pn.NursingRework.Nursebeecsv1 = false
+		pn.NursingRework.ForesightedCannibalism = false
 
 		for i := 0; i < 100; i++ {
-			run_nursebeecs2(app, i, &p, &pe)
+			run_nursebeecs2(app, i, &p, &pe, &pn)
 		}
 	}
 	dur = time.Since(start)
 	fmt.Println(dur)
 }
 
-func run(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default(params, params_etox, app)
+func run(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox) {
+	app = model.DefaultEtox(params, paramsEtox, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.DebugNursingEtox{},
@@ -119,24 +116,24 @@ func run(app *app.App, idx int, params params.Params, params_etox params_etox.Pa
 	app.Run()
 }
 
-func run_nursebeecs(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default_nbeecs(params, params_etox, app)
+func run_nursebeecs(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox, paramsNbeecs params.ParamsNursebeecs) {
+	app = model.DefaultNbeecsEtox(params, paramsEtox, paramsNbeecs, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.DebugNursingEtox{},
-		File:     fmt.Sprintf("out/oldbc-%04d.csv", idx),
+		File:     fmt.Sprintf("out/old-%04d.csv", idx),
 		Sep:      ";",
 	})
 
 	app.Run()
 }
 
-func run_nursebeecs2(app *app.App, idx int, params params.Params, params_etox params_etox.Params_etox) {
-	app = model_etox.Default_nbeecs(params, params_etox, app)
+func run_nursebeecs2(app *app.App, idx int, params params.Params, paramsEtox params.ParamsEtox, paramsNbeecs params.ParamsNursebeecs) {
+	app = model.DefaultNbeecsEtox(params, paramsEtox, paramsNbeecs, app)
 
 	app.AddSystem(&reporter.CSV{
 		Observer: &obs.DebugNursingEtox{},
-		File:     fmt.Sprintf("out/newbc-%04d.csv", idx),
+		File:     fmt.Sprintf("out/new-%04d.csv", idx),
 		Sep:      ";",
 	})
 

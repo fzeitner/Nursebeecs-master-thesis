@@ -2,28 +2,27 @@ package obs
 
 import (
 	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
-	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
 // ForagingStats is a table observer for foraging activity over the day.
-type ForagingStats_etox struct {
+type ForagingStatsEtox struct {
 	Relative bool
-	stats    *globals_etox.ForagingStats_etox
+	stats    *globals.ForagingStatsEtox
 	pop      *globals.PopulationStats
 	data     []float64
 }
 
-func (o *ForagingStats_etox) Initialize(w *ecs.World) {
-	o.stats = ecs.GetResource[globals_etox.ForagingStats_etox](w)
+func (o *ForagingStatsEtox) Initialize(w *ecs.World) {
+	o.stats = ecs.GetResource[globals.ForagingStatsEtox](w)
 	o.pop = ecs.GetResource[globals.PopulationStats](w)
 	o.data = make([]float64, len(o.Header()))
 }
-func (o *ForagingStats_etox) Update(w *ecs.World) {}
-func (o *ForagingStats_etox) Header() []string {
+func (o *ForagingStatsEtox) Update(w *ecs.World) {}
+func (o *ForagingStatsEtox) Header() []string {
 	return []string{"Round", "Lazy", "Resting", "Searching", "Recruited", "Nectar", "Pollen", "Water"}
 }
-func (o *ForagingStats_etox) Values(w *ecs.World) []float64 {
+func (o *ForagingStatsEtox) Values(w *ecs.World) []float64 {
 	for i, round := range o.stats.Rounds {
 		o.data[0] = float64(i)
 		o.data[1] += float64(round.Lazy)

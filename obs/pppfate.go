@@ -1,7 +1,7 @@
 package obs
 
 import (
-	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
+	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -10,14 +10,14 @@ import (
 //
 // Primarily meant for validation of Nursebeecs-master-thesis against BEEHAVE_ecotox.
 type PPPFateObs struct {
-	pppfate *globals_etox.PPPfate
-	stores  *globals_etox.Storages_etox
+	pppfate *globals.PPPFate
+	stores  *globals.StoragesEtox
 	data    []float64
 }
 
 func (o *PPPFateObs) Initialize(w *ecs.World) {
-	o.pppfate = ecs.GetResource[globals_etox.PPPfate](w)
-	o.stores = ecs.GetResource[globals_etox.Storages_etox](w)
+	o.pppfate = ecs.GetResource[globals.PPPFate](w)
+	o.stores = ecs.GetResource[globals.StoragesEtox](w)
 	o.data = make([]float64, len(o.Header()))
 }
 func (o *PPPFateObs) Update(w *ecs.World) {}

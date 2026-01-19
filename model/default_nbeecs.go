@@ -2,11 +2,8 @@ package model
 
 import (
 	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
-	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
 	"github.com/fzeitner/Nursebeecs-master-thesis/params"
-	"github.com/fzeitner/Nursebeecs-master-thesis/params_etox"
 	"github.com/fzeitner/Nursebeecs-master-thesis/sys"
-	"github.com/fzeitner/Nursebeecs-master-thesis/sys_etox"
 	"github.com/mlange-42/ark-tools/app"
 	"github.com/mlange-42/ark/ecs"
 )
@@ -15,11 +12,11 @@ import (
 //
 // If the argument m is nil, a new model instance is created.
 // If it is non-nil, the model is reset and re-used, saving some time for initialization and memory allocation.
-func Default_nbeecs(p params.Params, pe params_etox.Params_etox, app *app.App) *app.App {
+func DefaultNbeecs(p params.Params, pn params.ParamsNursebeecs, app *app.App) *app.App {
 
 	// Add parameters and other resources
 
-	app = initializeModel_nbeecs(p, pe, app)
+	app = initializeModelNbeecs(p, pn, app)
 
 	// Initialization
 	app.AddSystem(&sys.InitStore{})
@@ -27,10 +24,10 @@ func Default_nbeecs(p params.Params, pe params_etox.Params_etox, app *app.App) *
 	app.AddSystem(&sys.InitPopulation{})
 	app.AddSystem(&sys.InitPatchesList{})
 	app.AddSystem(&sys.InitForagingPeriod{})
-	app.AddSystem(&sys_etox.Init_etox{}) // inits all the changes necessary for the etox and nursing module
+	app.AddSystem(&sys.InitNursebeecs{}) // inits all the changes necessary for the etox and nursing module
 
 	// Sub-models
-	app.AddSystem(&sys_etox.CalcAffNbeecs{})
+	app.AddSystem(&sys.CalcAffNbeecs{})
 	app.AddSystem(&sys.CalcForagingPeriod{})
 	app.AddSystem(&sys.ReplenishPatches{})
 
@@ -39,9 +36,9 @@ func Default_nbeecs(p params.Params, pe params_etox.Params_etox, app *app.App) *
 	app.AddSystem(&sys.EggLaying{})
 	app.AddSystem(&sys.TransitionForagers{})
 
-	app.AddSystem(&sys.CountPopulation{})   // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
-	app.AddSystem(&sys_etox.NursingNeeds{}) // calculates need of nurses based on population dynamics and nursing metrics from the last step; determines available nurses for broodcare and consumption
-	app.AddSystem(&sys_etox.Nbroodcare{})   // new nurse based brood care process (if turned on)
+	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
+	app.AddSystem(&sys.NursingNeeds{})    // calculates need of nurses based on population dynamics and nursing metrics from the last step; determines available nurses for broodcare and consumption
+	app.AddSystem(&sys.Nbroodcare{})      // new nurse based brood care process (if turned on)
 
 	app.AddSystem(&sys.NewCohorts{})      // here the new cohorts get initialized now
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model (miteproc), necessary to capture new Cohorts for foraging
@@ -50,7 +47,7 @@ func Default_nbeecs(p params.Params, pe params_etox.Params_etox, app *app.App) *
 	app.AddSystem(&sys.MortalityForagers{})
 
 	app.AddSystem(&sys.CountPopulation{})
-	app.AddSystem(&sys_etox.NurseConsumption{})
+	app.AddSystem(&sys.NurseConsumption{})
 
 	app.AddSystem(&sys.FixedTermination{})
 
@@ -61,9 +58,9 @@ func Default_nbeecs(p params.Params, pe params_etox.Params_etox, app *app.App) *
 //
 // If the argument m is nil, a new model instance is created.
 // If it is non-nil, the model is reset and re-used, saving some time for initialization and memory allocation.
-func WithSystems_nbeecs(p params.Params, pe params_etox.Params_etox, sys []app.System, app *app.App) *app.App {
+func WithSystemsNbeecs(p params.Params, pn params.ParamsNursebeecs, sys []app.System, app *app.App) *app.App {
 
-	app = initializeModel_nbeecs(p, pe, app)
+	app = initializeModelNbeecs(p, pn, app)
 
 	for _, s := range sys {
 		app.AddSystem(s)
@@ -72,7 +69,7 @@ func WithSystems_nbeecs(p params.Params, pe params_etox.Params_etox, sys []app.S
 	return app
 }
 
-func initializeModel_nbeecs(p params.Params, pe params_etox.Params_etox, a *app.App) *app.App {
+func initializeModelNbeecs(p params.Params, pn params.ParamsNursebeecs, a *app.App) *app.App {
 	if a == nil {
 		a = app.New()
 	} else {
@@ -80,7 +77,7 @@ func initializeModel_nbeecs(p params.Params, pe params_etox.Params_etox, a *app.
 	}
 
 	p.Apply(&a.World)
-	pe.Apply(&a.World)
+	pn.Apply(&a.World)
 
 	factory := globals.NewForagerFactory(&a.World)
 	ecs.AddResource(&a.World, &factory)
@@ -94,10 +91,10 @@ func initializeModel_nbeecs(p params.Params, pe params_etox.Params_etox, a *app.
 	foragingStats := globals.ForagingStats{}
 	ecs.AddResource(&a.World, &foragingStats)
 
-	nurseStats := globals_etox.Nursing_stats{}
+	nurseStats := globals.NursingStats{}
 	ecs.AddResource(&a.World, &nurseStats)
 
-	nurseGlobals := globals_etox.Nursing_globals{}
+	nurseGlobals := globals.NursingGlobals{}
 	ecs.AddResource(&a.World, &nurseGlobals)
 
 	return a

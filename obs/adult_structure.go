@@ -2,7 +2,6 @@ package obs
 
 import (
 	"github.com/fzeitner/Nursebeecs-master-thesis/globals"
-	"github.com/fzeitner/Nursebeecs-master-thesis/globals_etox"
 	"github.com/mlange-42/ark/ecs"
 )
 
@@ -15,8 +14,8 @@ type AdultStructure struct {
 	stores   *globals.Stores
 	foraging *globals.ForagingPeriod
 	cons     *globals.ConsumptionStats
-	nglobals *globals_etox.Nursing_globals
-	nstats   *globals_etox.Nursing_stats
+	nglobals *globals.NursingGlobals
+	nstats   *globals.NursingStats
 	aff      *globals.AgeFirstForaging
 
 	data []float64
@@ -27,8 +26,8 @@ func (o *AdultStructure) Initialize(w *ecs.World) {
 	o.stores = ecs.GetResource[globals.Stores](w)
 	o.foraging = ecs.GetResource[globals.ForagingPeriod](w)
 	o.cons = ecs.GetResource[globals.ConsumptionStats](w)
-	o.nglobals = ecs.GetResource[globals_etox.Nursing_globals](w)
-	o.nstats = ecs.GetResource[globals_etox.Nursing_stats](w)
+	o.nglobals = ecs.GetResource[globals.NursingGlobals](w)
+	o.nstats = ecs.GetResource[globals.NursingStats](w)
 	o.aff = ecs.GetResource[globals.AgeFirstForaging](w)
 
 	o.data = make([]float64, len(o.Header()))
