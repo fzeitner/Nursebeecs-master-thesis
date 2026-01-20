@@ -5,7 +5,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// ForagingStats is a table observer for foraging activity over the day.
+// ForagingStatsEtox is a table observer for foraging activity over the day.
 type ForagingStatsEtox struct {
 	Relative bool
 	stats    *globals.ForagingStatsEtox

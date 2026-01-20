@@ -18,8 +18,8 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// InitCohorts initializes and adds the resources
-// [globals.Eggs], [globals.Larvae], [globals.Pupae] and [globals.InHive].
+// InitEtoxNursebeecs initializes and adds the resources
+// necessary to simulate nursebeecs_ecotox.
 type InitEtoxNursebeecs struct {
 	larvaeEtox     globals.LarvaeEtox
 	inHiveEtox     globals.InHiveEtox

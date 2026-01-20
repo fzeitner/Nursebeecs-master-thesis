@@ -49,10 +49,6 @@ func (s *CalcAffNbeecs) Update(w *ecs.World) {
 	broodTH := 0.1
 	foragerToWorkerTH := 0.3
 
-	//maxNurseTH := 0.5
-	//minNurseTH := 0.2
-	//minIHbeeTH := 0.1 // non-Nurse IHbees are meant here
-
 	aff := s.aff.Aff
 
 	if s.stores.Pollen/s.stores.IdealPollen < pollenTH { // included a second pollen criterion, because Protein criterion based on ProteinFactorNurses got removed

@@ -1,12 +1,12 @@
 package globals
 
-// Larvae contains worker and drone larvae age cohorts.
+// LarvaeEtox contains oral doses for worker and drone larvae cohorts; divided by age like in BEEHAVE.
 type LarvaeEtox struct {
 	WorkerCohortDose []float64 // Mean PPP oral dose per cohort.
 	DroneCohortDose  []float64 // Mean PPP oral dose per cohort.
 }
 
-// InHive contains in-hive worker and drone age cohorts.
+// InHiveEtox contains oral doses for in-hive worker and drone cohorts; divided by age like in BEEHAVE.
 type InHiveEtox struct {
 	WorkerCohortDose []float64 // Mean PPP oral dose per cohort.
 	DroneCohortDose  []float64 // Mean PPP oral dose per cohort.

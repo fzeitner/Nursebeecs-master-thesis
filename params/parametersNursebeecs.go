@@ -1,6 +1,6 @@
 package params
 
-// New estimates for consumption that became necessary to create Nursebeecs
+// New estimates for consumption that became necessary to create nursebeecs; explained in detail in my master thesis.
 type ConsumptionRework struct {
 	HoneyAdultWorker  float64 // honey intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
 	PollenAdultWorker float64 // pollen intake that each adult worker bee takes in (also the baseline for nurses) [mg/d]
@@ -25,11 +25,11 @@ type ConsumptionRework struct {
 	PDLtotal         float64   // PollenDroneLarva_total --> total amount of pollen necessary to rear one drone larva [mg]
 	PFPdrone         float64   // PollenForPriming sexual maturity in drones, added on baseline consumption over the first 9 days of adult life [mg]
 
-	DynamicProteinNursing bool      // switch to turn on dynamic nursing capability
+	DynamicProteinNursing bool      // switch to turn on dynamic nursing capability; not tested and should remain deactivated as of now
 	Nursingcapabiliies    []float64 // this is an array full of factors defining efficiency/capabiliy of the nurse cohort depending on age [-]
 }
 
-// Switches and key parameters for Nursebeecs that are not strictly consumption related
+// Switches and key parameters for nursebeecs that are not strictly consumption related. Controls the different options to simulate nurse bee behavior that were evaluated in my master thesis.
 type NursingRework struct {
 	NurseAgeCeiling        int       // baseline age until model assumes that workers will act as nurses
 	BroodCannibalismChance []float64 // chance of brood to be cannibalized based on age (Schmickl & Crailsheim 2001,2002)

@@ -11,7 +11,8 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// ReplenishPatches resets and replenishes flower patches to their current maximum nectar and pollen.
+// PPPApplication calculates concentrations inside of nectar and pollen as well as contact exposure for any available patch.
+// submodel logic is basically identical to BEEHAVE_ecotox, but lacks the ability to simulate multiple applications of different PPP within one run.
 type PPPApplication struct {
 	time   *resource.Tick
 	filter *ecs.Filter2[comp.PatchPropertiesEtox, comp.ResourceEtox]
@@ -54,7 +55,7 @@ func (s *PPPApplication) Update(w *ecs.World) {
 				props.PPPconcentrationNectar+props.PPPconcentrationPollen+props.PPPcontactDose > 0 {
 				if s.etox.AppDay == dayOfYear && etox_year >= s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase {
 					if con.NectarConcentration != 0 {
-						props.PPPconcentrationNectar += ((s.etox.PPPconcentrationNectar / (1 - 0.1047*con.NectarConcentration)) / con.NectarConcentration) / (1000 * 1000 * s.energycontent.Sucrose) // looks complicated, simply adjusts the units properly to mug/kJ though depending on chemical properties
+						props.PPPconcentrationNectar += ((s.etox.PPPconcentrationNectar / (1 - 0.1047*con.NectarConcentration)) / con.NectarConcentration) / (1000 * 1000 * s.energycontent.Sucrose) // looks complicated, but simply adjusts the units properly to mug/kJ depending on chemical properties
 					} else {
 						props.PPPconcentrationNectar += 0
 					}
@@ -64,7 +65,7 @@ func (s *PPPApplication) Update(w *ecs.World) {
 				if s.etox.ContactExposureOneDay && dayOfYear != s.etox.AppDay {
 					props.PPPcontactDose = 0
 				}
-				if dayOfYear >= s.etox.AppDay+s.etox.ExposurePeriod || // TODO: ReadInFile adjustments
+				if dayOfYear >= s.etox.AppDay+s.etox.ExposurePeriod || // TODO: could add ReadInFile support here like in Netlogo; multiple applications
 					etox_year*365+dayOfYear == s.etox.SpinupPhase*365+(s.etox.ExposurePhase-1)*365+s.etox.AppDay+s.etox.ExposurePeriod {
 					props.PPPconcentrationNectar = 0
 					props.PPPconcentrationPollen = 0
@@ -89,7 +90,7 @@ func (s *PPPApplication) Update(w *ecs.World) {
 				props.PPPconcentrationNectar+props.PPPconcentrationPollen+props.PPPcontactDose > 0 {
 				if s.etox.AppDay == dayOfYear && etox_year > s.etox.SpinupPhase && etox_year < s.etox.SpinupPhase+s.etox.ExposurePhase {
 					if seas.NectarConcentration != 0 {
-						props.PPPconcentrationNectar += ((s.etox.PPPconcentrationNectar / (1 - 0.1047*seas.NectarConcentration)) / seas.NectarConcentration) / (1000 * 1000 * s.energycontent.Sucrose) // looks complicated, simply adjusts the units properly to mug/kJ though depending on chemical properties
+						props.PPPconcentrationNectar += ((s.etox.PPPconcentrationNectar / (1 - 0.1047*seas.NectarConcentration)) / seas.NectarConcentration) / (1000 * 1000 * s.energycontent.Sucrose) // looks complicated, but simply adjusts the units properly to mug/kJ depending on chemical properties
 					} else {
 						props.PPPconcentrationNectar += 0
 					}
@@ -99,7 +100,7 @@ func (s *PPPApplication) Update(w *ecs.World) {
 				if s.etox.ContactExposureOneDay && dayOfYear != s.etox.AppDay {
 					props.PPPcontactDose = 0
 				}
-				if dayOfYear >= s.etox.AppDay+s.etox.ExposurePeriod || // TODO: ReadInFile adjustments
+				if dayOfYear >= s.etox.AppDay+s.etox.ExposurePeriod || // TODO: could add ReadInFile support here like in Netlogo; multiple applications
 					etox_year*365+dayOfYear == s.etox.SpinupPhase*365+(s.etox.ExposurePhase-1)*365+s.etox.AppDay+s.etox.ExposurePeriod {
 					props.PPPconcentrationNectar = 0
 					props.PPPconcentrationPollen = 0
@@ -112,7 +113,8 @@ func (s *PPPApplication) Update(w *ecs.World) {
 			}
 		}
 	}
-	// TODO: STILL NEED TO IMPLEMENT SCRIPTED PATCHES TO ENABLE ReadInFiles
+
+	// TODO: could still implement scriped patches here; not implemented for now because they were not needed yet
 
 	query := s.filter.Query()
 	for query.Next() {

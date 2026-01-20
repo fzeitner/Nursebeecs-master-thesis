@@ -65,7 +65,7 @@ func main() {
 		NursebeesNectar: 0.05, // Factor describing the filter effect of nurse bees for nectar [ ], 1 = no filtering effect, 0 = everything gets filtered
 		NursebeesPollen: 0.05, // Factor describing the filter effect of nurse bees for pollen [ ], 1 = no filtering effect, 0 = everything gets filtered
 
-		HPGthreshold: []float64{0.000727 / 12.78, 0.000727 / 12.78 * 10, 0.000727 / 12.78 * 100}, // authors used 1 mug/L Clothianidin in 400 ml of Apiinvert; Apiinvert has 1 kg of sugar per Liter and a concentration of 72.7% (https://www.beefeed.com/en/apiinvert/) --> 1 l of Apiinvert should be equivalent to 1/0.727 = 1.376 kg
+		HGthreshold: []float64{0.000727 / 12.78, 0.000727 / 12.78 * 10, 0.000727 / 12.78 * 100}, // authors used 1 mug/L Clothianidin in 400 ml of Apiinvert; Apiinvert has 1 kg of sugar per Liter and a concentration of 72.7% (https://www.beefeed.com/en/apiinvert/) --> 1 l of Apiinvert should be equivalent to 1/0.727 = 1.376 kg
 		// therefore 1 mug/L (w/v) should be equivalent to 0.727 mug/kg (w/w) in apiinvert; 0.727 mug/kg = 0.727 ng/g = 0.000727 mug/g; BEEHAVE needs values in weight per kJ, therefore we need to consider honey energy content of 12.78 kJ/g
 		ProteinFactorNurseExposed: []float64{0.65, 0.65, 0.65}, // very much experimental; straight up taken from Schott et al. 2021
 		MaxPollenRed:              []float64{0.3, 0.3, 0.3},    // no clue yet if this makes any sense

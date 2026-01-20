@@ -1,8 +1,9 @@
 package sys
 
-// regulates compartimentalized storages of the _ecotox addition
+// regulates the compartimentalized storages of the _ecotox addition
+// and classic BEEHAVE_ecotox calculation of exposure
 // updates concentrations of PPP in nectar
-// corresponding process in netlogo: TupdateInternalExposureNectar_ETOX
+// corresponding process in NetLogo: TupdateInternalExposureNectar_ETOX
 // all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
 
 import (
@@ -101,7 +102,7 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 		s.stores.ETOX_EnergyThermo = float64(s.pop.TotalBrood) * thermoRegBrood * 0.001 * s.energyParams.Honey // or calculate the total necessary energy
 	}
 
-	// get values for the debugging variables
+	// get values for some observing/debugging variables
 	s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc // used in debugging and as a helpful metric
 
 	if s.stores.ETOX_HES_E_D0 != 0 {
@@ -149,7 +150,6 @@ func (s *EtoxStorages) Update(w *ecs.World) {
 	}
 	s.foragerShuffle = s.foragerShuffle[:0]
 
-	// classic BEEHAVE_ecotox calculation of exposure
 	// inhive bees, all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
 	s.etoxStats.CumDoseIHBees, c, h, p, num = s.CalcDosePerCohort(w, s.inHive.Workers, s.inHiveEtox.WorkerCohortDose, s.stores.ETOX_EnergyThermo, workerbaselineneed, s.needsPollen.Worker, float64(1), float64(1))
 	s.stores.ETOX_EnergyThermo = 0.
@@ -273,7 +273,7 @@ func (s *EtoxStorages) CalcDosePerCohort(w *ecs.World, coh []int, dose []float64
 	num = 0
 	pconsumed = 0.
 
-	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	order := rand.Perm(len(coh)) // randomize order to further emulate NetLogo ask function
 	for _, i := range order {
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := init_honeyenergy

@@ -1,8 +1,8 @@
 package globals
 
-// PopulationStats contains summarized population numbers for development stages.
+// PopulationStatsEtox contains the mean and cumulative oral doses of various cohorts.
 //
-// PopulationStats is updated at the end of each simulation step.
+// PopulationStatsEtox is updated at the end of each simulation step.
 // Thus, it contains stats of the previous step.
 type PopulationStatsEtox struct {
 	NumberIHbeeCohorts int // only for debugging, will probably remove this later
@@ -47,7 +47,7 @@ func (s *PopulationStatsEtox) Reset() {
 
 }
 
-// ForagingRound contains statistics for a single foraging round.
+// ForagingRoundEtox contains statistics for a single foraging round.
 // Not used as an ECS resource directly!
 type ForagingRoundEtox struct {
 	Lazy      int
@@ -60,19 +60,19 @@ type ForagingRoundEtox struct {
 	Water int
 }
 
-// ForagingStats contains statistics on foraging per foraging round.
+// ForagingStatsEtox contains additional statistics on foraging per day.
+// Mainly used for debugging differences to NetLogo during development.
 type ForagingStatsEtox struct {
 	Rounds []ForagingRoundEtox
 
 	ContactExp_once        int     // for debugging how often foragers get contact exp per foraging day
 	ContactExp_repeat      int     // for debugging how often foragers get contact exp per foraging day
-	Prob                   float64 // debugging global
-	SumDur                 float64 // debugging global
-	Pollensuccess          float64 // debugging global
-	Collectionflightstotal int     // debugging global
-	Foragerdied            int     // debugging global
-	TotalSearches          int     //debugging global
-	ForagerDiedLifespan    int     //debugging global
+	Prob                   float64 // debugging global; foragingProb
+	SumDur                 float64 // debugging global; total foraging duration
+	Pollensuccess          float64 // debugging global; successful pollen foraging flights
+	Collectionflightstotal int     // debugging global; total amount of successful foraging flights
+	Foragerdied            int     // debugging global; amount squadrons that died due to direct foraging mortality
+	TotalSearches          int     //debugging global; total amount of searching flights
 
 	MaxEnergyExpenditure  float64 // for tracking the energy use of foragers per foraging day
 	MeanEnergyExpenditure float64 // for tracking the energy use of foragers per foraging day
@@ -90,7 +90,6 @@ func (s *ForagingStatsEtox) Reset() {
 	s.Collectionflightstotal = 0
 	s.Foragerdied = 0
 	s.TotalSearches = 0
-	s.ForagerDiedLifespan = 0
 
 	s.MaxEnergyExpenditure = 0.
 	s.MeanEnergyExpenditure = 0.

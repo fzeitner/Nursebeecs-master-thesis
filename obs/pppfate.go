@@ -5,10 +5,10 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Debug is a row observer for several colony structure variables,
-// using the same names as the original BEEHAVE_ecotox implementation.
+// PPPFateObs is an observer that notes any and all flows of PPP once it has been picked up by
+// foragers. It was primarily used to create mass balances of PPP inside and outside of the hive.
 //
-// Primarily meant for validation of Nursebeecs-master-thesis against BEEHAVE_ecotox.
+// For example use see _examples/beecs_ecotox/PPP_massbalance
 type PPPFateObs struct {
 	pppfate *globals.PPPFate
 	stores  *globals.StoragesEtox

@@ -8,7 +8,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Default sets up the default beecs_ecotox model with the standard sub-models.
+// DefaultEtox sets up the default beecs_ecotox model with the standard sub-models.
 //
 // If the argument m is nil, a new model instance is created.
 // If it is non-nil, the model is reset and re-used, saving some time for initialization and memory allocation.
@@ -25,20 +25,20 @@ func DefaultEtox(p params.Params, pe params.ParamsEtox, app *app.App) *app.App {
 	app.AddSystem(&sys.InitPopulation{})
 	app.AddSystem(&sys.InitPatchesList{})
 	app.AddSystem(&sys.InitForagingPeriod{})
-	app.AddSystem(&sys.InitEtox{}) // inits all the changes necessary for the etox module
+	app.AddSystem(&sys.InitEtox{}) // inits all the changes necessary for the beecs_ecotox submodels
 
 	// Sub-models
 	app.AddSystem(&sys.CalcAff{})
 	app.AddSystem(&sys.CalcForagingPeriod{})
 	//app.AddSystem(&sys.CalcWaterForagingPeriod{}) // might as well be disabled atm because no function actually uses water data as of yet, because water foraging seems irrelevant/untested in netlogo as well
-	app.AddSystem(&sys.ReplenishPatches{}) // same old function as in beecs
-	app.AddSystem(&sys.PPPApplication{})   // introduced PPP exposure at patches
+	app.AddSystem(&sys.ReplenishPatches{}) // unchanged to beecs
+	app.AddSystem(&sys.PPPApplication{})   // introduced calculation of PPP exposure at patches analogous to BEEHAVE_ecotox
 
-	app.AddSystem(&sys.MortalityCohorts{})     // same old mortality function now again
+	app.AddSystem(&sys.MortalityCohorts{})     // unchanged to beecs
 	app.AddSystem(&sys.MortalityCohortsEtox{}) // introduced ETOXMortality as an additional process for all cohorts
-	app.AddSystem(&sys.AgeCohorts{})
-	app.AddSystem(&sys.EggLaying{})          // no counting before EggLaying, therefore we can just let it run here after ageing in beecs. Necessary to first age to free up space for new eggs. Therefore has to happen after Mortaliy procs too which have to happen before ageing
-	app.AddSystem(&sys.TransitionForagers{}) // now only counts how many foragers are going to be transitioned and empties the IHbeecohort but does not initialize anything to resemble original BEEHAVE more closely
+	app.AddSystem(&sys.AgeCohorts{})           // unchanged to beecs
+	app.AddSystem(&sys.EggLaying{})            // unchanged to beecs
+	app.AddSystem(&sys.TransitionForagers{})   // unchanged to beecs
 
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model, necessary to capture mortality effects of cohorts on broodcare and foraging
 	app.AddSystem(&sys.BroodCare{})       // Moved after the first countingproc to resemble the original model further, as counting twice is inevitable because of ETOXmortality processes.
@@ -46,14 +46,14 @@ func DefaultEtox(p params.Params, pe params.ParamsEtox, app *app.App) *app.App {
 	app.AddSystem(&sys.NewCohorts{})
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model (miteproc), necessary to capture new Cohorts for foraging
 
-	app.AddSystem(&sys.ForagingEtox{})          // introduced the uptake of PPP into foragers and the hive through contaminated honey/pollen, very tedious to decouple from normal foraging process
-	app.AddSystem(&sys.MortalityForagers{})     // now once again exactly the same as in baseline BEEHAVE, decoupled from etox mortality
-	app.AddSystem(&sys.MortalityForagersEtox{}) // introduced ETOXMortality as an additional process for foragers and put after Foraging, because same in BEEHAVE
+	app.AddSystem(&sys.ForagingEtox{})          // introduced the uptake of PPP into foragers and the hive through contaminated honey/pollen; would be far too tedious to decouple this from the normal foraging submodel
+	app.AddSystem(&sys.MortalityForagers{})     // unchanged to beecs
+	app.AddSystem(&sys.MortalityForagersEtox{}) // introduced ETOXMortality as an additional process for foragers after normal foraging mortality, analogous to BEEHAVE_ecotox
 
-	app.AddSystem(&sys.CountPopulation{}) // necessary here because of food comsumption in the next steps
-	app.AddSystem(&sys.PollenConsumption{})
-	app.AddSystem(&sys.HoneyConsumption{})
-	app.AddSystem(&sys.EtoxStorages{}) // regulates in-hive exposition and fate of PPP and the newly introduced honey compartiments
+	app.AddSystem(&sys.CountPopulation{})   // necessary here because of food comsumption in the next steps
+	app.AddSystem(&sys.PollenConsumption{}) // unchanged to beecs
+	app.AddSystem(&sys.HoneyConsumption{})  // unchanged to beecs
+	app.AddSystem(&sys.EtoxStorages{})      // regulates in-hive exposure and fate of PPP and the newly introduced honey compartiments
 
 	app.AddSystem(&sys.FixedTermination{})
 

@@ -16,6 +16,8 @@ type WaterForagingPeriodData struct {
 	CurrentYear int
 }
 
+// StoragesEtox tracks the current concentration of PPP inside of the compartimentarized honey stores added in BEEHAVE_ecotox.
+// It also traks some PPP-related ovserving variables as well as the energy necessary for thermoregulation.
 type StoragesEtox struct {
 	PPPInHivePollenConc float64 // Concentration of PPP currently in stored pollen [mug/g].
 	ETOX_EnergyThermo   float64 // Energy needed for Thermoregulation of hive/brood made global for Etox_consumption purposes.
@@ -43,6 +45,8 @@ type StoragesEtox struct {
 	PPPTotal       float64 // total amount of PPP in all stores this timestep
 }
 
+// PPPFate tracks the total amount of PPP that flows into the respective PPP-sinks and was used to create
+// PPP mass balances (see examples/beecs_ecotox)
 type PPPFate struct {
 	TotalPPPforaged      float64 // Total amount of PPP foraged by all foragers; used to create a mass balance
 	PPPhoneyStores       float64 // Total amount of PPP that ends up in honey stores after being foraged

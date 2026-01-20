@@ -162,12 +162,10 @@ func (s *Foraging) Finalize(w *ecs.World) {}
 
 func (s *Foraging) newForagers(w *ecs.World) {
 	if s.newCohorts.Foragers > 0 {
-		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick)-s.aff.Aff) // make sure this -1 for the tick makes sense before publishing this anywhere
+		s.factory.CreateSquadrons(s.newCohorts.Foragers, int(s.time.Tick)-s.aff.Aff)
 	}
 	s.newCohorts.Foragers = 0
 
-	// may have to start adding winterbee component here in case we are simulating nursebeecs over multiple years
-	// postpone for now though
 	if s.nursingparams.WinterBees {
 		year := int((s.time.Tick) / 365)
 		agequery := s.ageFilter.Without(ecs.C[comp.ActivityEtox]()).Query()

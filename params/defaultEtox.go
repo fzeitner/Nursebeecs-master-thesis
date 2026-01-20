@@ -8,7 +8,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Params is an interface for parameter sets.
+// ParamsEtox is an interface for the beecs_ecotox parameter sets.
 type ParamsEtox interface {
 	// Apply the parameters to a world.
 	Apply(world *ecs.World)
@@ -18,9 +18,9 @@ type ParamsEtox interface {
 	FromJSON(data []byte) error
 }
 
-// DefaultParams contains all default parameters of BEEHAVE.
+// DefaultParamsEtox contains all default parameters of BEEHAVE_ecotox.
 //
-// DefaultParams implements [Params].
+// DefaultParamsEtox implements [ParamsEtox].
 type DefaultParamsEtox struct {
 	PPPApplication      PPPApplication
 	WaterForaging       WaterForaging
@@ -28,7 +28,7 @@ type DefaultParamsEtox struct {
 	PPPToxicity         PPPToxicity
 }
 
-// Default returns the complete default parameter set of BEEHAVE.
+// DefaultEtox returns the complete default parameter set for beecs_ecotox. ReworkedThermoEtox, RealisticStoch and the two fixes are additions created by me.
 func DefaultEtox() DefaultParamsEtox {
 	return DefaultParamsEtox{
 		PPPApplication: PPPApplication{
@@ -37,10 +37,11 @@ func DefaultEtox() DefaultParamsEtox {
 			DegradationHoney:          false, // Determines whether the compound in the honey (within the hive) does degrade or not. This does impact the in-hive toxicity of the compound,
 			ContactSum:                false, // Determines whether contact exposure should be summed up per visit to a patch (true) or if the mean should be calculated whenever a new patch is visited (false)
 			ContactExposureOneDay:     false, // Determines whether contact exposure should only be possible on the day of application
-			RealisticStoch:            false, // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
-			ReworkedThermoETOX:        false, // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
-			Nursebeefix:               true,  // Determines whether the nurse bee intake from BEEHAVE_ecotox's nursebeefactors shall be added to IHbees instead of dissipating
-			HSUfix:                    true,  // Determines if the PPP lost to the second call of HSuptake when unloading nectar shall be redirected to IHbees (true) insted of dissipating
+
+			RealisticStoch:     false, // Determines whether stochstic death for low numbers of IHbees in one cohort shall be made more realistic by calculating a chance for each bee
+			ReworkedThermoETOX: false, // Determines whether thermoregulation energy shall be taken in equally by all adult bees (True, new version) or if one cohort/squad shall take it all (false; Netlogo version)
+			Nursebeefix:        true,  // Determines whether the nurse bee intake from BEEHAVE_ecotox's nursebeefactors shall be added to IHbees instead of dissipating
+			HSUfix:             true,  // Determines if the PPP lost to the second call of HSuptake when unloading nectar shall be redirected to IHbees (true) insted of dissipating
 
 			PPPname:                "No applications", // Identifier for the PPP used.
 			PPPconcentrationNectar: 990,
@@ -71,7 +72,7 @@ func DefaultEtox() DefaultParamsEtox {
 			NursebeesNectar: 0.25, // Factor describing the filter effect of nurse bees for nectar [ ]
 			NursebeesPollen: 1.,   // Factor describing the filter effect of nurse bees for pollen [ ]
 
-			HPGthreshold: []float64{0.000727 / 12.78, 0.000727 / 12.78 * 10, 0.000727 / 12.78 * 100}, // authors used 1 mug/L Clothianidin in 400 ml of Apiinvert; Apiinvert has 1 kg of sugar per Liter and a concentration of 72.7% (https://www.beefeed.com/en/apiinvert/) --> 1 l of Apiinvert should be equivalkent to 1/0.727 = 1.376 kg
+			HGthreshold: []float64{0.000727 / 12.78, 0.000727 / 12.78 * 10, 0.000727 / 12.78 * 100}, // authors used 1 mug/L Clothianidin in 400 ml of Apiinvert; Apiinvert has 1 kg of sugar per Liter and a concentration of 72.7% (https://www.beefeed.com/en/apiinvert/) --> 1 l of Apiinvert should be equivalkent to 1/0.727 = 1.376 kg
 			// therefore 1 mug/L (w/v) should be equivalent to 0.727 mug/kg (w/w) in apiinvert; 0.727 mug/kg = 0.727 ng/g = 0.000727 mug/g; BEEHAVE needs values in weight per kJ, therefore we need to consider honey energy content of 12.78 kJ/g
 			ProteinFactorNurseExposed: []float64{0.82, 0.77, 0.}, // very much experimental; straight up taken from Schott et al. 2021
 			MaxPollenRed:              []float64{0.9, 0.8, 0.25}, // very much experimental and just a guess for now, needs to be calibrated probperly for each PPP

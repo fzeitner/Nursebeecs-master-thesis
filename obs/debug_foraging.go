@@ -33,7 +33,7 @@ func (o *DebugForaging) Initialize(w *ecs.World) {
 
 func (o *DebugForaging) Update(w *ecs.World) {}
 func (o *DebugForaging) Header() []string {
-	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "nIHbeeCohorts", "contactonce", "contactrepeat", "ForagingRounds", "ForagingSpontaneousProb", "summedTripDuration", "TotalSearches", "ForagerDied", "Collectionflightstotal", "Pollensuccess", "ForagerDiedLifespan"}
+	return []string{"DailyForagingPeriod", "HoneyEnergyStore", "PollenStore_g", "TotalEggs", "TotalLarvae", "TotalPupae", "TotalIHbees", "TotalForagers", "nIHbeeCohorts", "contactonce", "contactrepeat", "ForagingRounds", "ForagingSpontaneousProb", "summedTripDuration", "TotalSearches", "ForagerDied", "Collectionflightstotal", "Pollensuccess"}
 }
 func (o *DebugForaging) Values(w *ecs.World) []float64 {
 	o.data[0] = float64(o.foraging.SecondsToday)
@@ -57,7 +57,6 @@ func (o *DebugForaging) Values(w *ecs.World) []float64 {
 	o.data[15] = float64(o.forstats.Foragerdied)
 	o.data[16] = float64(o.forstats.Collectionflightstotal)
 	o.data[17] = float64(o.forstats.Pollensuccess)
-	o.data[18] = float64(o.forstats.ForagerDiedLifespan)
 
 	return o.data
 }

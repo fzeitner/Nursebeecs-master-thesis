@@ -221,7 +221,7 @@ func (s *ForagingEtox) newForagers(w *ecs.World) {
 			} else if age.DayOfBirth >= 265+year*365 { // original BEEHAVE assumes starting foragers are aged 100 - 160 days already !!!; this is just an estimate though, it would make a lot more sense to couple this to pop dynamic and nectar/pollen influxes
 				s.foragerMapper.Add(e, &comp.ActivityEtox{Current: activity.Resting, Winterbee: true}, &comp.KnownPatchEtox{}) // assumes bees turning into foragers are winterbees again
 				// aligns with literature assuming eggs from august - september start turning into winterbees (21 days for theses eggs to turn into IHbees + some more to turn into foragers --> roughly start of october)
-				// there should eventually be a system introduced to actually differentiate between winterbees and summeerbees properly (mortalities, food demands, chance from egg onwards to turn into 1 of the 2, ...)
+				// there should eventually be a system introduced to actually differentiate between winterbees and summerbees properly (mortalities, food demands, chance from egg onwards to turn into summer- or winterbee, ...)
 			} else {
 				s.foragerMapper.Add(e, &comp.ActivityEtox{Current: activity.Resting}, &comp.KnownPatchEtox{})
 			}
@@ -494,7 +494,6 @@ func (s *ForagingEtox) collecting(w *ecs.World) {
 	sz := float64(s.foragerParams.SquadronSize)
 
 	// TODO: water collecting here, postponed because water foraging seems basically irrelevant overall
-	// TODO: test this foragerShuffle
 	activityQuery := s.activityFilter.Query()
 	for activityQuery.Next() {
 		act := activityQuery.Get()
@@ -553,9 +552,10 @@ func (s *ForagingEtox) collecting(w *ecs.World) {
 			milage.Today += float32(dist)
 			milage.Total += float32(dist)
 
-			// exposition from nectar foraging
+			// exposure from nectar foraging
 			PPPload.PPPLoad = load.Energy * etoxprops.PPPconcentrationNectar // kJ * mug/kJ = mug / load
 			PPPexpo.OralDose += PPPload.PPPLoad * s.toxic.HSuptake
+
 			// pppfate is simply used to create a ppp mass balance to analyze and debug
 			s.pppfate.PPPforagersImmediate += PPPload.PPPLoad * s.toxic.HSuptake * float64(s.foragerParams.SquadronSize)
 			s.pppfate.PPPforagersTotal += PPPload.PPPLoad * s.toxic.HSuptake * float64(s.foragerParams.SquadronSize)
@@ -569,7 +569,7 @@ func (s *ForagingEtox) collecting(w *ecs.World) {
 				s.foragingStats.ContactExp_once++
 				patch.VisitedthisDay = true
 			}
-			if s.etox.AppDay == int(s.time.Tick) || !s.etox.ContactExposureOneDay { // this should a) always enable contactexp on AppDay and b) prevent exposure from diluting if ContactExposureOneDay == True for the GUTS model that does not reset ContactDose
+			if s.etox.AppDay == int(s.time.Tick) || !s.etox.ContactExposureOneDay {
 				if PPPexpo.ContactDose > 0 {
 					if s.etox.ContactSum {
 						PPPexpo.ContactDose += etoxprops.PPPcontactDose
@@ -591,7 +591,7 @@ func (s *ForagingEtox) collecting(w *ecs.World) {
 			milage.Today += float32(dist)
 			milage.Total += float32(dist)
 
-			// exposition from pollen foraging
+			// exposure from pollen foraging
 			PPPload.PPPLoad = s.foragerParams.PollenLoad * etoxprops.PPPconcentrationPollen // g * mug/g = mug / load
 			s.pppfate.TotalPPPforaged += PPPload.PPPLoad * float64(s.foragerParams.SquadronSize)
 
@@ -601,7 +601,7 @@ func (s *ForagingEtox) collecting(w *ecs.World) {
 				s.foragingStats.ContactExp_once++
 				patch.VisitedthisDay = true
 			}
-			if s.etox.AppDay == int(s.time.Tick) || !s.etox.ContactExposureOneDay { // this should a) always enable contactexp on AppDay and b) prevent exposure from diluting if ContactExposureOneDay == True for the GUTS model that does not reset ContactDose
+			if s.etox.AppDay == int(s.time.Tick) || !s.etox.ContactExposureOneDay {
 				if PPPexpo.ContactDose > 0 {
 					if s.etox.ContactSum {
 						PPPexpo.ContactDose += etoxprops.PPPcontactDose
@@ -622,7 +622,7 @@ func (s *ForagingEtox) flightCost(w *ecs.World) (duration float64, foragers int)
 	duration = 0.0
 	foragers = 0
 
-	// TODO: flightCost for water foraging here, postponed ...
+	// TODO: flightCost for water foraging here, postponed because of a lack of relevance
 
 	activityQuery := s.activityFilter.Query()
 	for activityQuery.Next() {
@@ -859,7 +859,7 @@ func (s *ForagingEtox) unloading(w *ecs.World) {
 
 			s.storesEtox.ETOX_HES_C_D0 = ((s.storesEtox.ETOX_HES_C_D0 * s.storesEtox.ETOX_HES_E_D0) + (PPPload.PPPLoad * (1 - s.toxic.HSuptake) * float64(s.foragerParams.SquadronSize))) / (s.storesEtox.ETOX_HES_E_D0 + (load.Energy * float64(s.foragerParams.SquadronSize))) // may need to readjust
 			// HSuptake actually gets applied a second time in here; it already got applied to PPPload when the foragers took up the load; the lost fraction then got added to the foragers OralDose
-			// here PPPLoad loses another 10% (in total 19% are "lost" to the forager), but these 10% just dissipate. There is no addition to foragers OralDose, 9% of total pesticide taken in via honey is thus lost in the model
+			// here PPPLoad loses another 10% (in total 19% are "lost" to the forager), but these 10% just dissipate. There is no addition to foragers OralDose, 9% of total pesticide taken in via nectarforaging is thus lost in the model without the fix below
 			// BEEHAVE_ecotox ODD´s do not talk about HSuptake anywhere sadly
 			if s.etox.HSUfix {
 				ppp.OralDose += PPPload.PPPLoad * s.toxic.HSuptake
@@ -936,7 +936,7 @@ type patchCandidateEtox struct {
 	HasWater bool
 }
 
-// copy from etox_storages_consumption, because it should be more efficient to just use it here as a ForagingEtox function too than to get the necessary globals within the func with every call, right?
+// copy from etox_storages_consumption
 func (s *ForagingEtox) FeedOnHoneyStores(w *ecs.World, cons float64, number float64, honeydilution bool) (OralDose float64) {
 	OralDose = 0.
 	if cons < s.storesEtox.ETOX_HES_E_D0 {

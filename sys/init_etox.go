@@ -18,8 +18,8 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// InitCohorts initializes and adds the resources
-// [globals.Eggs], [globals.Larvae], [globals.Pupae] and [globals.InHive].
+// InitEtox initializes and adds the resources
+// necessary to simulate beecs_ecotox.
 type InitEtox struct {
 	larvaeEtox globals.LarvaeEtox
 	inHiveEtox globals.InHiveEtox
@@ -94,7 +94,7 @@ func (s *InitEtox) Initialize(w *ecs.World) {
 	for query.Next() {
 		toAdd = append(toAdd, query.Entity())
 	}
-	// also adds GUTS related components here if GUTS is enabled
+
 	rng := rand.New(s.source)
 	for _, entity := range toAdd {
 		s.foragerPPPmapper.Add(entity, &comp.PPPExpo{OralDose: 0., ContactDose: 0., RdmSurvivalContact: rng.Float64(), RdmSurvivalOral: rng.Float64()}, &comp.EtoxLoad{PPPLoad: 0., EnergyUsed: 0.})

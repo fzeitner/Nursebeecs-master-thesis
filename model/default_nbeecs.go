@@ -8,7 +8,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Default sets up the default beecs model with the standard sub-models.
+// DefaultNbeecs sets up the default nursebeecs model with the standard beecs and nursing related sub-models.
 //
 // If the argument m is nil, a new model instance is created.
 // If it is non-nil, the model is reset and re-used, saving some time for initialization and memory allocation.
@@ -43,11 +43,11 @@ func DefaultNbeecs(p params.Params, pn params.ParamsNursebeecs, app *app.App) *a
 	app.AddSystem(&sys.NewCohorts{})      // here the new cohorts get initialized now
 	app.AddSystem(&sys.CountPopulation{}) // added here to reflect position in original model (miteproc), necessary to capture new Cohorts for foraging
 
-	app.AddSystem(&sys.Foraging{}) // also initializes foragers now
+	app.AddSystem(&sys.Foraging{})
 	app.AddSystem(&sys.MortalityForagers{})
 
 	app.AddSystem(&sys.CountPopulation{})
-	app.AddSystem(&sys.NurseConsumption{})
+	app.AddSystem(&sys.NurseConsumption{}) // regulates all consumption of honey and pollen with consideration of nurse bee feeding
 
 	app.AddSystem(&sys.FixedTermination{})
 

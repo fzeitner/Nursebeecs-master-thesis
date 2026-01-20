@@ -9,7 +9,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// this subsystem calculates the amount of nurses and decides if the nursing age needs to be adjusted or if some foragers need to revert to nurses
+// this subsystem calculates the current amount of nurses and decides if the nursing age needs to be adjusted or if some foragers need to revert to nurses
 
 type NursingNeeds struct {
 	oldNurseParams *params.Nursing
@@ -106,7 +106,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 		}
 
 		/*
-			// function to adjust NurseAgeMax to next nonzero cohort, this is still to be tested though
+			// function to adjust NurseAgeMax to next nonzero cohort, this is untested as of yet and did not make it into my master thesis
 			if (!s.nGlobals.SuffNurses && s.nGlobals.NurseAgeMax < s.aff.Aff) || (s.inHive.Workers[4] == 0 && s.inHive.Workers[min(s.nGlobals.NurseAgeMax+1, 50)] > 0) {
 				PufferCohortAvailable := false
 				nextCohort := 50
@@ -126,9 +126,10 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 				for i := s.nGlobals.NurseAgeMax - 1; i > 4; i-- {
 					if s.inHive.Workers[i] != 0 {
 						nextCohort = max(i, nextCohort)
-				}
-				if nextCohort != 0 {
-					s.nGlobals.NurseAgeMax = util.Clamp(nextCohort, 5, s.aff.Aff)
+					}
+					if nextCohort != 0 {
+						s.nGlobals.NurseAgeMax = util.Clamp(nextCohort, 5, s.aff.Aff)
+					}
 				}
 			}
 		*/
@@ -156,7 +157,7 @@ func (s *NursingNeeds) Update(w *ecs.World) {
 				s.nGlobals.NurseAgeMax = util.Clamp(s.aff.Aff, 5, 50)
 
 				s.inHive.Workers[s.aff.Aff] = s.newCohorts.Foragers * 100
-				s.aff.Aff++ // increase Aff by 1
+				s.aff.Aff++ // increase Aff by 1; only necessary because the conversion to foragers in this timestep was reversed due to emergency
 				s.newCohorts.Foragers = 0
 				recruitedNurses += s.inHive.Workers[s.nGlobals.NurseAgeMax]
 			}
@@ -199,7 +200,7 @@ func (s *NursingNeeds) calcNursingMetrics(w *ecs.World) {
 			s.nGlobals.Reverted = append(s.nGlobals.Reverted, query.Entity())
 		}
 	}
-	s.nStats.TotalNurses = s.nStats.IHbeeNurses + s.nStats.RevertedForagers + s.nStats.WinterBees // maybe ignore winterbees here as they are a bit of a special case?
+	s.nStats.TotalNurses = s.nStats.IHbeeNurses + s.nStats.RevertedForagers + s.nStats.WinterBees
 	s.nStats.NurseFraction = (float64(s.nStats.TotalNurses) / float64(s.pop.WorkersForagers+s.pop.WorkersInHive))
 }
 

@@ -12,8 +12,8 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// InitCohorts initializes and adds the resources
-// [globals.Eggs], [globals.Larvae], [globals.Pupae] and [globals.InHive].
+// InitNursebeecs initializes and adds the resources
+// necessary to run nursebeecs.
 type InitNursebeecs struct {
 	nGlobals       *globals.NursingGlobals
 	nurseCons      *params.ConsumptionRework
@@ -23,13 +23,9 @@ type InitNursebeecs struct {
 	foragersFilter *ecs.Filter0
 	actAdder       *ecs.Map1[comp.ActivityEtox]
 	source         rand.Source
-
-	//waterperiodData globals.WaterForagingPeriodData
 }
 
 func (s *InitNursebeecs) Initialize(w *ecs.World) {
-	// initialize the globals for larvae/IHbee exposure
-
 	// nursebeecs consumption changes to larvae get initializd here
 	s.nurseCons = ecs.GetResource[params.ConsumptionRework](w)
 	// assume total honey need of 65.4 mg based on Rortais et al. 2005 and original BEEHAVE, but spread throughout the different stages
@@ -92,7 +88,6 @@ func (s *InitNursebeecs) Initialize(w *ecs.World) {
 	s.nGlobals = ecs.GetResource[globals.NursingGlobals](w)
 	s.nGlobals.SuffNurses = true                           // assume that first stimestep there simply are enough nurses, maybe change at some point
 	s.nGlobals.NurseAgeMax = s.nurseParams.NurseAgeCeiling // initialize with baseline nurse max age from params
-	// rest probably won´t need to be initialized here because it should get set with a value before any other subsystem calls for a value
 
 	statsEtox := globals.PopulationStatsEtox{}
 	ecs.AddResource(w, &statsEtox)
@@ -100,7 +95,6 @@ func (s *InitNursebeecs) Initialize(w *ecs.World) {
 	forstatsEtox := globals.ForagingStatsEtox{}
 	ecs.AddResource(w, &forstatsEtox)
 
-	// add the PPPExpo component to all foragers
 	s.source = rand.New(ecs.GetResource[resource.Rand](w))
 	s.actAdder = s.actAdder.New(w)
 	s.foragersFilter = ecs.NewFilter0(w).With(ecs.C[comp.Age]())
@@ -121,49 +115,6 @@ func (s *InitNursebeecs) Initialize(w *ecs.World) {
 			s.actAdder.Add(entity, &comp.ActivityEtox{Current: activity.Resting, Winterbee: false})
 		}
 	}
-
-	/*
-		// WATERFORAGING IMPLEMENTATION HERE: EToX_WaterforcoolingREP <- Reporter for Water need per day
-		// water foraging from here on, does work with embedded files, but water foraging as a whole is not tested
-		// and should not be turned on as of yet, might be deleted/never finished; time will tell
-		waterParams := ecs.GetResource[params.WaterForaging](w)
-		s.waterperiodData = globals.WaterForagingPeriodData{}
-		ecs.AddResource(w, &s.waterperiodData)
-		if waterParams.WaterForaging {
-			waterPeriodParams := ecs.GetResource[params.WaterForagingPeriod](w)
-			var WaterfileSys fs.FS = data.WaterNeedsDaily
-			if !waterPeriodParams.Builtin {
-				wd := ecs.GetResource[params.WorkingDirectory](w).Path
-				WaterfileSys = os.DirFS(wd)
-			}
-
-			// fill from data provided directly
-			for _, arr := range waterPeriodParams.Years {
-				if len(arr)%365 != 0 {
-					log.Fatal(fmt.Errorf("foraging period entries requires multiple of 365 values, parameters have %d", len(arr)))
-				}
-				years := len(arr) / 365
-				for year := 0; year < years; year++ {
-					s.waterperiodData.Years = append(s.waterperiodData.Years, arr[year*365:(year+1)*365])
-				}
-			}
-
-			// fill from files
-			for _, f := range waterPeriodParams.Files {
-				arr, err := util.FloatArrayFromFile(WaterfileSys, f)
-				if err != nil {
-					log.Fatal(fmt.Errorf("error reading foraging period file '%s': %s", f, err.Error()))
-				}
-				if len(arr)%365 != 0 {
-					log.Fatal(fmt.Errorf("foraging period file requires multiple of 365 values, '%s' has %d", f, len(arr)))
-				}
-				years := len(arr) / 365
-				for year := 0; year < years; year++ {
-					s.waterperiodData.Years = append(s.waterperiodData.Years, arr[year*365:(year+1)*365])
-				}
-			}
-		}
-	*/
 }
 
 func (s *InitNursebeecs) Update(w *ecs.World) {}

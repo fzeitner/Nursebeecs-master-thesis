@@ -5,10 +5,9 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Debug is a row observer for several colony structure variables,
-// using the same names as the original BEEHAVE implementation.
-//
-// Primarily meant for validation of beecs against BEEHAVE.
+// AdultStructure is an observer that reports relative fractions of various cohorts from
+// the total adult population.
+// Primarily used to create some results for my master thesis.
 type AdultStructure struct {
 	pop      *globals.PopulationStats
 	stores   *globals.Stores

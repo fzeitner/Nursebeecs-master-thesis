@@ -1,6 +1,6 @@
 package params
 
-// ETOX parameters regarding application of the pesticide.
+// parameters for the application of pesticides.
 type PPPApplication struct {
 	Application               bool // Determines if there is an application at all at any point in the model and if the _ecotox-module should be turned on for all purposes
 	ForagerImmediateMortality bool // Determines whether it is taken into account that foragers can die from exposure during a foraging trip which would reduce the amount of compound brought back to the hive.
@@ -28,7 +28,7 @@ type PPPApplication struct {
 	ETOXDensityOfHoney float64 // The density of honey is 1.4 [kg/l].
 }
 
-// parameters regarding the toxicity of the pesticide and the tolerance/uptake of the foragers and cohorts.
+// parameters for uptake and toxicity of the applied pesticide to foragers and cohorts.
 type PPPToxicity struct {
 	ForagerOralLD50  float64 // Lethal oral dose for 50% mortality of foragers [µg/bee].
 	ForagerOralSlope float64 // Slope of the dose-response relationship (forager, oral) [ ].
@@ -43,7 +43,7 @@ type PPPToxicity struct {
 	NursebeesNectar float64 // Factor describing the filter effect of nurse bees for nectar [ ].
 	NursebeesPollen float64 // Factor describing the filter effect of nurse bees for pollen [ ].
 
-	HPGthreshold              []float64 // threshold value of PPP necessary in honey to activate the HPG effects
+	HGthreshold               []float64 // threshold value of PPP necessary in honey to activate the HPG effects
 	ProteinFactorNurseExposed []float64 // new ceiling for ProteinFactorNurses in case HPG effects are turned on and the threshold is exceeded}
 	MaxPollenRed              []float64 // factors to reduce MaxPollenIntake by depending on HPGthresholds; needs to be calibrated
 }

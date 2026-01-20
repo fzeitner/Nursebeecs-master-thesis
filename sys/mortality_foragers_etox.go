@@ -68,10 +68,6 @@ func (s *MortalityForagersEtox) Update(w *ecs.World) {
 	}
 	s.toRemove = s.toRemove[:0]
 
-	//querysimple := s.foragersFilterSimple.Query()
-	//c := querysimple.Count()
-	//querysimple.Close()
-
 	if c > 0 {
 		s.etoxStats.MeanDoseForager = s.etoxStats.CumDoseForagers / float64(c*100)
 	} else {

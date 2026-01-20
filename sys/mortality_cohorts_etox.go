@@ -11,8 +11,8 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// MortalityCohorts applies background mortality to all cohort-based development stages
-// (i.e. all except foragers).
+// MortalityCohortsEtox applies ETOX-related mortality to all in-hive cohorts
+// analogously to BEEHAVE_ecotox. This is part of beecs_ecotox/nursebeecs_ecotox only.
 type MortalityCohortsEtox struct {
 	workerMort *params.WorkerMortality
 	droneMort  *params.DroneMortality
@@ -58,8 +58,6 @@ func (s *MortalityCohortsEtox) Update(w *ecs.World) {
 
 func (s *MortalityCohortsEtox) Finalize(w *ecs.World) {}
 
-// adapted the mortaliy function for cohorts that can be exposed to PPP, after the normal background mortality there is now
-// etox-based mortality depending on the dose of the cohort and a simple dose-response relationship; dose reset every tick
 func (s *MortalityCohortsEtox) applyMortalityEtox(coh []int, dose []float64, slope float64, LD50 float64) {
 	r := rand.New(s.rng)
 	for i := range coh {
@@ -71,7 +69,7 @@ func (s *MortalityCohortsEtox) applyMortalityEtox(coh []int, dose []float64, slo
 			if ldx > 0.99 { // introduced this because netlogo-version behaves the same way. This makes it much less likely to have single digit cohorts left over after very lethal PPP events
 				ldx = 1
 			}
-			if s.etox.RealisticStoch {
+			if s.etox.RealisticStoch { // this is deactivated by default and not part of BEEHAVE_ecotox, but found to make sense
 				if num > 100 { // introduced this to make survival for lower numbers of cohorts more realisitcally stochastic
 					toDie = int((float64(num) * ldx))
 				} else {

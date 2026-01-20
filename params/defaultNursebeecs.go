@@ -8,7 +8,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// Params is an interface for parameter sets.
+// ParamsNursebeecs is an interface for nursebeecs parameter sets.
 type ParamsNursebeecs interface {
 	// Apply the parameters to a world.
 	Apply(world *ecs.World)
@@ -18,15 +18,15 @@ type ParamsNursebeecs interface {
 	FromJSON(data []byte) error
 }
 
-// DefaultParams contains all default parameters of BEEHAVE.
+// DefaultParamsNursebeecs contains all default parameters of nursebeecs.
 //
-// DefaultParams implements [Params].
+// DefaultParamsNursebeecs implements [ParamsNursebeecs].
 type DefaultParamsNursebeecs struct {
 	ConsumptionRework ConsumptionRework
 	NursingRework     NursingRework
 }
 
-// Default returns the complete default parameter set of BEEHAVE.
+// DefaultNursebeecs returns the complete default parameter set of nursebeecs.
 func DefaultNursebeecs() DefaultParamsNursebeecs {
 	return DefaultParamsNursebeecs{
 		ConsumptionRework: ConsumptionRework{
@@ -56,8 +56,8 @@ func DefaultNursebeecs() DefaultParamsNursebeecs {
 			// Hrassnigg and Crailsheim (2005) use the same values for carbohydrates as Rortais for both larvae, but use a higher pollen budged than I estimated here. I could also simply adopt their budgets, but that would not be completely biologically accurate for modeling dynamics,
 			// because both worker and drones have an increased need of pollen after emerging (worker for 3-5 days, drones for ca. 8-10 days) to reach complete maturity. The authors mention this as well, it is hard to estimate how much of the budget is allocated to priming as adults.
 
-			DynamicProteinNursing: false, // determines if nursing capability shall be dynamically adjusted based on worker age (there is evidence of a peaking in capability by age 6-10 roughly)
-			Nursingcapabiliies:    make([]float64, 51),
+			DynamicProteinNursing: false,               // determines if nursing capability shall be dynamically adjusted based on worker age (there is evidence of a peaking in capability by age 6-10 roughly)
+			Nursingcapabiliies:    make([]float64, 51), // array to save the dynamic capabilities of nurse bees depending on their age
 		},
 		NursingRework: NursingRework{
 			//MinWLRatio:            2,                                            // might not be used for now; see Eischen et al. 1982, 1983, 1984; placeholder for now but it seems 2:1 Worker:Larva gives a good efficiency baseline for rearing, where adult longevity is somewhat as expected
@@ -66,9 +66,9 @@ func DefaultNursebeecs() DefaultParamsNursebeecs {
 			NurseWorkLoadTH:        1.5,                                          // equals 11.25 mg of pollen per day, this should be a reasonable maximum intake for nurse bees (Rortais et al. 2005, Crailsheim et al. 1992)
 			MinimumTH:              1.0,                                          // 1.0 equals per calculation of NurseWorkload a reasonable mean intake of nurse bees, because NurseWorkload is designed to represent exactly this
 
-			NewBroodCare:           false,
+			NewBroodCare:           true,
 			Nursebeecsv0:           false,
-			Nursebeecsv1:           false,
+			Nursebeecsv1:           true,
 			ForesightedCannibalism: false,
 
 			HGEffects:    false,

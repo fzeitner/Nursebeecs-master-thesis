@@ -2,8 +2,8 @@ package sys
 
 // regulates compartimentalized storages of the _ecotox addition
 // updates concentrations of PPP in nectar
-// corresponding process in netlogo: TupdateInternalExposureNectar_ETOX
-// all cohorts work with a mean dose per cohort that gets calculated based on number of individuals in that cohort and their consumption rates
+// corresponding process in NetLogo: TupdateInternalExposureNectar_ETOX
+// and also calculates exposure for nursebeecs
 
 import (
 	"math"
@@ -107,7 +107,7 @@ func (s *EtoxStoragesNbeecs) Update(w *ecs.World) {
 		s.stores.ETOX_EnergyThermo = float64(s.pop.TotalBrood) * thermoRegBrood * 0.001 * s.energyParams.Honey // or calculate the total necessary energy
 	}
 
-	// get values for the debugging variables
+	// get values for some observing/debugging variables
 	s.stores.Pollenconcbeforeeating = s.stores.PPPInHivePollenConc // used in debugging and as a helpful metric
 
 	if s.stores.ETOX_HES_E_D0 != 0 {
@@ -126,7 +126,7 @@ func (s *EtoxStoragesNbeecs) Update(w *ecs.World) {
 		s.stores.Nectarconcbeforeeating = 0 // used in debugging and as a helpful metric
 	}
 
-	// foragers, pretty straigt forward and same for all model versions
+	// forager oral intake, pretty straigt forward and same for all model versions
 	forquery := s.foragerFilter.Query()
 	for forquery.Next() {
 		s.foragerShuffle = append(s.foragerShuffle, forquery.Entity())
@@ -355,7 +355,7 @@ func (s *EtoxStoragesNbeecs) CalcDosePerCohortHPGWorkers(w *ecs.World, coh []int
 	num = 0
 	pconsumed = 0.
 
-	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	order := rand.Perm(len(coh)) // randomize order to further emulate NetLogo ask function
 	for _, i := range order {
 		if i >= 4 && i <= s.nglobals.NurseAgeMax { // exclude nurses here
 			continue
@@ -395,7 +395,7 @@ func (s *EtoxStoragesNbeecs) CalcDosePerCohortNursingWLarvae(w *ecs.World, coh [
 	pconsumed = 0.
 	num = 0
 
-	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	order := rand.Perm(len(coh)) // randomize order to further emulate NetLogo ask function
 	for _, i := range order {    // range of a slice iterates over 2 values, first the index and then a copy of the actual val that we use as the index within the for loop
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := 0.
@@ -436,7 +436,7 @@ func (s *EtoxStoragesNbeecs) CalcDosePerCohortNursingDLarvae(w *ecs.World, coh [
 	pconsumed = 0.
 	num = 0
 
-	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	order := rand.Perm(len(coh)) // randomize order to further emulate NetLogo ask function
 	for _, i := range order {    // range of a slice iterates over 2 values, first the index and then a copy of the actual val that we use as the index within the for loop
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := 0.
@@ -477,7 +477,7 @@ func (s *EtoxStoragesNbeecs) CalcDosePerCohort(w *ecs.World, coh []int, dose []f
 	num = 0
 	pconsumed = 0.
 
-	order := rand.Perm(len(coh)) // randomize order to further emulate netlogo ask function
+	order := rand.Perm(len(coh)) // randomize order to further emulate NetLogo ask function
 	for _, i := range order {
 		ETOX_PPPOralDose := 0.
 		ETOX_Consumed_Honey := init_honeyenergy

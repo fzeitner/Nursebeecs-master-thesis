@@ -5,7 +5,7 @@ import (
 	"github.com/mlange-42/ark/ecs"
 )
 
-// NectarLoad component for forager squadrons.
+// EtoxLoad component for forager squadrons.
 type EtoxLoad struct {
 	PPPLoad float64 // Current amount of PPP in the load [µg]
 
@@ -21,6 +21,7 @@ type PPPExpo struct {
 	RdmSurvivalOral    float64 // Survival chance or "resilience" of the squadron to PPP oral exposure
 }
 
+// analogous to KnownPatch, but used in beecs_ecotox.
 type KnownPatchEtox struct {
 	Nectar ecs.Entity // Known nectar patch.
 	Pollen ecs.Entity // Known pollen patch.
@@ -30,7 +31,7 @@ type KnownPatchEtox struct {
 	VisitedthisDay bool // addition for debugging patch visits
 }
 
-// Activity component for forager squadrons.
+// analogous to Activity component for forager squadrons, but used in beecs_ecotox and nursebeecs/nursebeecs_ecotox; tracks Winterbees/reverted foragers.
 type ActivityEtox struct {
 	Current       activity.ForagerActivity // Current activity.
 	PollenForager bool                     // Whether it is currently foraging for pollen.
